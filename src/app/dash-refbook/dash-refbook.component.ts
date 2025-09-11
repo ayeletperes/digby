@@ -4,6 +4,7 @@ import { SpeciesGeneSelection } from './species-gene-selector/species-gene-selec
 import { SpeciesGeneSelectorComponent } from './species-gene-selector/species-gene-selector.component';
 import { DashRefbookOverviewComponent } from './dash-refbook-overview/dash-refbook-overview.component';
 import { DashRefbookAlignmentComponent } from './dash-refbook-alignment/dash-refbook-alignment.component';
+import { DashRefbookUsageComponent } from './dsah-refbook-usage/dash-refbook-usage.component';
 import { RefbookService } from '../../../projects/digby-swagger-client/api/refbook.service';
 
 @Component({
@@ -15,7 +16,8 @@ import { RefbookService } from '../../../projects/digby-swagger-client/api/refbo
     MatTabsModule,
     SpeciesGeneSelectorComponent,
     DashRefbookOverviewComponent,
-    DashRefbookAlignmentComponent
+    DashRefbookAlignmentComponent,
+    DashRefbookUsageComponent
   ],
   providers: [
     {
@@ -34,11 +36,10 @@ export class DashRefbookComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    
   }
 
   ascChange(selection: SpeciesGeneSelection) {
-    console.log('ascChange in parent', selection);
-    // ngOnChanges will only detect the change if the object reference changes
     this.selection = {species: selection.species, chain: selection.chain, asc: selection.asc};
   }
 

@@ -7,7 +7,9 @@ import { catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { SpeciesGeneSelection } from '../species-gene-selector/species-gene-selector.model';
 import { OverviewData } from './dash-refbook-overview.model';
-import { ChartConfiguration } from 'chart.js';
+import { ChartConfiguration, ChartData, ChartOptions, Chart, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 
 @Component({
@@ -39,7 +41,7 @@ export class DashRefbookOverviewComponent implements OnInit, OnChanges {
   };
 
   // Create the chart data
-  public chartData: ChartConfiguration<'bar'>['data'] = {
+  public chartData: ChartData<'bar'> = {
     labels: [], // Alleles as labels on the X-axis
     datasets: [
       {
@@ -47,25 +49,29 @@ export class DashRefbookOverviewComponent implements OnInit, OnChanges {
         data: [],
         backgroundColor: '#a9e1d4', // Color for Genomic Only
         borderColor: '#8DD3C7',
+        borderWidth: 1
       },
       {
         label: 'AIRRseq Only',
         data: [],
         backgroundColor: '#FFA07A', // Color for AIRRseq Only
         borderColor: '#fa946b',
+        borderWidth: 1
       },
       {
         label: 'Both',
         data: [],
         backgroundColor: '#ce93d8', // Color for Genomic + AIRRseq
         borderColor: '#ba68c8',
+        borderWidth: 1
       }
     ]
   };
 
   // Chart configuration
-  public chartOptions: ChartConfiguration<'bar'>['options'] = {
+  public chartOptions: ChartOptions<'bar'> = {
     responsive: true,
+    maintainAspectRatio: false,
     scales: {
       x: {
         stacked: true, // Enable stacking on the X-axis
@@ -77,20 +83,23 @@ export class DashRefbookOverviewComponent implements OnInit, OnChanges {
           display: true,
           text: 'Sample Count' // Y-axis label
         }
+      }
     }
-  }
-}
+  };
+
+  public chartType: 'bar' = 'bar';
 
 constructor(private refbookService: RefbookService) { }
 
   ngOnInit() {
+    
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log('ngOnChanges in overview', changes);
     if (changes['selection'] && changes['selection'].currentValue) {
         const cs = changes['selection'].currentValue;
         this.selection = changes['selection'].currentValue;
+        this.isFetching = true;
         this.refbookService.getAscsOverview(cs.species, cs.chain, cs.asc)
           .pipe(
             retryWithBackoff(),
@@ -102,12 +111,35 @@ constructor(private refbookService: RefbookService) { }
           .subscribe((data: OverviewData) => {
             this.isFetching = false;
             this.overviewData = data;
-            this.chartData.labels = data.alleles;
-            this.chartData.datasets[0].data = data.genomic_only_counts;
-            this.chartData.datasets[1].data = data.vdjbase_only_counts;
-            this.chartData.datasets[2].data = data.both_counts;
-           ; // Create a new object to trigger change detection
-            console.log('overviewData', this.overviewData);
+            
+            // Create new chart data object to trigger change detection
+            this.chartData = {
+              labels: data.alleles,
+              datasets: [
+                {
+                  label: 'Genomic Only',
+                  data: data.genomic_only_counts,
+                  backgroundColor: '#a9e1d4',
+                  borderColor: '#8DD3C7',
+                  borderWidth: 1
+                },
+                {
+                  label: 'AIRRseq Only',
+                  data: data.vdjbase_only_counts,
+                  backgroundColor: '#FFA07A',
+                  borderColor: '#fa946b',
+                  borderWidth: 1
+                },
+                {
+                  label: 'Both',
+                  data: data.both_counts,
+                  backgroundColor: '#ce93d8',
+                  borderColor: '#ba68c8',
+                  borderWidth: 1
+                }
+              ]
+            };
+            
           });
     }
   }

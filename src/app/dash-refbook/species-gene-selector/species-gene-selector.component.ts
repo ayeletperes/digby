@@ -26,8 +26,11 @@ export class SpeciesGeneSelectorComponent implements OnInit, AfterViewInit {
   @Output() selectionChange = new EventEmitter<SpeciesGeneSelection>();
   isFetching: boolean;
   availableSpeciesAndData: AvailableSpeciesAndData = {
-    species: ['Human'],
-    chains: {'Human': ['IGHV'] }
+    species: ['Human','Rhesus Macque'],
+    chains: {
+      'Human': ['IGHV','IGHD','IGHJ','IGKV','IGKJ','IGLV','IGLJ'],
+      'Rhesus Macque': ['IGHV','IGHD','IGHJ','IGKV','IGKJ','IGLV','IGLJ']
+    }
   };
   selection: SpeciesGeneSelection;
   availableAsc: string[];
@@ -48,6 +51,7 @@ export class SpeciesGeneSelectorComponent implements OnInit, AfterViewInit {
       .pipe(
         retryWithBackoff(),
         catchError(err => {
+          console.error('getSpeciesApi ERROR:', err);
           this.error = err;
           return EMPTY;
         })
@@ -77,8 +81,6 @@ export class SpeciesGeneSelectorComponent implements OnInit, AfterViewInit {
   }
 
  chainChange() {
-  console.log('chainChange');
-
     this.isFetching = true;
     this.refbookService.getAscsInChainApi(this.selection.species, this.selection.chain)
       .pipe(
@@ -99,8 +101,6 @@ export class SpeciesGeneSelectorComponent implements OnInit, AfterViewInit {
   }
 
   ascChange() {
-    console.log('ascChange');
-
     this.selectionChange.emit(this.selection);
   }
 }

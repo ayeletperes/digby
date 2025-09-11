@@ -27,7 +27,7 @@
     "angular-plotly.js": "^6.0.0",
     "angular-resizable-element": "^7.0.2",
     "bootstrap": "^5.3.6",
-    "chart.js": "4.5",
+    "chart.js": "^4.5.0",
     "datatables.net": "^1.12.1",
     "datatables.net-dt": "^1.12.1",
     "datatables.net-select": "^1.4.0",

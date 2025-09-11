@@ -1,0 +1,559 @@
+{
+  "reports": {
+    "rep_single_genotype": {
+      "title": "Genotype Report",
+      "description": "Genotype report for single genotype sample",
+      "params": [],
+      "filter_params": false,
+      "scope": [],
+      "format": [
+        "pdf",
+        "html"
+      ]
+    },
+    "rep_single_haplotype": {
+      "title": "Haplotype Report",
+      "description": "Haplotype report for single sample using the specified haplotyping gene",
+      "params": [
+        {
+          "id": "haplo_gene",
+          "type": "textBox",
+          "label": "Haplotyping gene:"
+        }
+      ],
+      "filter_params": false,
+      "scope": [],
+      "format": [
+        "pdf",
+        "html"
+      ]
+    },
+    "sequence_search": {
+      "title": "Search for Sequence Matches",
+      "description": "Lists matches and near-matches to the specified sequence",
+      "thumbnail": "sequence_search.png",
+      "scope": [
+        "rep_sample",
+        "gen_sample"
+      ],
+      "params": [
+        {
+          "id": "sequence",
+          "type": "multiTextBox",
+          "label": "Sequence"
+        },
+        {
+          "id": "ambiguous_alleles",
+          "type": "select",
+          "label": "Ambiguous Alleles",
+          "options": [
+            "Exclude",
+            "Include"
+          ]
+        },
+        {
+          "id": "novel_alleles",
+          "type": "select",
+          "label": "Novel Alleles",
+          "options": [
+            "Include",
+            "Exclude"
+          ]
+        }
+      ],
+      "filter_params": true,
+      "format": [
+        "xls",
+        "html"
+      ]
+    },
+    "rep_genotype_heatmap": {
+      "title": "Genotype Heatmap",
+      "description": "Heatmap showing the inferred genotype derived from each selected sample. Selecting >150 samples may exhaust server memory in which case no report will be returned.",
+      "thumbnail": "genotype_heatmap.png",
+      "params": [
+        {
+          "id": "per_sample",
+          "type": "select",
+          "label": "Show graphs for",
+          "options": [
+            "Each sample",
+            "Individual (representative sample for each subject)"
+          ]
+        },
+        {
+          "id": "f_kdiff",
+          "type": "decimal",
+          "label": "Min allele score"
+        },
+        {
+          "id": "sort_order",
+          "type": "select",
+          "label": "Gene Sort Order",
+          "options": [
+            "Locus",
+            "Alphabetic"
+          ]
+        },
+        {
+          "id": "geno_hap",
+          "type": "select",
+          "label": "Show genomic alleles",
+          "options": [
+            "Fully and partially haplotyped",
+            "Only if fully haplotyped"
+          ]
+        }
+      ],
+      "filter_params": true,
+      "scope": [
+        "rep_sample",
+        "gen_sample"
+      ],
+      "format": [
+        "pdf",
+        "html"
+      ]
+    },
+    "rep_genotype": {
+      "title": "Genotype List",
+      "description": "Report of the inferred genotypes for up to 20 samples",
+      "thumbnail": "genotype_list.png",
+      "params": [
+        {
+          "id": "per_sample",
+          "type": "select",
+          "label": "Show graphs for:",
+          "options": [
+            "Each sample",
+            "Individual (representative sample for each subject)"
+          ]
+        },
+        {
+          "id": "sort_order",
+          "type": "select",
+          "label": "Gene Sort Order",
+          "options": [
+            "Locus",
+            "Alphabetic"
+          ]
+        },
+        {
+          "id": "geno_hap",
+          "type": "select",
+          "label": "Show genomic alleles",
+          "options": [
+            "Fully and partially haplotyped",
+            "Only if fully haplotyped"
+          ]
+        }
+      ],
+      "filter_params": true,
+      "scope": [
+        "rep_sample",
+        "gen_sample"
+      ],
+      "format": [
+        "pdf",
+        "html"
+      ],
+      "limits": {
+        "max_samples": 20
+      }
+    },
+    "haplo_heatmap": {
+      "title": "Haplotype Heatmap",
+      "description": "Heatmap showing the inferred haplotype derived from each selected sample. Only samples that can be haplotyped with the selected gene will be shown.",
+      "thumbnail": "haplo_heatmap.png",
+      "params": [
+        {
+          "id": "per_sample",
+          "type": "select",
+          "label": "Show graphs for",
+          "options": [
+            "Each sample",
+            "Individual (representative sample for each subject)"
+          ]
+        },
+        {
+          "id": "haplo_gene",
+          "type": "select",
+          "label": "Haplotyping Gene",
+          "options": []
+        },
+        {
+          "id": "f_kdiff",
+          "type": "decimal",
+          "label": "Min allele score"
+        },
+        {
+          "id": "sort_order",
+          "type": "select",
+          "label": "Gene Sort Order",
+          "options": [
+            "Locus",
+            "Alphabetic"
+          ]
+        }
+      ],
+      "filter_params": true,
+      "scope": [
+        "rep_sample"
+      ],
+      "format": [
+        "pdf"
+      ]
+    },
+    "allele_appearance": {
+      "title": "Allele Appearances",
+      "description": "Charts the frequency at which each allele appears (on either or both chromosomes) in the selected samples",
+      "thumbnail": "allele_appearance.png",
+      "params": [
+        {
+          "id": "ambiguous_alleles",
+          "type": "select",
+          "label": "Ambiguous Alleles",
+          "options": [
+            "Exclude",
+            "Include"
+          ]
+        },
+        {
+          "id": "novel_alleles",
+          "type": "select",
+          "label": "Novel Alleles",
+          "options": [
+            "Include",
+            "Exclude"
+          ]
+        },
+        {
+          "id": "sort_order",
+          "type": "select",
+          "label": "Gene Sort Order",
+          "options": [
+            "Locus",
+            "Alphabetic"
+          ]
+        }
+      ],
+      "filter_params": true,
+      "scope": [
+        "rep_sample",
+        "gen_sample"
+      ],
+      "format": [
+        "pdf",
+        "xls"
+      ]
+    },
+    "heterozygosity": {
+      "title": "Heterozygosity",
+      "description": "Charts the extent to which alleles of each gene are heterozygous in the selected samples",
+      "thumbnail": "heterozygosity.png",
+      "params": [
+        {
+          "id": "ambiguous_alleles",
+          "type": "select",
+          "label": "Ambiguous Alleles",
+          "options": [
+            "Exclude",
+            "Include"
+          ]
+        },
+        {
+          "id": "sort_order",
+          "type": "select",
+          "label": "Gene Sort Order",
+          "options": [
+            "Locus",
+            "Alphabetic"
+          ]
+        },
+        {
+          "id": "f_kdiff",
+          "type": "decimal",
+          "label": "Min allele score"
+        }
+      ],
+      "filter_params": true,
+      "scope": [
+        "rep_sample"
+      ],
+      "format": [
+        "html"
+      ]
+    },
+    "allele_usage": {
+      "title": "Allele Usage",
+      "description": "Charts the number of alleles of each gene that appear in the selected samples",
+      "thumbnail": "allele_usage.png",
+      "params": [
+        {
+          "id": "ambiguous_alleles",
+          "type": "select",
+          "label": "Ambiguous Alleles",
+          "options": [
+            "Exclude",
+            "Include"
+          ]
+        },
+        {
+          "id": "novel_alleles",
+          "type": "select",
+          "label": "Novel Alleles",
+          "options": [
+            "Include",
+            "Exclude"
+          ]
+        },
+        {
+          "id": "sort_order",
+          "type": "select",
+          "label": "Gene Sort Order",
+          "options": [
+            "Locus",
+            "Alphabetic"
+          ]
+        },
+        {
+          "id": "f_kdiff",
+          "type": "decimal",
+          "label": "Min allele score"
+        }
+      ],
+      "filter_params": true,
+      "scope": [
+        "rep_sample",
+        "gen_sample"
+      ],
+      "format": [
+        "html"
+      ]
+    },
+    "gene_frequencies": {
+      "title": "Gene Frequencies",
+      "description": "Plots the expression frequency of genes in selected samples",
+      "thumbnail": "gene_frequencies.png",
+      "params": [
+        {
+          "id": "single_sample",
+          "type": "select",
+          "label": "Samples Per Subject",
+          "options": [
+            "All Available",
+            "One Selected Sample"
+          ]
+        },
+        {
+          "id": "calculate_by",
+          "type": "select",
+          "label": "Calculate Frequencies By",
+          "options": [
+            "Number of Clones",
+            "Number of Sequences"
+          ]
+        },
+        {
+          "id": "sort_order",
+          "type": "select",
+          "label": "Gene Sort Order",
+          "options": [
+            "Locus",
+            "Alphabetic"
+          ]
+        }
+      ],
+      "filter_params": true,
+      "scope": [
+        "rep_sample"
+      ],
+      "format": [
+        "pdf"
+      ]
+    },
+    "download_rep_data": {
+      "title": "Download Data",
+      "description": "Download currently selected sequences ",
+      "thumbnail": "",
+      "params": [
+        {
+          "id": "type",
+          "type": "select",
+          "label": "Download",
+          "options": [
+            "Sample info (CSV)",
+            "Sample files (ZIP)",
+            "Gapped sequences (FASTA)",
+            "Ungapped sequences (FASTA)"
+          ]
+        }
+      ],
+      "scope": [],
+      "format": [
+        "file"
+      ]
+    },
+    "download_gen_data": {
+      "title": "Download Data",
+      "description": "Download currently selected sequences ",
+      "thumbnail": "",
+      "params": [
+        {
+          "id": "type",
+          "type": "select",
+          "label": "Download",
+          "options": [
+            "Sample info (CSV)",
+            "Sample files (ZIP)",
+            "Gapped sequences (FASTA)",
+            "Ungapped sequences (FASTA)"
+          ]
+        }
+      ],
+      "scope": [],
+      "format": [
+        "file"
+      ]
+    },
+    "allele_support": {
+      "title": "Allele Support",
+      "description": "Lists the number of samples in which each allele is found",
+      "thumbnail": "allele_support.png",
+      "scope": [
+        "rep_sample",
+        "gen_sample"
+      ],
+      "params": [
+        {
+          "id": "ambiguous_alleles",
+          "type": "select",
+          "label": "Ambiguous Alleles",
+          "options": [
+            "Exclude",
+            "Include"
+          ]
+        },
+        {
+          "id": "novel_alleles",
+          "type": "select",
+          "label": "Novel Alleles",
+          "options": [
+            "Include",
+            "Exclude"
+          ]
+        },
+        {
+          "id": "sort_order",
+          "type": "select",
+          "label": "Gene Sort Order",
+          "options": [
+            "Locus",
+            "Alphabetic"
+          ]
+        },
+        {
+          "id": "f_kdiff",
+          "type": "decimal",
+          "label": "Min allele score"
+        }
+      ],
+      "filter_params": true,
+      "format": [
+        "xls"
+      ]
+    },
+    "novel_haplotypes": {
+      "title": "Halotypes for novel allele inferences",
+      "description": "Itemises for each novel inference the samples that provide haplotyping evidence",
+      "thumbnail": "allele_support.png",
+      "scope": [
+        "rep_sample"
+      ],
+      "params": [
+        {
+          "id": "ambiguous_alleles",
+          "type": "select",
+          "label": "Ambiguous Alleles",
+          "options": [
+            "Exclude",
+            "Include"
+          ]
+        },
+        {
+          "id": "sort_order",
+          "type": "select",
+          "label": "Gene Sort Order",
+          "options": [
+            "Locus",
+            "Alphabetic"
+          ]
+        },
+        {
+          "id": "f_kdiff",
+          "type": "decimal",
+          "label": "Min allele score"
+        },
+        {
+          "id": "read_length",
+          "type": "select",
+          "label": "",
+          "options": [
+            "Only include inferences from full-length reads",
+            "Include inferences from full-length and short reads"
+          ]
+        }
+      ],
+      "filter_params": true,
+      "format": [
+        "xls"
+      ]
+    },
+    "novel_samples": {
+      "title": "Sample support for novel allele inferences",
+      "description": "Itemises for each AIRR-seq novel inference the samples that support them, with associated read counts",
+      "thumbnail": "allele_support.png",
+      "scope": [
+        "rep_sample"
+      ],
+      "params": [
+        {
+          "id": "ambiguous_alleles",
+          "type": "select",
+          "label": "Ambiguous Alleles",
+          "options": [
+            "Exclude",
+            "Include"
+          ]
+        },
+        {
+          "id": "sort_order",
+          "type": "select",
+          "label": "Gene Sort Order",
+          "options": [
+            "Locus",
+            "Alphabetic"
+          ]
+        },
+        {
+          "id": "f_kdiff",
+          "type": "decimal",
+          "label": "Min allele score"
+        },
+        {
+          "id": "read_length",
+          "type": "select",
+          "label": "",
+          "options": [
+            "Only include inferences from full-length reads",
+            "Include inferences from full-length and short reads"
+          ]
+        }
+      ],
+      "filter_params": true,
+      "format": [
+        "xls"
+      ]
+    }
+  }
+}

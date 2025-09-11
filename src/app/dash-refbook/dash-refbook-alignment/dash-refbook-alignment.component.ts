@@ -121,7 +121,6 @@ export class DashRefbookAlignmentComponent implements OnInit, OnChanges {
    */
   alignmentChart(data) {
 
-    console.log(data);
     const reshaped = this.reshapeData(data);
     const alleles  = data.map(r => r.name);
     const seqLen   = (data[0].seq_gapped || data[0].seq).length;
@@ -207,6 +206,5 @@ export class DashRefbookAlignmentComponent implements OnInit, OnChanges {
   }
 
   plot_update() {
-    console.log('plot_update');
   }
 }

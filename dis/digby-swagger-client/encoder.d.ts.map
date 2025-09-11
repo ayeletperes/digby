@@ -1,0 +1,1 @@
+{"version":3,"file":"encoder.d.ts","sourceRoot":"","sources":["../../projects/digby-swagger-client/encoder.ts"],"names":[],"mappings":"AAAI,OAAO,EAAE,oBAAoB,EAAE,MAAM,sBAAsB,CAAC;AAEhE;;;;EAIE;AACF,qBAAa,0BAA2B,SAAQ,oBAAoB;IACvD,SAAS,CAAC,CAAC,EAAE,MAAM,GAAG,MAAM;IAI5B,WAAW,CAAC,CAAC,EAAE,MAAM,GAAG,MAAM;CAI1C"}
