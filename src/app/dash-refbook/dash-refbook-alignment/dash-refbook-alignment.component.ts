@@ -45,9 +45,9 @@ export class DashRefbookAlignmentComponent implements OnInit, OnChanges {
             [1,   'rgba(255,255,255,0.8)']   // gap
           ],
           showscale: false,
-          hoverinfo: 'none',
           zmin: 0,
           zmax: 5,
+          hovertemplate: 'Position: %{x}<br>Allele: %{y}<br>Nucleotide: %{text}<extra></extra>',
           texttemplate: '%{text}',
           textfont: { color: '#212121' },
           xgap: 1,
@@ -163,13 +163,13 @@ export class DashRefbookAlignmentComponent implements OnInit, OnChanges {
         [1,   'rgba(255,255,255,0.8)']   // gap
       ],
       showscale: false,
-      hoverinfo: 'none',
       zmin: 0,
       zmax: 5,
       texttemplate: '%{text}',
       textfont: { color: '#212121' },
       xgap: 1,
-      ygap: 1
+      ygap: 1,
+      hovertemplate: 'Position: %{x}<br>Allele: %{y}<br>Nucleotide: %{text}<extra></extra>'
     };
     //this.graph.layout = {title: 'A Fancy Plot'}
     this.graph.data = [
@@ -188,9 +188,9 @@ export class DashRefbookAlignmentComponent implements OnInit, OnChanges {
           [1,   'rgba(255,255,255,0.8)']   // gap
         ],
         showscale: false,
-        hoverinfo: 'none',
         zmin: 0,
         zmax: 5,
+        hovertemplate: 'Position: %{x}<br>Allele: %{y}<br>Nucleotide: %{text}<extra></extra>',
         texttemplate: '%{text}',
         textfont: { color: '#212121' },
         xgap: 1,

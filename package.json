@@ -23,6 +23,7 @@
     "@angular/router": "~19.2.14",
     "@ng-bootstrap/ng-bootstrap": "^18.0.0",
     "@popperjs/core": "^2.11.8",
+    "@upsetjs/bundle": "^1.11.0",
     "angular-google-charts": "^16.0.2",
     "angular-plotly.js": "^6.0.0",
     "angular-resizable-element": "^7.0.2",

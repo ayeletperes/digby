@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
-  "dest": "../../dist/digby-swagger-client",
+  "dest": "../../dis/digby-swagger-client",
   "lib": {
     "entryFile": "index.ts"
   }

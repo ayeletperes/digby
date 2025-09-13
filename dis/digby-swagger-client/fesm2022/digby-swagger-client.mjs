@@ -479,6 +479,227 @@ class GenomicService {
  * Do not edit the class manually.
  */
 /* tslint:disable:no-unused-variable member-ordering */
+class RefbookService {
+    constructor(httpClient, basePath, configuration) {
+        this.httpClient = httpClient;
+        this.basePath = 'https://localhost/api';
+        this.defaultHeaders = new HttpHeaders();
+        this.configuration = new Configuration();
+        if (basePath) {
+            this.basePath = basePath;
+        }
+        if (configuration) {
+            this.configuration = configuration;
+            this.basePath = basePath || configuration.basePath || this.basePath;
+        }
+    }
+    /**
+     * @param consumes string[] mime-types
+     * @return true: consumes contains 'multipart/form-data', false: otherwise
+     */
+    canConsumeForm(consumes) {
+        const form = 'multipart/form-data';
+        for (const consume of consumes) {
+            if (form === consume) {
+                return true;
+            }
+        }
+        return false;
+    }
+    getAscSeqs(species, chain, asc, observe = 'body', reportProgress = false) {
+        if (species === null || species === undefined) {
+            throw new Error('Required parameter species was null or undefined when calling getAscSeqs.');
+        }
+        if (chain === null || chain === undefined) {
+            throw new Error('Required parameter chain was null or undefined when calling getAscSeqs.');
+        }
+        if (asc === null || asc === undefined) {
+            throw new Error('Required parameter asc was null or undefined when calling getAscSeqs.');
+        }
+        let headers = this.defaultHeaders;
+        // to determine the Accept header
+        let httpHeaderAccepts = [
+            'application/json'
+        ];
+        const httpHeaderAcceptSelected = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+        // to determine the Content-Type header
+        const consumes = [
+            'application/json'
+        ];
+        return this.httpClient.get(`${this.basePath}/refbook/asc_seqs/${encodeURIComponent(String(species))}/${encodeURIComponent(String(chain))}/${encodeURIComponent(String(asc))}`, {
+            withCredentials: this.configuration.withCredentials,
+            headers: headers,
+            observe: observe,
+            reportProgress: reportProgress
+        });
+    }
+    getAscUsage(species, chain, asc, observe = 'body', reportProgress = false) {
+        if (species === null || species === undefined) {
+            throw new Error('Required parameter species was null or undefined when calling getAscUsage.');
+        }
+        if (chain === null || chain === undefined) {
+            throw new Error('Required parameter chain was null or undefined when calling getAscUsage.');
+        }
+        if (asc === null || asc === undefined) {
+            throw new Error('Required parameter asc was null or undefined when calling getAscUsage.');
+        }
+        let headers = this.defaultHeaders;
+        // to determine the Accept header
+        let httpHeaderAccepts = [
+            'application/json'
+        ];
+        const httpHeaderAcceptSelected = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+        // to determine the Content-Type header
+        const consumes = [
+            'application/json'
+        ];
+        return this.httpClient.get(`${this.basePath}/refbook/asc_usage/${encodeURIComponent(String(species))}/${encodeURIComponent(String(chain))}/${encodeURIComponent(String(asc))}`, {
+            withCredentials: this.configuration.withCredentials,
+            headers: headers,
+            observe: observe,
+            reportProgress: reportProgress
+        });
+    }
+    getAscZygosity(species, chain, asc, observe = 'body', reportProgress = false) {
+        if (species === null || species === undefined) {
+            throw new Error('Required parameter species was null or undefined when calling getAscZygosity.');
+        }
+        if (chain === null || chain === undefined) {
+            throw new Error('Required parameter chain was null or undefined when calling getAscZygosity.');
+        }
+        if (asc === null || asc === undefined) {
+            throw new Error('Required parameter asc was null or undefined when calling getAscZygosity.');
+        }
+        let headers = this.defaultHeaders;
+        // to determine the Accept header
+        let httpHeaderAccepts = [
+            'application/json'
+        ];
+        const httpHeaderAcceptSelected = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+        // to determine the Content-Type header
+        const consumes = [
+            'application/json'
+        ];
+        return this.httpClient.get(`${this.basePath}/refbook/asc_zygousity/${encodeURIComponent(String(species))}/${encodeURIComponent(String(chain))}/${encodeURIComponent(String(asc))}`, {
+            withCredentials: this.configuration.withCredentials,
+            headers: headers,
+            observe: observe,
+            reportProgress: reportProgress
+        });
+    }
+    getAscsInChainApi(species, chain, observe = 'body', reportProgress = false) {
+        if (species === null || species === undefined) {
+            throw new Error('Required parameter species was null or undefined when calling getAscsInChainApi.');
+        }
+        if (chain === null || chain === undefined) {
+            throw new Error('Required parameter chain was null or undefined when calling getAscsInChainApi.');
+        }
+        let headers = this.defaultHeaders;
+        // to determine the Accept header
+        let httpHeaderAccepts = [
+            'application/json'
+        ];
+        const httpHeaderAcceptSelected = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+        // to determine the Content-Type header
+        const consumes = [
+            'application/json'
+        ];
+        return this.httpClient.get(`${this.basePath}/refbook/ascs_in_chain/${encodeURIComponent(String(species))}/${encodeURIComponent(String(chain))}`, {
+            withCredentials: this.configuration.withCredentials,
+            headers: headers,
+            observe: observe,
+            reportProgress: reportProgress
+        });
+    }
+    getAscsOverview(species, chain, asc, observe = 'body', reportProgress = false) {
+        if (species === null || species === undefined) {
+            throw new Error('Required parameter species was null or undefined when calling getAscsOverview.');
+        }
+        if (chain === null || chain === undefined) {
+            throw new Error('Required parameter chain was null or undefined when calling getAscsOverview.');
+        }
+        if (asc === null || asc === undefined) {
+            throw new Error('Required parameter asc was null or undefined when calling getAscsOverview.');
+        }
+        let headers = this.defaultHeaders;
+        // to determine the Accept header
+        let httpHeaderAccepts = [
+            'application/json'
+        ];
+        const httpHeaderAcceptSelected = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+        // to determine the Content-Type header
+        const consumes = [
+            'application/json'
+        ];
+        return this.httpClient.get(`${this.basePath}/refbook/ascs_overview/${encodeURIComponent(String(species))}/${encodeURIComponent(String(chain))}/${encodeURIComponent(String(asc))}`, {
+            withCredentials: this.configuration.withCredentials,
+            headers: headers,
+            observe: observe,
+            reportProgress: reportProgress
+        });
+    }
+    getSpeciesApi(observe = 'body', reportProgress = false) {
+        let headers = this.defaultHeaders;
+        // to determine the Accept header
+        let httpHeaderAccepts = [
+            'application/json'
+        ];
+        const httpHeaderAcceptSelected = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+        // to determine the Content-Type header
+        const consumes = [
+            'application/json'
+        ];
+        return this.httpClient.get(`${this.basePath}/refbook/species_and_chains`, {
+            withCredentials: this.configuration.withCredentials,
+            headers: headers,
+            observe: observe,
+            reportProgress: reportProgress
+        });
+    }
+    static { this.ɵfac = function RefbookService_Factory(__ngFactoryType__) { return new (__ngFactoryType__ || RefbookService)(i0.ɵɵinject(i1.HttpClient), i0.ɵɵinject(BASE_PATH, 8), i0.ɵɵinject(Configuration, 8)); }; }
+    static { this.ɵprov = /*@__PURE__*/ i0.ɵɵdefineInjectable({ token: RefbookService, factory: RefbookService.ɵfac }); }
+}
+(() => { (typeof ngDevMode === "undefined" || ngDevMode) && i0.ɵsetClassMetadata(RefbookService, [{
+        type: Injectable
+    }], () => [{ type: i1.HttpClient }, { type: undefined, decorators: [{
+                type: Optional
+            }, {
+                type: Inject,
+                args: [BASE_PATH]
+            }] }, { type: Configuration, decorators: [{
+                type: Optional
+            }] }], null); })();
+
+/**
+ * DIgServer API
+ * API for Ig Receptor gene data
+ *
+ * OpenAPI spec version: 1.0
+ *
+ *
+ * NOTE: This class is auto generated by the swagger code generator program.
+ * https://github.com/swagger-api/swagger-codegen.git
+ * Do not edit the class manually.
+ */
+/* tslint:disable:no-unused-variable member-ordering */
 class ReportsService {
     constructor(httpClient, basePath, configuration) {
         this.httpClient = httpClient;
@@ -758,6 +979,36 @@ class RepseqService {
             'application/json'
         ];
         return this.httpClient.get(`${this.basePath}/repseq/dataset_info/${encodeURIComponent(String(species))}/${encodeURIComponent(String(dataset))}`, {
+            withCredentials: this.configuration.withCredentials,
+            headers: headers,
+            observe: observe,
+            reportProgress: reportProgress
+        });
+    }
+    getDownloadStudyScript(species, studyId, dataset, observe = 'body', reportProgress = false) {
+        if (species === null || species === undefined) {
+            throw new Error('Required parameter species was null or undefined when calling getDownloadStudyScript.');
+        }
+        if (studyId === null || studyId === undefined) {
+            throw new Error('Required parameter studyId was null or undefined when calling getDownloadStudyScript.');
+        }
+        if (dataset === null || dataset === undefined) {
+            throw new Error('Required parameter dataset was null or undefined when calling getDownloadStudyScript.');
+        }
+        let headers = this.defaultHeaders;
+        // to determine the Accept header
+        let httpHeaderAccepts = [
+            'application/json'
+        ];
+        const httpHeaderAcceptSelected = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+        // to determine the Content-Type header
+        const consumes = [
+            'application/json'
+        ];
+        return this.httpClient.get(`${this.basePath}/repseq/download_study_script/${encodeURIComponent(String(species))}/${encodeURIComponent(String(studyId))}/${encodeURIComponent(String(dataset))}`, {
             withCredentials: this.configuration.withCredentials,
             headers: headers,
             observe: observe,
@@ -1114,7 +1365,7 @@ class SystemService {
                 type: Optional
             }] }], null); })();
 
-const APIS = [GenomicService, ReportsService, RepseqService, SystemService];
+const APIS = [GenomicService, RefbookService, ReportsService, RepseqService, SystemService];
 
 class ApiModule {
     static forRoot(configurationFactory) {
@@ -1136,6 +1387,7 @@ class ApiModule {
     static { this.ɵmod = /*@__PURE__*/ i0.ɵɵdefineNgModule({ type: ApiModule }); }
     static { this.ɵinj = /*@__PURE__*/ i0.ɵɵdefineInjector({ providers: [
             GenomicService,
+            RefbookService,
             ReportsService,
             RepseqService,
             SystemService
@@ -1149,6 +1401,7 @@ class ApiModule {
                 exports: [],
                 providers: [
                     GenomicService,
+                    RefbookService,
                     ReportsService,
                     RepseqService,
                     SystemService
@@ -1166,5 +1419,5 @@ class ApiModule {
  * Generated bundle index. Do not edit.
  */
 
-export { APIS, ApiModule, BASE_PATH, COLLECTION_FORMATS, Configuration, GenomicService, ReportsService, RepseqService, SystemService };
+export { APIS, ApiModule, BASE_PATH, COLLECTION_FORMATS, Configuration, GenomicService, RefbookService, ReportsService, RepseqService, SystemService };
 //# sourceMappingURL=digby-swagger-client.mjs.map

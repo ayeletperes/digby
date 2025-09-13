@@ -1,6 +1,6 @@
 import {AfterViewInit, Component, Injectable, Output, OnInit, ViewEncapsulation, EventEmitter } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { GenomicService } from '../../../../dist/digby-swagger-client';
+import { GenomicService } from '../../../../projects/digby-swagger-client/api/genomic.service';
 import { RefbookService } from '../../../../projects/digby-swagger-client/api/refbook.service';
 import { retryWithBackoff } from '../../shared/retry_with_backoff';
 import {catchError, debounceTime} from 'rxjs/operators';

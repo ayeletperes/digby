@@ -5,6 +5,7 @@ import { SpeciesGeneSelectorComponent } from './species-gene-selector/species-ge
 import { DashRefbookOverviewComponent } from './dash-refbook-overview/dash-refbook-overview.component';
 import { DashRefbookAlignmentComponent } from './dash-refbook-alignment/dash-refbook-alignment.component';
 import { DashRefbookUsageComponent } from './dsah-refbook-usage/dash-refbook-usage.component';
+import { DashRefbookZygosityComponent } from './dash-book-zygosity/dash-refbook-zygosity.component';
 import { RefbookService } from '../../../projects/digby-swagger-client/api/refbook.service';
 
 @Component({
@@ -17,7 +18,8 @@ import { RefbookService } from '../../../projects/digby-swagger-client/api/refbo
     SpeciesGeneSelectorComponent,
     DashRefbookOverviewComponent,
     DashRefbookAlignmentComponent,
-    DashRefbookUsageComponent
+    DashRefbookUsageComponent,
+    DashRefbookZygosityComponent
   ],
   providers: [
     {
@@ -36,7 +38,7 @@ export class DashRefbookComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    
+
   }
 
   ascChange(selection: SpeciesGeneSelection) {

@@ -83,12 +83,13 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
       type: 'box',
       name: a.name,
       y: a.usage,                 // array of fractions for this allele across samples
+      customdata: a.samples,      // array of sample names corresponding to each fraction
       boxpoints: 'all',           // show points
       jitter: 0.35,               // spread points horizontally
-      pointpos: -1.5,                // center points on the box
+      pointpos: -1.5,             // center points on the box
       marker: { size: 6, opacity: 0.6 },
       line: { width: 1 },
-      hovertemplate: '%{y:.3f}<extra>' + a.name + '</extra>'
+      hovertemplate: 'Sample: %{customdata}<br>Fraction: %{y:.3f}<extra>' + a.name + '</extra>'
     }));
 
     this.plotData = traces;
