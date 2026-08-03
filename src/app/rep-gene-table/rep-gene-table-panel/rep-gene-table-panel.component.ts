@@ -138,11 +138,15 @@ export class RepGeneTablePanelComponent
         .pipe(debounceTime(500))
         .subscribe((sel: GeneTableSelection) => {
           if (sel.species && sel.repSeqs) {
-            this.selection = sel;
-            this.paginator.firstPage();
-            // this.table.renderRows();
-            this.loadSequencesSubject.next(null);
-            this.setSelectionFromParams();
+            // If we have URL params and haven't processed them yet, prioritize them
+            if (typeof this.params.species !== "undefined" && this.paramState === "pre selection") {
+              this.selection = sel;
+              this.setSelectionFromParams();
+            } else {
+              this.selection = sel;
+              this.paginator.firstPage();
+              this.loadSequencesSubject.next(null);
+            }
           }
         });
 
@@ -223,27 +227,14 @@ export class RepGeneTablePanelComponent
   }
 
   setSelectionFromParams() {
-    if (this.selection) {
-      setTimeout(() => {
-        if (typeof this.params.species !== "undefined") {
-          if (this.paramState == "pre selection") {
-            this.paramState = "post selection";
-            this.geneTableService.selection.next({
-              species: this.params.species,
-              datasets: this.selection.datasets,
-              genDatasetDescriptions: this.selection.genDatasetDescriptions,
-              assemblies: this.selection.assemblies,
-              repSeqs: [this.params.dataset],
-              repDatasetDescriptions: this.selection.repDatasetDescriptions,
-              commonDatasets: this.selection.commonDatasets
-            });
-            setTimeout(() => {
-              this.searchBox.nativeElement.value = this.params.alleleName;
-              this.quickSearch(this.params.alleleName);
-            }, 2000);
-          }
-        }
-      }, 500);
+    if (typeof this.params.species !== "undefined") {
+      if (this.paramState == "pre selection") {
+        this.paramState = "post selection";
+        setTimeout(() => {
+          this.searchBox.nativeElement.value = this.params.alleleName;
+          this.quickSearch(this.params.alleleName);
+        }, 2000);
+      }
     }
   }
 

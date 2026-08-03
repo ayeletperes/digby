@@ -8,6 +8,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { IDropdownSettings, NgMultiSelectDropDownModule } from 'ng-multiselect-dropdown';
 import {GeneTableSelection} from './gene-table-selector.model';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 
 @Component({
@@ -43,6 +44,20 @@ export class GeneTableSelectorComponent implements OnInit, AfterViewInit {
   initializing = false;
   error = null;
   geneTableServiceSubscription = null;
+<<<<<<< HEAD
+=======
+  params = null;
+
+  genDropdownSettings: IDropdownSettings = {
+    singleSelection: false,
+    idField: 'id',
+    textField: 'text',
+    selectAllText: 'Select All',
+    unSelectAllText: 'UnSelect All',
+    itemsShowLimit: 3,
+    allowSearchFilter: true
+  };
+>>>>>>> master
 
   genAssemblyDropdownSettings: IDropdownSettings = {
     singleSelection: true,
@@ -57,7 +72,26 @@ export class GeneTableSelectorComponent implements OnInit, AfterViewInit {
 
   constructor(private genomicService: GenomicService,
               private repseqService: RepseqService,
-              private geneTableService: GeneTableSelectorService) { }
+              private geneTableService: GeneTableSelectorService,
+              private route: ActivatedRoute
+            ) {
+    this.route.params.subscribe((params) => {
+      this.params = params;
+
+      // If we have URL params, override the default BehaviorSubject value immediately
+      if (params.species && params.dataset) {
+        console.log("GeneTableSelectorComponent: Route params detected", params.species, params.dataset);
+        this.geneTableService.selection.next({
+          species: params.species,
+          datasets: [],
+          genDatasetDescriptions: [],
+          assemblies: [],
+          repSeqs: [params.dataset],
+          repDatasetDescriptions: [],
+        });
+      }
+    });
+  }
 
   ngOnInit() {
     this.isFetching = true;
@@ -120,26 +154,24 @@ export class GeneTableSelectorComponent implements OnInit, AfterViewInit {
           return EMPTY;
         })
       )
-      .subscribe({next: (resp) => {
-        this.isFetching = false;
-        let id = 1;
-        this.species = [];
-        for (const sp of resp) {
-          const sel = {id, name: sp};
-          this.species.push(sel);
-          if (sp === selection.species) {
-            this.selectedSpecies = sel;
-          }
-          id = id + 1;
+      .subscribe((resp) => {
+      this.isFetching = false;
+      let id = 1;
+      this.species = [];
+      for (const sp of resp) {
+        const sel = {id, name: sp};
+        this.species.push(sel);
+        if (sp.toLowerCase() === selection.species.toLowerCase()) {
+          this.selectedSpecies = sel;
         }
 
-        this.updateGen(selection.datasets);
-        this.updateRep(selection.repSeqs);
-      },
-      error: (error) => {
-        this.isFetching = false;
-        this.error = error.message;
-      }
+      console.log("in updateSpecies: Selected species:", this.selectedSpecies);
+
+      this.updateGen(selection.datasets);
+      this.updateRep(selection.repSeqs);
+    }, error => {
+      this.isFetching = false;
+      this.error = error.message;
     });
   }
 
@@ -376,10 +408,12 @@ export class GeneTableSelectorComponent implements OnInit, AfterViewInit {
   onSelectionChange() {
     // if the species has changed, don't notify an update until we have updates to the other selections
     if (this.notifiedUpdates.species) {
-      if (!this.notifiedUpdates.repSeq || !this.notifiedUpdates.refSeq  || !this.notifiedUpdates.assemblies) {
+      if ((!this.notifiedUpdates.repSeq) || (!this.notifiedUpdates.refSeq)  || (!this.notifiedUpdates.assemblies)) {
         return;
       }
     }
+
+    console.log("onSelectionChange", this.selectedSpecies);
 
     if (this.selectedSpecies) {
       this.notifiedUpdates = { species: false, refSeq: false, repSeq: false, assemblies: false, common: false };
