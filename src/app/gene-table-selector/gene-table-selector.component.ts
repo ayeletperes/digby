@@ -44,8 +44,6 @@ export class GeneTableSelectorComponent implements OnInit, AfterViewInit {
   initializing = false;
   error = null;
   geneTableServiceSubscription = null;
-<<<<<<< HEAD
-=======
   params = null;
 
   genDropdownSettings: IDropdownSettings = {
@@ -57,7 +55,6 @@ export class GeneTableSelectorComponent implements OnInit, AfterViewInit {
     itemsShowLimit: 3,
     allowSearchFilter: true
   };
->>>>>>> master
 
   genAssemblyDropdownSettings: IDropdownSettings = {
     singleSelection: true,
@@ -88,6 +85,7 @@ export class GeneTableSelectorComponent implements OnInit, AfterViewInit {
           assemblies: [],
           repSeqs: [params.dataset],
           repDatasetDescriptions: [],
+          commonDatasets:[]
         });
       }
     });
@@ -164,6 +162,8 @@ export class GeneTableSelectorComponent implements OnInit, AfterViewInit {
         if (sp.toLowerCase() === selection.species.toLowerCase()) {
           this.selectedSpecies = sel;
         }
+        id = id + 1;
+      }
 
       console.log("in updateSpecies: Selected species:", this.selectedSpecies);
 
