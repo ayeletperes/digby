@@ -1,1 +1,44 @@
-<plotly-plot [data]="graph.data" [layout]="graph.layout" (update)="plot_update()"></plotly-plot>
+<div class="alignment-panel">
+  <div class="alignment-toolbar">
+    <span class="alignment-caption">
+      Differences from the first allele. <code>---</code> matches the reference,
+      lower case marks a substitution, <code>...</code> is an IMGT gap.
+    </span>
+
+    <div class="alignment-controls">
+      <label for="codonWrap">Codons per line</label>
+      <select id="codonWrap" [(ngModel)]="codonWrap" (ngModelChange)="onWrapChange()">
+        @for (option of wrapOptions; track option) {
+          <option [ngValue]="option">{{ option }}</option>
+        }
+      </select>
+      <button type="button" (click)="copyToClipboard()" [disabled]="!alignment">Copy</button>
+      <button type="button" (click)="download()" [disabled]="!alignment">Download</button>
+    </div>
+  </div>
+
+  @if (isFetching) {
+    <div class="alignment-status">Building alignment…</div>
+  } @else if (error) {
+    <div class="alignment-status alignment-error">{{ error }}</div>
+  } @else if (!alignment) {
+    <div class="alignment-status">Select an ASC to see its alignment.</div>
+  } @else {
+    @if (legend.length) {
+      <div class="alignment-legend">
+        <button type="button" class="legend-toggle" (click)="showLegend = !showLegend">
+          {{ showLegend ? '▾' : '▸' }}
+          {{ legend.length }} name{{ legend.length === 1 ? '' : 's' }} shortened
+        </button>
+        @if (showLegend) {
+          <table>
+            @for (entry of legend; track entry.label) {
+              <tr><td class="legend-label">{{ entry.label }}</td><td>{{ entry.name }}</td></tr>
+            }
+          </table>
+        }
+      </div>
+    }
+    <pre class="alignment-text">{{ alignment }}</pre>
+  }
+</div>
