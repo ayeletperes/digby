@@ -13,13 +13,13 @@
 }
 
 @if (overviewData) {
-  <h2 class="title">Overview</h2>
   <div class="row">
     <div class="col-12">
       <div class="card">
         <div class="card-body">
           <h4>Allele Overview</h4>
-          <p>Number of alleles in the selected species and gene.</p>
+          <app-scope-note [selection]="selection"></app-scope-note>
+          <p>Number of {{ scopeDescription }}</p>
         </div>
       </div>
     </div>
@@ -56,6 +56,7 @@
           [data]="chartData"
           [options]="chartOptions"
           [type]="chartType"
+          (chartClick)="onChartClick($event)"
         >
         </canvas>
       </div>

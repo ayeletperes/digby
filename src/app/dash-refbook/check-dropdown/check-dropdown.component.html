@@ -1,0 +1,45 @@
+<div class="input-group check-dropdown">
+  <label class="input-group-text">{{ label }}</label>
+
+  <button type="button" class="btn btn-outline-secondary summary-button"
+          [disabled]="disabled || !options.length"
+          [attr.aria-expanded]="open"
+          (click)="open = !open">
+    {{ summary }}
+    <span class="caret">{{ open ? '▾' : '▸' }}</span>
+  </button>
+
+  @if (open && !disabled) {
+    <div class="check-panel">
+      <div class="panel-head">
+        <span>{{ selected.length ? selected.length + ' of ' + options.length : allLabel }}</span>
+        <span class="panel-actions">
+          <button type="button" class="link-button" [disabled]="allSelected"
+                  (click)="selectAll()">Select all</button>
+          <button type="button" class="link-button" [disabled]="!selected.length"
+                  (click)="clear()">Clear</button>
+        </span>
+      </div>
+      <div class="panel-list">
+        @for (group of groups; track group.name) {
+          @if (isGrouped && group.name) {
+            <button type="button" class="group-head" (click)="selectGroup(group)"
+                    [title]="'Select or clear every ' + group.name + ' entry'">
+              <span class="box" [class.all]="groupState(group) === 'all'"
+                                [class.some]="groupState(group) === 'some'"></span>
+              {{ group.name }}
+              <span class="detail">{{ group.options.length }}</span>
+            </button>
+          }
+          @for (option of group.options; track option.value) {
+            <label class="check-row" [class.indented]="isGrouped && group.name">
+              <input type="checkbox" [checked]="isOn(option.value)" (change)="toggle(option.value)">
+              <span class="name">{{ option.label }}</span>
+              @if (option.detail !== undefined) { <span class="detail">{{ option.detail }}</span> }
+            </label>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>

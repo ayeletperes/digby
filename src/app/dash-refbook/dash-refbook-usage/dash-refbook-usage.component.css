@@ -1,0 +1,10 @@
+
+/* Long VDJbase novel-allele names are shortened on the axis; this maps them back. */
+.usage-legend { font-size: 0.8rem; margin-bottom: 0.25rem; }
+.legend-toggle { background: none; border: 0; padding: 0; color: #1a73e8; font-size: 0.8rem; cursor: pointer; }
+.usage-legend table { margin-top: 0.3rem; border-collapse: collapse; }
+.usage-legend td { padding: 0.12rem 0.75rem 0.12rem 0; vertical-align: top; }
+.legend-short { font-family: 'Roboto Mono', Menlo, Consolas, monospace; white-space: nowrap; }
+.usage-legend td:last-child { color: #5f6368; word-break: break-all; }
+
+.usage-status { margin: 1rem 0; font-size: 0.9rem; color: #5f6368; }

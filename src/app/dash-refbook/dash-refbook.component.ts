@@ -1,163 +1,637 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { MatTabsModule, MatTabChangeEvent } from '@angular/material/tabs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SpeciesGeneSelection } from '../shared/models/species-gene-selection.model';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { EMPTY, Subject, Subscription } from 'rxjs';
+import { catchError, debounceTime, takeUntil } from 'rxjs/operators';
+
+import {
+  DataSource, DATA_SOURCES, DATA_SOURCE_LABELS,
+  SourceAvailability, SpeciesGeneSelection, sourcesParam,
+} from '../shared/models/species-gene-selection.model';
+import { DASH_PANELS, DashPanel, PANEL_GROUPS, panelBlockedReason } from './dash-panels';
+import { segmentLabel, segmentOf, segmentsIn } from '../shared/models/gene-naming';
+import { CheckDropdownComponent, CheckOption } from './check-dropdown/check-dropdown.component';
+import { GenePickerComponent } from './gene-picker/gene-picker.component';
 import { GeneTableSelectorComponent } from '../gene-table-selector/gene-table-selector.component';
 import { GeneTableSelectorService } from '../gene-table-selector/gene-table-selector.service';
 import { GeneTableSelection } from '../gene-table-selector/gene-table-selector.model';
-import { DashRefbookOverviewComponent } from './dash-refbook-overview/dash-refbook-overview.component';
-import { DashRefbookAlignmentComponent } from './dash-refbook-alignment/dash-refbook-alignment.component';
-import { DashRefbookUsageComponent } from './dash-refbook-usage/dash-refbook-usage.component';
-import { DashRefbookZygosityComponent } from './dash-refbook-zygosity/dash-refbook-zygosity.component';
 import { RefbookService } from '../../../projects/digby-swagger-client/api/refbook.service';
-import { Subscription, Subject } from 'rxjs';
-import { debounceTime, takeUntil, catchError } from 'rxjs/operators';
-import { EMPTY } from 'rxjs';
+import { DashDrillService, DrillEvent } from './dash-drill.service';
+
+/** Genes pre-selected when a locus is opened, so every panel has something to show. */
+const DEFAULT_GENE_COUNT = 3;
+
+/**
+ * Most panels draw one chart per gene, so the selection is capped: beyond a few
+ * genes the faceted view stops being readable and the request count grows with it.
+ */
+export const MAX_GENES = 3;
 
 @Component({
   selector: 'app-dash-refbook',
   templateUrl: './dash-refbook.component.html',
   styleUrls: ['./dash-refbook.component.scss'],
   standalone: true,
-  imports: [
-    MatTabsModule,
-    FormsModule,
-    GeneTableSelectorComponent,
-    DashRefbookOverviewComponent,
-    DashRefbookAlignmentComponent,
-    DashRefbookUsageComponent,
-    DashRefbookZygosityComponent
-  ],
-  providers: [
-    {
-      provide: RefbookService,
-      useClass: RefbookService
-    }
-  ]
+  imports: [CommonModule, FormsModule, NgbModule,
+            GeneTableSelectorComponent, GenePickerComponent, CheckDropdownComponent],
+  providers: [{ provide: RefbookService, useClass: RefbookService }, DashDrillService],
 })
 export class DashRefbookComponent implements OnInit, OnDestroy {
-  selection: SpeciesGeneSelection = {
-    species: undefined, chain: undefined, asc: undefined
-  };
+  readonly panels = DASH_PANELS;
+  readonly panelGroups = PANEL_GROUPS;
 
+  /** The rail collapses so a plot can use the full width when needed. */
+  railOpen = true;
+  readonly dataSources = DATA_SOURCES;
+  readonly sourceLabels = DATA_SOURCE_LABELS;
+
+  selection: SpeciesGeneSelection = { species: undefined, chain: undefined, asc: undefined,
+                                      sources: [...DATA_SOURCES], ascs: [] };
+
+  /** What the locus holds, independent of what the user asked for. */
+  available = new SourceAvailability();
+
+  /** Every gene in the locus, before the segment narrows it. */
+  allAscs: string[] = [];
   availableAscs: string[] = [];
+
+  /** Segment is chosen alongside species and locus, not inside the gene list. */
+  segment: string | null = null;
+  segments: { code: string; count: number }[] = [];
+  readonly segmentLabel = segmentLabel;
+
+  /** AIRR-seq projects and samples, used to narrow the sample-based panels. */
+  projects: { name: string; accession: string; samples: number; sources?: string[] }[] = [];
+  samples: { name: string; project: string; sources?: string[] }[] = [];
+  /** Empty means no filtering, which is how the API reads an absent parameter. */
+  selectedProjects: string[] = [];
+  selectedSamples: string[] = [];
+  selectedAlleles: string[] = [];
+
   ascLoading = false;
   ascError: string | null = null;
-  ascDisabled = true;
-  selectedTabIndex = 0;
-  genomic_present: boolean = false;
-  airrseq_present: boolean = false
+  activePanelId = DASH_PANELS[0].id;
+
+  /** Loaded panel components, keyed by panel id. */
+  loaded: Record<string, unknown> = {};
+
+  readonly maxGenes = MAX_GENES;
+
+  /** Which panels have their explanatory caption expanded. */
+  captionOpen: Record<string, boolean> = {};
+
+  /**
+   * The selection controls collapse once genes are chosen: expanded they take most
+   * of the viewport, which leaves no room for the plots they configure.
+   */
+  pickerOpen = false;
+
+  /** One-line description of the current selection, shown while collapsed. */
+  get selectionSummary(): string {
+    const genes = this.selection.ascs ?? [];
+    const parts = [this.selection.species, this.selection.chain].filter(Boolean);
+    if (this.segment) {
+      parts.push(this.segmentLabel(this.segment));
+    }
+    return [parts.join(' · '), genes.join(', ') || 'no genes selected']
+      .filter(Boolean).join('  —  ');
+  }
+
+  /**
+   * One selection object per gene, reused between change detection runs.
+   *
+   * Faceted panels take a single-gene selection as an @Input, and a fresh object
+   * each time would retrigger their ngOnChanges and refetch on every cycle.
+   */
+  private facetCache = new Map<string, SpeciesGeneSelection>();
+
+  /**
+   * Genes named in the URL, held until the gene list for the locus arrives.
+   *
+   * The dataset selector emits before that list is known, and the resulting
+   * default selection would otherwise overwrite the query string that asked for
+   * these, losing the selection on every shared link.
+   */
+  private pendingAscs: string[] = [];
 
   private destroy$ = new Subject<void>();
   private geneTableSubscription: Subscription;
-  private ascLoadSubject = new Subject<{species: string, chain: string}>();
+  private ascLoadSubject = new Subject<{ species: string; locus: string }>();
 
   constructor(
     private geneTableService: GeneTableSelectorService,
-    private refbookService: RefbookService
+    private refbookService: RefbookService,
+    private route: ActivatedRoute,
+    private router: Router,
+    private drillService: DashDrillService,
   ) {
-    // Setup debounced ASC loading
-    this.ascLoadSubject.pipe(
-      debounceTime(300),
-      takeUntil(this.destroy$)
-    ).subscribe(({species, chain}) => {
-      this.loadAscs(species, chain);
-    });
+    this.ascLoadSubject
+      .pipe(debounceTime(300), takeUntil(this.destroy$))
+      .subscribe(({ species, locus }) => this.loadAscs(species, locus));
   }
 
   ngOnInit(): void {
-    // Subscribe to gene table selector changes
+    this.restoreFromUrl();
+    this.watchHistory();
+
     this.geneTableSubscription = this.geneTableService.selection
       .pipe(takeUntil(this.destroy$))
-      .subscribe((geneSelection: GeneTableSelection) => {
-        this.handleGeneTableSelectionChange(geneSelection);
-      });
+      .subscribe((geneSelection: GeneTableSelection) => this.onDatasetChange(geneSelection));
+
+    this.panels.forEach(panel => panel.load().then(component => this.loaded[panel.id] = component));
+
+    this.drillService.events$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(event => this.applyDrill(event));
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    if (this.geneTableSubscription) {
-      this.geneTableSubscription.unsubscribe();
+    this.geneTableSubscription?.unsubscribe();
+  }
+
+  // ---------------------------------------------------------------- panels
+
+  /**
+   * Act on a click inside a panel.
+   *
+   * Clicking something already filtered removes it, so the same click both drills
+   * in and backs out, and none of these are destructive: every one lands in the
+   * URL and can be undone with the chip or the browser's back button.
+   */
+  private applyDrill(event: DrillEvent): void {
+    if (event.kind === 'allele') {
+      const alreadyOpen = this.selectedAlleles.includes(event.value);
+
+      // one allele at a time: this opens a view of that allele rather than
+      // narrowing the gene-level plots to a set
+      this.selectedAlleles = alreadyOpen ? [] : [event.value];
+
+      // clicking an allele means "show me this allele", so go to the panel that
+      // answers that; clicking it again steps back up to where the gene is shown
+      if (!alreadyOpen) {
+        this.activePanelId = 'allele';
+      } else if (this.activePanelId === 'allele') {
+        this.activePanelId = 'overview';
+      }
+
+      this.applySampleFilters();
+
+    } else if (event.kind === 'sample') {
+      if (!this.selectedSamples.includes(event.value)) {
+        this.onSamplesChange([...this.selectedSamples, event.value]);
+      }
+
+    } else if (event.kind === 'gene') {
+      // zoom from comparing several genes to studying one
+      this.applyAscs([event.value], true);
     }
   }
 
-  private handleGeneTableSelectionChange(geneSelection: GeneTableSelection): void {
-    if (!geneSelection.species) {
+  /** Open one gene on its own, from a facet heading. */
+  focusGene(gene: string): void {
+    this.applyAscs([gene], true);
+  }
+
+  toggleCaption(id: string): void {
+    this.captionOpen = { ...this.captionOpen, [id]: !this.captionOpen[id] };
+  }
+
+  blockedReason(panel: DashPanel): string | null {
+    return panelBlockedReason(panel, this.selection.sources ?? [], this.available,
+                              this.selection.ascs?.length ?? 0, this.selectedAlleles.length);
+  }
+
+  panelsIn(group: string): DashPanel[] {
+    return this.panels.filter(panel => panel.group === group);
+  }
+
+  get activePanel(): DashPanel {
+    return this.panels.find(panel => panel.id === this.activePanelId) ?? this.panels[0];
+  }
+
+  selectPanel(panel: DashPanel): void {
+    if (this.blockedReason(panel)) {
+      return;
+    }
+    this.activePanelId = panel.id;
+    this.writeToUrl();
+  }
+
+  /**
+   * The filters currently narrowing the view, as removable chips.
+   *
+   * Species and locus are omitted: they are not narrowing anything, they are the
+   * dataset being looked at, and removing them would leave nothing to show.
+   */
+  get activeChips(): { key: string; label: string; value: string }[] {
+    const chips: { key: string; label: string; value: string }[] = [];
+
+    if (this.segment) {
+      chips.push({ key: 'segment', label: 'Segment', value: this.segmentLabel(this.segment) });
+    }
+    const sources = this.selection.sources ?? [];
+    if (sources.length === 1) {
+      chips.push({ key: 'source', label: 'Data', value: this.sourceLabels[sources[0]] });
+    }
+    for (const project of this.selectedProjects) {
+      chips.push({ key: `project:${project}`, label: 'Project', value: project });
+    }
+    for (const sample of this.selectedSamples) {
+      chips.push({ key: `sample:${sample}`, label: 'Sample', value: sample });
+    }
+    for (const gene of this.selection.ascs ?? []) {
+      chips.push({ key: `gene:${gene}`, label: 'Gene', value: gene });
+    }
+    for (const allele of this.selectedAlleles) {
+      chips.push({ key: `allele:${allele}`, label: 'Allele', value: allele });
+    }
+    return chips;
+  }
+
+  removeChip(key: string): void {
+    const [kind, value] = key.split(':');
+
+    if (kind === 'segment') {
+      this.segment = null;
+      this.onSegmentChange();
+    } else if (kind === 'source') {
+      this.selection = { ...this.selection, sources: [...DATA_SOURCES] };
+      this.facetCache.clear();
+      this.loadProjects();
+      this.writeToUrl();
+    } else if (kind === 'project') {
+      this.onProjectsChange(this.selectedProjects.filter(p => p !== value));
+    } else if (kind === 'sample') {
+      this.onSamplesChange(this.selectedSamples.filter(s => s !== value));
+    } else if (kind === 'gene') {
+      this.applyAscs((this.selection.ascs ?? []).filter(g => g !== value), true);
+    } else if (kind === 'allele') {
+      this.selectedAlleles = this.selectedAlleles.filter(a => a !== value);
+      this.applySampleFilters();
+    }
+  }
+
+  // ---------------------------------------------------------------- sources
+
+  isSourceOn(source: DataSource): boolean {
+    return (this.selection.sources ?? []).includes(source);
+  }
+
+  isSourceAvailable(source: DataSource): boolean {
+    return source === 'genomic' ? this.available.genomic : this.available.airrseq;
+  }
+
+  toggleSource(source: DataSource): void {
+    const current = new Set(this.selection.sources ?? []);
+    current.has(source) ? current.delete(source) : current.add(source);
+
+    // turning everything off would leave every panel blocked and no way back
+    if (!current.size) {
       return;
     }
 
-    // Update selection
-    const previousChain = this.selection.chain;
-    const previousSpecies = this.selection.species;
+    this.selection = { ...this.selection, sources: DATA_SOURCES.filter(s => current.has(s)) };
+    this.facetCache.clear();
+    // the two databases hold different studies, so the lists have to be refetched
+    this.loadProjects();
+    this.writeToUrl();
+  }
+
+  // ------------------------------------------------------------------ genes
+
+  isAscSelected(asc: string): boolean {
+    return (this.selection.ascs ?? []).includes(asc);
+  }
+
+  onGenesChange(ascs: string[]): void {
+    this.applyAscs(ascs, true);
+    // reaching the cap means the picker has nothing more to offer
+    if (ascs.length >= MAX_GENES) {
+      this.pickerOpen = false;
+    }
+  }
+
+  /** Sample filters only mean anything when AIRR-seq data is being read. */
+  get sampleFiltersEnabled(): boolean {
+    return this.available.airrseq && this.isSourceOn('airrseq');
+  }
+
+  /**
+   * The database an entry belongs to, used as its heading.
+   *
+   * A selection narrows only the database that holds it, so grouping by source is
+   * what makes a project or sample list honest about what picking it will do.
+   */
+  private sourceGroup(sources?: string[]): string {
+    const named = (sources ?? []).map(s => this.sourceLabels[s] ?? s);
+    return named.length ? named.join(' + ') : 'Unknown';
+  }
+
+  get projectOptions(): CheckOption[] {
+    return this.projects.map(p => ({
+      value: p.name,
+      label: p.name,
+      detail: p.samples,
+      group: this.sourceGroup(p.sources),
+    }));
+  }
+
+  get sampleOptions(): CheckOption[] {
+    return this.samples.map(s => ({
+      value: s.name,
+      label: s.name,
+      detail: s.project,
+      group: this.sourceGroup(s.sources),
+    }));
+  }
+
+  onProjectsChange(projects: string[]): void {
+    this.selectedProjects = projects;
+    // samples are listed per project, so a narrowed project set can strand a
+    // sample that is no longer offered; loadSamples drops those
+    this.loadSamples();
+    this.applySampleFilters();
+  }
+
+  onSamplesChange(samples: string[]): void {
+    this.selectedSamples = samples;
+    this.applySampleFilters();
+  }
+
+  /**
+   * Split the selected projects by the database that holds them.
+   *
+   * A project belongs to one database or the other, so a selection narrows only
+   * the database it came from; panels need this to describe their own scope.
+   */
+  private projectScope(): { genomic: string[]; airrseq: string[] } {
+    const scope = { genomic: [] as string[], airrseq: [] as string[] };
+
+    for (const name of this.selectedProjects) {
+      const known = this.projects.find(p => p.name === name);
+      for (const source of known?.sources ?? []) {
+        if (source === 'genomic' || source === 'airrseq') {
+          scope[source].push(name);
+        }
+      }
+    }
+    return scope;
+  }
+
+  private applySampleFilters(): void {
     this.selection = {
-      species: geneSelection.species,
-      chain: geneSelection.commonDatasets.length > 0 ? geneSelection.commonDatasets[0] : null,
-      asc: undefined // Always clear ASC when species/chain changes
+      ...this.selection,
+      projects: [...this.selectedProjects],
+      samples: [...this.selectedSamples],
+      alleles: [...this.selectedAlleles],
+      projectScope: this.projectScope(),
     };
-
-    // Update ASC dropdown if species or chain changed
-    if (this.selection.species && this.selection.chain &&
-        (this.selection.species !== previousSpecies || this.selection.chain !== previousChain)) {
-      this.ascLoadSubject.next({species: this.selection.species, chain: this.selection.chain});
-    } else if (!this.selection.chain) {
-      this.disableAscDropdown();
-    }
+    this.facetCache.clear();
+    this.writeToUrl();
   }
 
-  private loadAscs(species: string, chain: string): void {
+  private loadProjects(): void {
+    const { species, chain } = this.selection;
     if (!species || !chain) {
-      this.disableAscDropdown();
+      this.projects = [];
       return;
     }
 
-    this.ascLoading = true;
-    this.ascError = null;
-    this.ascDisabled = true;
-    this.availableAscs = [];
+    this.refbookService.getProjects(species, chain, sourcesParam(this.selection))
+      .pipe(catchError(() => EMPTY), takeUntil(this.destroy$))
+      .subscribe((rec: { projects: typeof this.projects }) => {
+        this.projects = rec.projects ?? [];
 
-    this.refbookService.getAscsInLocusApi(species, chain)
-      .pipe(
-        catchError(err => {
-          this.ascError = err.message || 'Failed to load ASCs';
-          this.ascLoading = false;
-          this.ascDisabled = true;
-          return EMPTY;
-        }),
-        takeUntil(this.destroy$)
-      )
-      .subscribe((rec: { ascs: string[], genomic: boolean, airr_seq: boolean }) => {
-        this.ascLoading = false;
-        this.availableAscs = rec.ascs || [];
-        this.genomic_present = rec.genomic;
-        this.airrseq_present = rec.airr_seq;
-        this.ascDisabled = this.availableAscs.length === 0;
-        this.ascError = null;
+        // the databases hold different studies, so switching source can strand a
+        // project that no longer exists; drop it and tell the panels
+        const known = new Set(this.projects.map(p => p.name));
+        const kept = this.selectedProjects.filter(name => known.has(name));
+        const changed = kept.length !== this.selectedProjects.length;
+        this.selectedProjects = kept;
 
-        if (this.availableAscs.length > 0) {
-          this.selection.asc = this.availableAscs[0];
-          this.onAscChange();
+        // the scope is derived from this list, so refresh it even when the
+        // selection itself did not change
+        this.applySampleFilters();
+        this.loadSamples();
+      });
+  }
+
+  private loadSamples(): void {
+    const { species, chain } = this.selection;
+    if (!species || !chain) {
+      this.samples = [];
+      return;
+    }
+
+    const projects = this.selectedProjects.length ? this.selectedProjects.join(',') : undefined;
+
+    this.refbookService.getSamples(species, chain, projects, sourcesParam(this.selection))
+      .pipe(catchError(() => EMPTY), takeUntil(this.destroy$))
+      .subscribe((rec: { samples: typeof this.samples }) => {
+        this.samples = rec.samples ?? [];
+        const known = new Set(this.samples.map(s => s.name));
+        const kept = this.selectedSamples.filter(name => known.has(name));
+
+        if (kept.length !== this.selectedSamples.length) {
+          this.selectedSamples = kept;
+          this.applySampleFilters();
         }
       });
   }
 
-  private disableAscDropdown(): void {
-    this.ascDisabled = true;
+  onSegmentChange(): void {
+    this.applySegment();
+    // a new segment is a new set of genes, so start it the way a new locus starts
+    this.applyAscs(this.availableAscs.slice(0, DEFAULT_GENE_COUNT), true);
+  }
+
+  /** Narrow the gene list to the chosen segment, or show all when none is chosen. */
+  private applySegment(): void {
+    this.availableAscs = this.segment
+      ? this.allAscs.filter(gene => segmentOf(gene) === this.segment)
+      : [...this.allAscs];
+  }
+
+  /**
+   * @param clearAlleles pass true when the user chose different genes. An allele
+   *   belongs to a gene, so it cannot survive that - but this method also runs
+   *   from startup and from the dataset selector reporting no locus yet, and
+   *   clearing on those discarded any allele restored from the URL.
+   */
+  private applyAscs(ascs: string[], clearAlleles = false): void {
+    const capped = ascs.slice(0, MAX_GENES);
+
+    if (clearAlleles) {
+      this.selectedAlleles = [];
+    }
+
+    // asc mirrors ascs[0] so single-gene panels keep working unchanged
+    this.selection = { ...this.selection, ascs: capped, asc: capped[0],
+                       alleles: [...this.selectedAlleles] };
+    this.facetCache.clear();
+    this.writeToUrl();
+  }
+
+  /**
+   * The genes a panel should be drawn for: all of them for a panel that compares
+   * genes itself, otherwise one facet each.
+   */
+  facetsFor(panel: DashPanel): string[] {
+    return panel.multi ? [] : (this.selection.ascs ?? []);
+  }
+
+  /** A single-gene view of the current selection, stable across change detection. */
+  selectionFor(gene: string): SpeciesGeneSelection {
+    let facet = this.facetCache.get(gene);
+    if (!facet) {
+      facet = { ...this.selection, asc: gene, ascs: [gene] };
+      this.facetCache.set(gene, facet);
+    }
+    return facet;
+  }
+
+  // --------------------------------------------------------------- datasets
+
+  private onDatasetChange(geneSelection: GeneTableSelection): void {
+    if (!geneSelection.species) {
+      return;
+    }
+
+    const locus = geneSelection.commonDatasets.length ? geneSelection.commonDatasets[0] : undefined;
+    const changed = geneSelection.species !== this.selection.species || locus !== this.selection.chain;
+
+    this.selection = { ...this.selection, species: geneSelection.species, chain: locus };
+
+    if (!locus) {
+      this.resetAscs();
+      return;
+    }
+
+    if (changed) {
+      this.ascLoadSubject.next({ species: geneSelection.species, locus });
+    }
+  }
+
+  private loadAscs(species: string, locus: string): void {
+    this.ascLoading = true;
+    this.ascError = null;
+    this.allAscs = [];
     this.availableAscs = [];
+
+    // deliberately unfiltered: this asks what the locus holds, which is what the
+    // source toggle and the panel gating are described against
+    this.refbookService.getAscsInLocusApi(species, locus)
+      .pipe(
+        catchError(err => {
+          this.ascError = err?.message ?? 'Failed to load genes';
+          this.ascLoading = false;
+          return EMPTY;
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((rec: { ascs: string[]; genomic: boolean; airr_seq: boolean }) => {
+        this.ascLoading = false;
+        this.allAscs = rec.ascs ?? [];
+        this.segments = segmentsIn(this.allAscs);
+
+        // keep the segment if the new locus has it, else default to the largest
+        if (!this.segments.some(s => s.code === this.segment)) {
+          this.segment = this.segments.length
+            ? [...this.segments].sort((a, b) => b.count - a.count)[0].code
+            : null;
+        }
+        this.applySegment();
+
+        this.available = { genomic: rec.genomic, airrseq: rec.airr_seq };
+        this.loadProjects();
+
+        // drop sources this locus does not have, but never end up with none
+        const usable = DATA_SOURCES.filter(s => this.isSourceAvailable(s));
+        const kept = (this.selection.sources ?? []).filter(s => usable.includes(s));
+        this.selection = { ...this.selection, sources: kept.length ? kept : usable };
+
+        // a link naming genes wins; otherwise start the new locus fresh
+        const asked = this.pendingAscs.filter(a => this.availableAscs.includes(a));
+        this.pendingAscs = [];
+
+        // a link naming both genes and alleles must keep the alleles
+        this.applyAscs(asked.length ? asked : this.availableAscs.slice(0, DEFAULT_GENE_COUNT),
+                       !asked.length);
+      });
+  }
+
+  private resetAscs(): void {
+    this.allAscs = [];
+    this.availableAscs = [];
+    this.segments = [];
+    this.segment = null;
     this.ascLoading = false;
     this.ascError = null;
-    this.selection.asc = undefined;
+    this.applyAscs([]);
   }
 
-  onTabChange(event: MatTabChangeEvent): void {
-    this.selectedTabIndex = event.index;
-    // console.log(`Tab changed to index: ${event.index}`);
+  // ------------------------------------------------------------------- URL
+
+  /** Selection lives in the query string so a panel can be linked to and reloaded. */
+  private writeToUrl(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        panel: this.activePanelId,
+        segment: this.segment,
+        projects: this.selectedProjects.join(',') || null,
+        samples: this.selectedSamples.join(',') || null,
+        alleles: this.selectedAlleles.join(',') || null,
+        sources: (this.selection.sources ?? []).join(',') || null,
+        genes: (this.selection.ascs ?? []).join(',') || null,
+      },
+      queryParamsHandling: 'merge',
+      // a real navigation, not a replacement, so browser back steps through the
+      // exploration rather than leaving the dashboard
+      replaceUrl: false,
+    });
   }
 
-  onAscChange(): void {
-    // This method is called when ASC selection changes
-    // The selection.asc is already updated by ngModel
-    // No need to recreate the object - ngModel handles the update
-    this.selection = { ...this.selection };
+  private restoreFromUrl(): void {
+    const params = this.route.snapshot.queryParamMap;
+
+    const panel = params.get('panel');
+    if (panel && this.panels.some(p => p.id === panel)) {
+      this.activePanelId = panel;
+    }
+
+    this.segment = params.get('segment');
+    this.selectedProjects = (params.get('projects') ?? '').split(',').filter(Boolean);
+    this.selectedSamples = (params.get('samples') ?? '').split(',').filter(Boolean);
+    this.selectedAlleles = (params.get('alleles') ?? '').split(',').filter(Boolean);
+    this.selection = {
+      ...this.selection,
+      projects: [...this.selectedProjects],
+      samples: [...this.selectedSamples],
+      alleles: [...this.selectedAlleles],
+    };
+
+    const sources = (params.get('sources') ?? '')
+      .split(',').filter((s): s is DataSource => (DATA_SOURCES as string[]).includes(s));
+    if (sources.length) {
+      this.selection = { ...this.selection, sources };
+    }
+
+    const genes = (params.get('genes') ?? '').split(',').filter(Boolean);
+    if (genes.length) {
+      this.pendingAscs = genes;
+      this.selection = { ...this.selection, ascs: genes, asc: genes[0] };
+    }
+  }
+
+  /** Re-read the selection when the browser moves through history. */
+  private watchHistory(): void {
+    this.route.queryParamMap
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.restoreFromUrl());
   }
 }

@@ -1,0 +1,5 @@
+/* Width comes from the column; height is set per render from the number of sets. */
+.upset-chart { width: 100%; min-width: 0; overflow-x: auto; }
+
+.upset-status { margin: 0.5rem 0; font-size: 0.85rem; color: #5f6368; }
+.upset-status.error { color: #d62839; }

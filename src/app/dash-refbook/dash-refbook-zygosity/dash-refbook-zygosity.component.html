@@ -1,1 +1,9 @@
+<app-scope-note [selection]="selection" [sources]="['airrseq']"></app-scope-note>
+@if (error) {
+  <p class="upset-status error">{{ error }}</p>
+} @else if (isFetching) {
+  <p class="upset-status">Loading zygosity…</p>
+} @else if (!zygosityData.samples.length) {
+  <p class="upset-status">No samples match the current selection. Remove a filter above to widen it.</p>
+}
 <div #upsetContainer class="upset-chart"></div>
