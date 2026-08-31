@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective  } from 'ng2-charts';
@@ -8,7 +8,7 @@ import { catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { SpeciesGeneSelection, sourcesParam, allelesParam, projectsParam, samplesParam }
   from '../../shared/models/species-gene-selection.model';
-import { shortenAlleleName } from '../../shared/models/gene-naming';
+import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { OverviewData } from './dash-refbook-overview.model';
@@ -75,13 +75,23 @@ export class DashRefbookOverviewComponent implements OnInit, OnChanges {
   public chartOptions: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
+    // Hover the column, not the bar. Most alleles here are carried by one or two
+    // samples, so their bars are a pixel high against an axis that runs to 350 -
+    // `intersect: true` made them effectively unhoverable.
+    // Horizontal: allele names are long, and on a category y-axis they read
+    // left to right without rotation or truncation. A vertical chart cannot
+    // show 384 of them at any width.
+    indexAxis: 'y',
+    interaction: { mode: 'index', intersect: false },
     plugins: {
       tooltip: {
         callbacks: {
           // a raw count means little without the cohort it came out of
           label: (item) => {
             const series = item.dataset.label ?? '';
-            const n = Number(item.parsed.y ?? 0);
+            const raw = item.parsed.y;
+            if (raw === null || raw === undefined) { return `${series}: not present`; }
+            const n = Number(raw);
             const total = this.denominators[series] ?? 0;
             if (!total) {
               return `${series}: ${n} samples`;
@@ -92,31 +102,48 @@ export class DashRefbookOverviewComponent implements OnInit, OnChanges {
         },
       },
     },
+    datasets: {
+      // a count of 1 has to be visible; without this it rounds away to nothing
+      bar: { minBarLength: 3 },
+    },
     scales: {
       // Not stacked: the two series are counts of the same samples from different
       // databases, so an allele in both would be counted twice by a stacked bar.
       // Side by side, the comparison between databases is the point.
       x: {
         stacked: false,
-        title: {
-          display: true,
-          text: 'Allele',
-        },
+        beginAtZero: true,
+        title: { display: true, text: 'Samples carrying the allele' },
+        grid: { drawTicks: true, tickLength: 6 },
       },
       y: {
         stacked: false,
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: 'Samples carrying the allele',
-        }
-      }
-    }
+        title: { display: true, text: 'Allele' },
+        // ticks instead of gridlines running through the bars
+        grid: { display: true, drawOnChartArea: false, drawTicks: true, tickLength: 6,
+                offset: true },
+        ticks: { autoSkip: false },
+      },
+    },
   };
 
   public chartType: 'bar' = 'bar';
 
-constructor(private refbookService: RefbookService, private drill: DashDrillService) { }
+constructor(private refbookService: RefbookService, private drill: DashDrillService,
+              private host: ElementRef<HTMLElement>) { }
+
+  /**
+   * The canvas keeps whatever height it was given on first paint, so a chart
+   * built before the alleles arrived stays at the 320px floor while its
+   * container grows to 1,338. `@ViewChild` does not resolve here - the panel is
+   * instantiated through NgComponentOutlet - so the canvas is found on the host.
+   */
+  private resizeChart(): void {
+    setTimeout(() => {
+      const canvas = this.host.nativeElement.querySelector('canvas');
+      if (canvas) { Chart.getChart(canvas)?.resize(); }
+    });
+  }
 
   ngOnInit() {
     this.fetchData();
@@ -200,6 +227,38 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
   /** Samples behind the figures, and how many are the same sample in both. */
   cohort: { genomic: number; airrseq: number; shared: number } | null = null;
 
+  /**
+   * Hide alleles no sample carries.
+   *
+   * On by default: the unobserved rows are dominated by `*Del` deletion markers
+   * (96 of Human IGH's 106, 524 of rhesus IGH's 1,893), which are genotype
+   * states rather than alleles, and they draw as empty bars.
+   */
+  observedOnly = true;
+  hiddenUnobserved = 0;
+
+  /**
+   * Row order. Count first, because at 384 alleles (IGHV1-69 in the full HUSA
+   * set) the handful anyone carries is what you came for; name is for lookup.
+   */
+  sortBy: 'count' | 'name' = 'count';
+
+  setSort(order: 'count' | 'name'): void {
+    this.sortBy = order;
+    if (this.lastOverview) { this.updateChartData(this.lastOverview); }
+  }
+
+  /** Rows are a fixed height and the panel scrolls; squeezing 384 into a box is unreadable. */
+  get chartHeight(): number {
+    return Math.max(320, 26 * (this.chartData.labels?.length ?? 0) + 90);
+  }
+  private lastOverview: (OverviewData & { genomic_counts?: number[]; vdjbase_counts?: number[] }) | null = null;
+
+  toggleObservedOnly(): void {
+    this.observedOnly = !this.observedOnly;
+    if (this.lastOverview) { this.updateChartData(this.lastOverview); }
+  }
+
   /** Where those samples come from, opened from the cohort box. */
   showProjects = false;
   projectsLoading = false;
@@ -207,10 +266,15 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
   public projectOptions: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
     plugins: { legend: { position: 'bottom' } },
+    datasets: { bar: { minBarLength: 3 } },
     scales: {
-      x: { stacked: false, title: { display: true, text: 'Project' } },
-      y: { stacked: false, beginAtZero: true, title: { display: true, text: 'Samples' } },
+      x: { stacked: false, title: { display: true, text: 'Project' },
+           grid: { display: true, drawOnChartArea: false, drawTicks: true, tickLength: 6,
+                   offset: true } },
+      y: { stacked: false, beginAtZero: true, title: { display: true, text: 'Samples' },
+           grid: { drawTicks: true, tickLength: 6 } },
     },
   };
 
@@ -234,9 +298,11 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
           this.projectData = {
             labels: projects.map(p => p.name),
             datasets: [
-              { label: 'Genomic', data: projects.map(p => p.by_source?.['genomic'] ?? 0),
+              // null rather than 0, as above: a project the database does not
+              // hold must draw nothing, not a floor-height bar
+              { label: 'Genomic', data: projects.map(p => p.by_source?.['genomic'] || null),
                 backgroundColor: '#a9e1d4', borderColor: '#8DD3C7', borderWidth: 1 },
-              { label: 'AIRR-seq', data: projects.map(p => p.by_source?.['airrseq'] ?? 0),
+              { label: 'AIRR-seq', data: projects.map(p => p.by_source?.['airrseq'] || null),
                 backgroundColor: '#FFA07A', borderColor: '#fa946b', borderWidth: 1 },
             ].filter(d => d.data.some(v => v > 0)),
           };
@@ -290,11 +356,37 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
         },
       ];
 
-      this.alleleByIndex = data.alleles ?? [];
+      this.lastOverview = data;
+      const names = data.alleles ?? [];
+      const seen = (i: number) =>
+        (data.genomic_counts?.[i] ?? 0) + (data.vdjbase_counts?.[i] ?? 0) > 0;
+      const total = (i: number) =>
+        (data.genomic_counts?.[i] ?? 0) + (data.vdjbase_counts?.[i] ?? 0);
+      const keep = names.map((_, i) => i)
+        .filter(i => !this.observedOnly || seen(i))
+        .sort((a, b) => this.sortBy === 'name'
+          ? names[a].localeCompare(names[b])
+          // most-carried at the top: Chart.js draws the first category at the
+          // top of a horizontal axis
+          : total(b) - total(a) || names[a].localeCompare(names[b]));
+      this.hiddenUnobserved = names.length - names.filter((_, i) => seen(i)).length;
+
+      this.alleleByIndex = keep.map(i => names[i]);
       this.chartData = {
-        labels: (data.alleles ?? []).map(name => shortenAlleleName(name)),
-        datasets: series.filter(entry => entry.show).map(({ show, ...dataset }) => dataset),
+        // the collision-safe variant, so the axis agrees with the zygosity
+        // sets and the names table rather than inventing its own labels
+        labels: (() => {
+          const display = shortenAlleleNames(keep.map(i => names[i]));
+          return keep.map(i => display.get(names[i]) ?? names[i]);
+        })(),
+        datasets: series.filter(entry => entry.show).map(({ show, data: values, ...rest }) => ({
+          // null, not 0. minBarLength gives every bar a floor so a count of one
+          // is visible, and it would give a genuine zero the same floor - an
+          // allele absent from a database would draw as if a sample carried it.
+          ...rest, data: keep.map(i => (values?.[i] ?? 0) || null),
+        })),
       };
+      this.resizeChart();
     } catch (error) {
       // Silently handle any chart update errors
       this.error = 'Error updating chart';

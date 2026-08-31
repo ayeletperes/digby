@@ -66,6 +66,21 @@ export const DASH_PANELS: DashPanel[] = [
       .then(m => m.DashRefbookOverviewComponent),
   },
   {
+    id: 'names',
+    group: 'Reference',
+    label: 'Allele names',
+    description: 'What the shortened labels in the plots stand for.',
+    caption: 'Allele names carrying many mutations are too long for a chart axis, so the ' +
+             'plots collapse the mutation suffixes to a count: IGHV1-18*04+8 is the allele ' +
+             'with eight mutations from IGHV1-18*04. This is the key. Where two alleles ' +
+             'would shorten to the same label, both keep their full name instead, so a ' +
+             'shortened label always identifies exactly one allele.',
+    requires: [],
+    multi: false,
+    load: () => import('./dash-refbook-names/dash-refbook-names.component')
+      .then(m => m.DashRefbookNamesComponent),
+  },
+  {
     id: 'alignment',
     group: 'Reference',
     label: 'Alignment',

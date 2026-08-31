@@ -9,6 +9,7 @@ import * as UpSetJS from '@upsetjs/bundle';
 
 import { RefbookService } from '../../../../projects/digby-swagger-client/api/refbook.service';
 import { retryWithBackoff } from '../../shared/retry_with_backoff';
+import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { SpeciesGeneSelection, projectsParam, samplesParam, allelesParam, sourcesParam }
   from '../../shared/models/species-gene-selection.model';
 import { DashDrillService } from '../dash-drill.service';
@@ -141,8 +142,23 @@ export class DashRefbookZygosityComponent
     }
   }
 
+  /** Shortened set label back to the allele it stands for, for the drill. */
+  private fullNameOf = new Map<string, string>();
+
   private drawUpset(el: HTMLDivElement, width: number) {
     const { sets, combinations } = UpSetJS.extractCombinations(this.zygosityData.samples);
+
+    // Shorten the labels, but only after extraction: the set name is the set's
+    // identity here, so shortening the input would merge two alleles that differ
+    // only in which mutations they carry. Collisions keep their full name.
+    const display = shortenAlleleNames(sets.map(set => set.name ?? ''));
+    this.fullNameOf = new Map();
+    for (const set of sets) {
+      const full = set.name ?? '';
+      const short = display.get(full) ?? full;
+      this.fullNameOf.set(short, full);
+      (set as { name: string }).name = short;
+    }
 
     // the set list is drawn down the left, so height has to follow it rather than
     // being fixed, or the rows overlap once a gene has more than a few alleles
@@ -175,7 +191,8 @@ export class DashRefbookZygosityComponent
           { name?: string; type?: string; elems?: readonly { name?: string }[] };
 
         if (chosen?.type === 'set' && chosen.name) {
-          this.drill.drill('allele', chosen.name);
+          // the label may be shortened; drill on the allele it stands for
+          this.drill.drill('allele', this.fullNameOf.get(chosen.name) ?? chosen.name);
         } else if (chosen?.elems?.length === 1 && chosen.elems[0]?.name) {
           this.drill.drill('sample', chosen.elems[0].name);
         }

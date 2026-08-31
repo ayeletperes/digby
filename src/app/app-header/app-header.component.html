@@ -41,10 +41,8 @@
             </a>
             <div ngbDropdownMenu class="dropdown-menu" aria-labelledby="navbarHelpAbout">
               <a ngbDropdownItem class="dropdown-item" routerLink="/reports" (click)="isMenuCollapsed = true">Reports</a>
-              <a ngbDropdownItem class="dropdown-item" routerLink="/dash_refbook" (click)="isMenuCollapsed = true">Allele Reference Dashboard</a>
-              <a ngbDropdownItem class="dropdown-item" routerLink="/gene_refbook" (click)="isMenuCollapsed = true">Gene Reference Dashboard</a>
+              <a ngbDropdownItem class="dropdown-item" routerLink="/dash_refbook" (click)="isMenuCollapsed = true">Repertoire &amp; Genome Explorer</a>
               <a ngbDropdownItem class="dropdown-item" routerLink="/dash_qtl" (click)="isMenuCollapsed = true">Gene Usage QTL</a>
-              <a ngbDropdownItem class="dropdown-item" [routerLink]="['./reference_book', 'null']" (click)="isMenuCollapsed = true">Macaque Reference Book</a>
             </div>
           </li>
         }
@@ -54,6 +52,8 @@
               Help / About
             </a>
             <div ngbDropdownMenu class="dropdown-menu" aria-labelledby="navbarHelpAbout">
+              <!-- routerLink, not href: the neighbours full-reload, which defeats the lazy load -->
+              <a ngbDropdownItem class="dropdown-item" routerLink="/docs" (click)="isMenuCollapsed = true">Documentation</a>
               <a ngbDropdownItem class="dropdown-item" href="./user-guide" (click)="isMenuCollapsed = true">User Guide</a>
               <a ngbDropdownItem class="dropdown-item" href="./quick-ref" (click)="isMenuCollapsed = true">Quick Reference</a>
               <a ngbDropdownItem class="dropdown-item" href="./assets/doc/report_documentation.pdf" (click)="isMenuCollapsed = true">Guide to Reports (pdf)</a>

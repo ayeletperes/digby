@@ -97,15 +97,38 @@
   </div>
   <div class="row">
     <div class="col-12">
-      <div class="chart-container">
-        <canvas
-          baseChart
-          [data]="chartData"
-          [options]="chartOptions"
-          [type]="chartType"
-          (chartClick)="onChartClick($event)"
-        >
-        </canvas>
+      @if (hiddenUnobserved) {
+        <div class="chart-toolbar">
+          <label class="observed-toggle">
+            <input type="checkbox" [checked]="observedOnly" (change)="toggleObservedOnly()">
+            <span class="switch" aria-hidden="true"></span>
+            <span class="switch-label">Only alleles seen in at least one sample</span>
+          </label>
+          <span class="sort-group" role="group" aria-label="Sort alleles">
+            <button type="button" [class.on]="sortBy === 'count'" (click)="setSort('count')">
+              Most carried
+            </button>
+            <button type="button" [class.on]="sortBy === 'name'" (click)="setSort('name')">
+              Name
+            </button>
+          </span>
+          <span class="toolbar-note">
+            {{ hiddenUnobserved }} of {{ overviewData.total }} carried by no sample
+            @if (observedOnly) { · hidden } @else { · shown as empty bars }
+          </span>
+        </div>
+      }
+      <div class="chart-scroll">
+        <div class="chart-container" [style.height.px]="chartHeight">
+          <canvas
+            baseChart
+            [data]="chartData"
+            [options]="chartOptions"
+            [type]="chartType"
+            (chartClick)="onChartClick($event)"
+          >
+          </canvas>
+        </div>
       </div>
     </div>
   </div>

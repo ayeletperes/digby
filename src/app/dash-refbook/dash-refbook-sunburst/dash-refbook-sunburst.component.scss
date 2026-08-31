@@ -1,0 +1,120 @@
+:host {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sunburst {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.head h4 {
+  color: var(--vdj-ink);
+  margin-bottom: 0.25rem;
+}
+
+.caption {
+  color: var(--vdj-body);
+  font-size: 0.875rem;
+  max-width: 62ch;
+  margin: 0;
+}
+
+/* breadcrumb: the only keyboard route through the levels, so these are real buttons */
+.trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.crumb {
+  border: 1px solid var(--vdj-rule);
+  background: #fff;
+  color: var(--vdj-body);
+  border-radius: 999px;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.crumb:hover { border-color: var(--vdj-teal); color: var(--vdj-teal-dark); }
+.crumb:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 1px; }
+
+.crumb.current {
+  background: var(--vdj-teal);
+  border-color: var(--vdj-teal);
+  color: #fff;
+}
+
+.sep { color: var(--vdj-muted); }
+
+.readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.9rem;
+  margin: 0;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--vdj-rule);
+  border-radius: 4px;
+  min-height: 2.25rem;   /* holds its place, so hovering does not reflow the chart */
+  font-size: 0.8125rem;
+  color: var(--vdj-body);
+}
+
+.readout .what { font-weight: 600; color: var(--vdj-ink); }
+.readout .level { color: var(--vdj-muted); text-transform: lowercase; }
+
+svg {
+  /* height follows the square viewBox, so the panel grows with its container
+     rather than with a pixel size written here */
+  display: block;
+  width: 100%;
+  height: auto;
+  align-self: center;
+}
+
+.arcs path {
+  stroke: var(--vdj-rule);
+  stroke-width: 0.12;
+  cursor: pointer;
+  transition: fill 120ms ease, stroke 120ms ease;
+}
+
+.arcs path.hovered {
+  stroke: var(--vdj-ink);
+  stroke-width: 0.6;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: var(--vdj-muted);
+}
+
+.legend li { display: flex; align-items: center; gap: 0.35rem; }
+
+.legend .ring {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--vdj-rule);
+  border-radius: 50%;
+  color: var(--vdj-body);
+  font-size: 0.6875rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arcs path { transition: none; }
+}

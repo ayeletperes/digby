@@ -8,7 +8,7 @@ import { ReportRunService } from './app/reports/report-run.service';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { CachingInterceptor } from './app/shared/caching_interceptor';
 import { AuthInterceptorService } from './app/auth/auth-interceptor.service';
-import { RouteReuseStrategy, provideRouter, Routes } from '@angular/router';
+import { RouteReuseStrategy, provideRouter, withInMemoryScrolling, Routes } from '@angular/router';
 import { CustomReuseStrategy } from './app/shared/route-reuse-strategy';
 import { appInitializer } from './app/auth/auth.initializer';
 import { BrowserModule, bootstrapApplication } from '@angular/platform-browser';
@@ -31,6 +31,8 @@ import { GenGeneTableComponent } from './app/gen-gene-table/gen-gene-table.compo
 import { GeneBrowserComponent } from './app/gene-browser/gene-browser.component';
 import { RefbookComponent } from './app/refbook/refbook.component';
 import { DashRefbookComponent } from './app/dash-refbook/dash-refbook.component';
+import { DocsComponent } from './app/docs/docs.component';
+import { DocsPageComponent } from './app/docs/docs-page.component';
 import { DashQtlComponent } from './app/dash-qtl/dash-qtl.component';
 import { GeneRefbookComponent } from './app/gene-refbook/gene-refbook.component';
 import { ReportsComponent } from './app/reports/reports.component';
@@ -72,6 +74,10 @@ const appRoutes: Routes = [
   { path: 'gene_refbook', component: GeneRefbookComponent, canActivate: [AuthGuard] },
   { path: 'dash_refbook', component: DashRefbookComponent, canActivate: [AuthGuard] },
   { path: 'dash_qtl', component: DashQtlComponent, canActivate: [AuthGuard] },
+  { path: 'docs', component: DocsComponent, canActivate: [AuthGuard] },
+  // one route for every doc page; the slug is looked up in DOCS_PAGES and the
+  // component lazy-loaded, so a new page needs no change here
+  { path: 'docs/:slug', component: DocsPageComponent, canActivate: [AuthGuard] },
   { path: 'reports', component: ReportsComponent, canActivate: [AuthGuard] },
   // Help menu
   { path: 'quick-ref', component: QuickRefComponent, canActivate: [AuthGuard] },
@@ -108,7 +114,11 @@ bootstrapApplication(AppComponent, {
         }),
         provideHttpClient(withInterceptorsFromDi()),
         provideAnimations(),
-        provideRouter(appRoutes)
+        provideRouter(appRoutes, withInMemoryScrolling({
+      // the docs pages deep-link to headings, and both dashboards restore
+      // scroll on back; neither works without this
+      anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled',
+    }))
     ]
 })
   .catch(err => console.error(err));

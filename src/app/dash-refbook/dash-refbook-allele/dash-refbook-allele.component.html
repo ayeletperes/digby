@@ -75,9 +75,12 @@
             <li><span class="n">{{ carriers }}</span> subjects carry it</li>
             <li><span class="n">{{ aloneCount }}</span> carry it as their only allele of this gene</li>
           </ul>
-          @if (carriersByProject.length) {
+          @if (carrierProjects.length) {
             <plotly-plot [data]="carrierPlot" [layout]="carrierLayout" [config]="plotConfig"></plotly-plot>
-            <p class="note">Subjects carrying it, by project.</p>
+            <p class="note">
+              Samples carrying it, by project and database. Hover for the share of the
+              project. A database with no bar for a project does not hold that project.
+            </p>
           }
         } @else {
           <p class="note">No carriers under the current filters.</p>
@@ -99,6 +102,15 @@
               </tr>
             }
           </table>
+
+          <h5 class="sub-head">In which combinations</h5>
+          <p class="note">
+            Each column is a combination of other {{ gene }} alleles, and its bar counts
+            how many of the {{ carriers }} carriers carry all of them alongside this
+            allele. Carriers with no other allele of the gene are not drawn.
+            Click an allele name to open it.
+          </p>
+          <div class="co-upset"></div>
         } @else {
           <p class="note">Always seen on its own, or no carrier data under the current filters.</p>
         }

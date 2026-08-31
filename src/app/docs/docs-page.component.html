@@ -1,0 +1,13 @@
+@if (unknownSlug !== null) {
+  <div class="docs-missing">
+    <h1 id="not-found">Page not found</h1>
+    <p>
+      There is no documentation page at <code>/docs/{{ unknownSlug }}</code>.
+    </p>
+    <p><a routerLink="/docs">Back to documentation</a></p>
+  </div>
+} @else if (component) {
+  <ng-container *ngComponentOutlet="component"></ng-container>
+} @else {
+  <p class="docs-loading">Loading…</p>
+}

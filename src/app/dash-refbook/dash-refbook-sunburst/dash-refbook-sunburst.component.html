@@ -1,0 +1,66 @@
+@if (isFetching) {
+  <div class="spinner-border" role="status">
+    <span class="sr-only">Loading…</span>
+  </div>
+}
+
+@if (error) {
+  <div class="alert alert-danger">
+    <h4>Error loading data: {{ error }}</h4>
+  </div>
+}
+
+@if (data) {
+  <div class="sunburst">
+    <div class="head">
+      <h4>Locus map</h4>
+      <p class="caption">
+        Every allele in the locus, one ring per level: {{ levelPath }}. An arc is as wide as
+        the number of alleles beneath it. Click a ring to drill in, click it again to step
+        back out, click an allele to open it. Colour marks where you are, not what the data
+        says. This is the reference content of the whole locus, so the project and sample
+        filters do not change it.
+      </p>
+    </div>
+
+    <nav class="trail" aria-label="Drill position">
+      <button type="button" class="crumb" [class.current]="drilled === null"
+              (click)="drillTo(null)">{{ data.label[0] }}</button>
+      @for (i of trail; track i) {
+        <span class="sep" aria-hidden="true">›</span>
+        <button type="button" class="crumb" [class.current]="i === drilled"
+                (click)="drillTo(i)">{{ data.label[i] }}</button>
+      }
+    </nav>
+
+    <p class="readout" aria-live="polite">
+      <span class="what">{{ data.label[focus] }}</span>
+      <span class="level">{{ levelOf(focus) }}</span>
+      <span class="stat">{{ alleleCount(focus) }} allele{{ alleleCount(focus) === 1 ? '' : 's' }}</span>
+      <span class="stat">{{ data.novel[focus] }} novel</span>
+      <span class="stat">genomic {{ data.nG[focus] }}</span>
+      <span class="stat">AIRR-seq {{ data.nA[focus] }}</span>
+    </p>
+
+    <!-- one delegated listener for the whole chart: per-arc event bindings are
+         what makes a few thousand alleles slow -->
+    <svg viewBox="-104 -104 208 208" role="img"
+         [attr.aria-label]="summary"
+         (click)="onClick($event)"
+         (mousemove)="onMove($event)"
+         (mouseleave)="onLeave()">
+      <g class="arcs">
+        @for (d of arcs; track $index) {
+          <path [attr.d]="d" [attr.fill]="fill[$index]" [attr.data-i]="$index"
+                [class.hovered]="$index === hover"></path>
+        }
+      </g>
+    </svg>
+
+    <ul class="legend">
+      @for (ring of ringLegend; track ring.name) {
+        <li><span class="ring">{{ ring.radius + 1 }}</span>{{ ring.name }} ({{ ring.count }})</li>
+      }
+    </ul>
+  </div>
+}

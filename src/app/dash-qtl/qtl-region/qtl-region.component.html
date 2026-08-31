@@ -1,0 +1,116 @@
+@if (error) {
+  <p class="qtl-status error">{{ error }}</p>
+} @else if (isFetching) {
+  <p class="qtl-status">Loading the region…</p>
+} @else if (contig) {
+
+  <div class="region-head">
+    <p class="region-where">
+      {{ contig }}:{{ start | number }}–{{ end | number }}
+      · {{ variantCount | number }} tested variant{{ variantCount === 1 ? '' : 's' }}
+      @if (plottedAsc) { · against <strong>{{ plottedAsc }}</strong> }
+      @else { · strongest signal per variant }
+    </p>
+    <label class="window-pick">
+      Window
+      <select [value]="window" (change)="setWindow($any($event.target).value)">
+        @for (w of windows; track w) {
+          <option [value]="w">{{ w >= 1000 ? (w / 1000) + ' kb' : w + ' bp' }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  @if (!annotated) {
+    <p class="note warn">
+      No gene annotation is configured on this server, so only the variants are
+      drawn. The track is empty because the annotation is missing, not because
+      the region is.
+    </p>
+  }
+
+  <svg class="track" [attr.viewBox]="'0 0 ' + view + ' ' + height"
+       preserveAspectRatio="xMidYMid meet" role="img"
+       aria-label="Genomic region around the selected variant">
+
+    <!-- the selected variant, carried through every row so the position a gene
+         body or an element sits at relative to it is readable by eye -->
+    <line class="centre-line" [attr.x1]="selectedX" [attr.x2]="selectedX"
+          [attr.y1]="plotTop - 6" [attr.y2]="axisY"></line>
+
+    <!-- significance -->
+    <line class="axis" [attr.x1]="pad" [attr.x2]="pad"
+          [attr.y1]="plotTop" [attr.y2]="plotBottom"></line>
+    @for (t of yTicks; track t.label) {
+      <text class="tick y" [attr.x]="pad - 2" [attr.y]="t.y + 3">{{ t.label }}</text>
+    }
+    @if (thresholdY !== null) {
+      <line class="threshold" [attr.x1]="pad" [attr.x2]="view - pad"
+            [attr.y1]="thresholdY" [attr.y2]="thresholdY"></line>
+      <text class="tick threshold-label" [attr.x]="view - pad"
+            [attr.y]="thresholdY - 3">significance threshold</text>
+    }
+    @for (m of marks; track m.variant) {
+      <circle class="mark" [class.sig]="m.significant" [class.on]="m.selected"
+              [attr.cx]="m.cx" [attr.cy]="m.cy" [attr.r]="m.r"
+              (click)="pick(m.variant)">
+        <title>{{ m.title }}</title>
+      </circle>
+    }
+
+    <!-- genes -->
+    @for (b of geneBoxes; track b.title) {
+      <rect class="gene" [attr.x]="b.x" [attr.y]="b.y"
+            [attr.width]="b.width" [attr.height]="b.height" [attr.fill]="b.fill">
+        <title>{{ b.title }}</title>
+      </rect>
+      @if (b.showLabel) {
+        <text class="gene-label" [attr.x]="b.labelX" [attr.y]="b.y - 3">{{ b.label }}</text>
+      }
+    }
+
+    <!-- functional elements, in their real coordinates -->
+    @for (b of elementBoxes; track b.title) {
+      <rect class="element" [attr.x]="b.x" [attr.y]="b.y"
+            [attr.width]="b.width" [attr.height]="b.height" [attr.fill]="b.fill">
+        <title>{{ b.title }}</title>
+      </rect>
+      @if (b.showLabel) {
+        <text class="element-label" [attr.x]="b.labelX"
+              [attr.y]="b.y + elementH - 4">{{ b.label }}</text>
+      }
+    }
+
+    <!-- position axis -->
+    <line class="axis" [attr.x1]="pad" [attr.x2]="view - pad"
+          [attr.y1]="axisY" [attr.y2]="axisY"></line>
+    @for (t of ticks; track t.label) {
+      <line class="axis" [attr.x1]="t.x" [attr.x2]="t.x"
+            [attr.y1]="axisY" [attr.y2]="axisY + 4"></line>
+      <text class="tick" [attr.x]="t.x" [attr.y]="axisY + 14">{{ t.label }}</text>
+    }
+  </svg>
+
+  <div class="legend">
+    <span class="key"><i class="swatch gene-swatch"></i>gene body</span>
+    @for (entry of legend; track entry.feature) {
+      <span class="key"><i class="swatch" [style.background]="entry.colour"></i>{{ entry.feature }}</span>
+    }
+    <span class="key"><i class="swatch dot sig"></i>significant variant</span>
+    <span class="key"><i class="swatch dot"></i>tested, not significant</span>
+  </div>
+
+  <p class="note">
+    Hover any block for its name and coordinates; click a variant to select it.
+    Blocks narrower than a pixel are drawn at minimum width, so a seven-base
+    heptamer is visible but its width is not to scale.
+    @if (annotationSource) { Annotation release {{ annotationSource }}. }
+  </p>
+
+  @if (!genesInWindow.length && annotated) {
+    <p class="note">No annotated gene falls in this window.</p>
+  }
+
+} @else {
+  <p class="qtl-status">Select a variant to see the region around it.</p>
+}
