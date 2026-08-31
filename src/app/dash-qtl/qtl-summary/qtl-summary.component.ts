@@ -179,6 +179,12 @@ export class QtlSummaryComponent implements OnChanges {
       }
     }
 
+    // A two-level axis only when there are two levels. Plotly draws group
+    // dividers for a multicategory axis - vertical rules hanging below the plot
+    // into the margin - and with a single locus they divide nothing and read as
+    // stray lines dropping off the chart.
+    const grouped = loci.length > 1;
+
     this.plotData = this.features.map(feature => {
       const values = columns.map(([locus, segment]) =>
         this.summary.rows.find((r: any) => r.locus === locus && r.segment === segment
@@ -186,7 +192,8 @@ export class QtlSummaryComponent implements OnChanges {
       return {
         type: 'bar',
         name: feature,
-        x: [columns.map(c => c[0]), columns.map(c => c[1])],
+        x: grouped ? [columns.map(c => c[0]), columns.map(c => c[1])]
+                   : columns.map(c => c[1]),
         y: values,
         text: values.map(v => v === null ? '' : String(v)),
         textposition: 'outside',
@@ -202,8 +209,9 @@ export class QtlSummaryComponent implements OnChanges {
       margin: { l: 70, r: 12, t: 26, b: 60 },
       barmode: 'group',
       // Plotly 3 drops a plain string title silently and draws nothing
-      xaxis: { type: 'multicategory',
-               title: { text: loci.length > 1 ? 'Locus and segment' : 'Segment' } },
+      xaxis: grouped
+        ? { type: 'multicategory', title: { text: 'Locus and segment' } }
+        : { type: 'category', title: { text: `Segment — ${loci[0] ?? ''}` } },
       yaxis: {
         title: { text: this.logScale ? 'Significant variants (log scale)'
                                      : 'Significant variants' },

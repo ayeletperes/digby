@@ -43,6 +43,13 @@
           <h3 class="rail-heading">Analysis</h3>
           <ul class="panel-list">
             <li>
+              <button type="button" class="panel-link" [class.on]="view === 'summary'"
+                      title="Every significant variant, by segment and location"
+                      (click)="showView('summary')">
+                <span class="panel-name">Summary of hits</span>
+              </button>
+            </li>
+            <li>
               <button type="button" class="panel-link" [class.on]="view === 'gene'"
                       title="Which variants explain a gene's usage"
                       (click)="showView('gene')">
@@ -61,13 +68,6 @@
                       title="Which partner a gene recombines with"
                       (click)="showView('pairing')">
                 <span class="panel-name">Gene pairing</span>
-              </button>
-            </li>
-            <li>
-              <button type="button" class="panel-link" [class.on]="view === 'summary'"
-                      title="Every significant variant, by segment and location"
-                      (click)="showView('summary')">
-                <span class="panel-name">Summary of hits</span>
               </button>
             </li>
           </ul>
