@@ -12,17 +12,6 @@
 
 @if (data) {
   <div class="sunburst">
-    <div class="head">
-      <h4>Locus map</h4>
-      <p class="caption">
-        Every allele in the locus, one ring per level: {{ levelPath }}. An arc is as wide as
-        the number of alleles beneath it. Click a ring to drill in, click it again to step
-        back out, click an allele to open it. Colour marks where you are, not what the data
-        says. This is the reference content of the whole locus, so the project and sample
-        filters do not change it.
-      </p>
-    </div>
-
     <nav class="trail" aria-label="Drill position">
       <button type="button" class="crumb" [class.current]="drilled === null"
               (click)="drillTo(null)">{{ data.label[0] }}</button>

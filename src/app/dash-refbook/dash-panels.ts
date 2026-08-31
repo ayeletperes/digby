@@ -66,6 +66,22 @@ export const DASH_PANELS: DashPanel[] = [
       .then(m => m.DashRefbookOverviewComponent),
   },
   {
+    id: 'sunburst',
+    group: 'Reference',
+    label: 'Locus map',
+    description: 'The whole locus at once: gene type, subgroup, gene and allele as nested rings.',
+    caption: 'Every allele in the locus, one ring per level: chain, gene type, subgroup, ' +
+             'gene, allele, from the centre out. An arc is as wide as the number of alleles ' +
+             'beneath it. Click a ring to drill in, click it again to step back out, click an ' +
+             'allele to open it. Colour marks where you are, not what the data says. This is ' +
+             'the reference content of the whole locus, so the gene, project and sample ' +
+             'filters do not change it.',
+    requires: [],
+    multi: true,
+    load: () => import('./dash-refbook-sunburst/dash-refbook-sunburst.component')
+      .then(m => m.DashRefbookSunburstComponent),
+  },
+  {
     id: 'names',
     group: 'Reference',
     label: 'Allele names',
@@ -95,6 +111,22 @@ export const DASH_PANELS: DashPanel[] = [
     multi: false,
     load: () => import('./dash-refbook-alignment/dash-refbook-alignment.component')
       .then(m => m.DashRefbookAlignmentComponent),
+  },
+  {
+    id: 'tree',
+    group: 'Reference',
+    label: 'Allele tree',
+    description: 'How the alleles of the gene relate to each other by sequence.',
+    caption: 'Clusters the alleles of the gene by how much their sequences differ, over the ' +
+             'IMGT-gapped positions that vary between them. Height is the distance at which ' +
+             'two branches join, so alleles joining low are near-identical. Alleles with ' +
+             'identical sequences over the compared positions are collapsed to one leaf and ' +
+             'listed together. The distance is computed on aligned positions only, never on ' +
+             'names.',
+    requires: [],
+    multi: false,
+    load: () => import('./dash-refbook-tree/dash-refbook-tree.component')
+      .then(m => m.DashRefbookTreeComponent),
   },
   {
     id: 'usage',
@@ -161,7 +193,7 @@ export function panelBlockedReason(
     }
   }
 
-  if (!ascCount) {
+  if (!panel.multi && !ascCount) {
     return 'Select a gene to see this panel.';
   }
 

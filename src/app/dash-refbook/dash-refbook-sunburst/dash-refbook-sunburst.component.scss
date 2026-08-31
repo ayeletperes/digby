@@ -10,18 +10,6 @@
   gap: 0.75rem;
 }
 
-.head h4 {
-  color: var(--vdj-ink);
-  margin-bottom: 0.25rem;
-}
-
-.caption {
-  color: var(--vdj-body);
-  font-size: 0.875rem;
-  max-width: 62ch;
-  margin: 0;
-}
-
 /* breadcrumb: the only keyboard route through the levels, so these are real buttons */
 .trail {
   display: flex;
@@ -70,10 +58,11 @@
 .readout .level { color: var(--vdj-muted); text-transform: lowercase; }
 
 svg {
-  /* height follows the square viewBox, so the panel grows with its container
-     rather than with a pixel size written here */
+  /* the viewBox is square, so width sets height too: at 100% of a wide pane the
+     figure runs past the fold and pushes the readout and legend off screen.
+     Capped against the viewport height instead, which is what has to hold it. */
   display: block;
-  width: 100%;
+  width: min(100%, 70vh, 900px);
   height: auto;
   align-self: center;
 }
