@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
@@ -62,7 +62,8 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
   /** The hover text for each node, rendered once per payload. */
   private detail: string[] = [];
 
-  constructor(private http: HttpClient, private drill: DashDrillService) {}
+  constructor(private http: HttpClient, private drill: DashDrillService,
+              private host: ElementRef<HTMLElement>) {}
 
   ngOnInit(): void {
     this.fetch();
@@ -194,17 +195,19 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
 
       if (this.plan.depth[i] === alleleDepth) {
         lines.push(`allele of ${label[parent[i]]}`, '');
-        lines.push(nG[i] && nA[i] ? 'Recorded in both databases'
-                  : nG[i] ? 'Recorded in genomic data only'
-                  : 'Recorded in AIRR-seq data only');
+        lines.push(nG[i] && nA[i] ? 'Held in both databases'
+                  : nG[i] ? 'Held in the genomic database only'
+                  : 'Held in the AIRR-seq database only');
         lines.push(novel[i] ? 'Not in the baseline reference set'
                             : 'In the baseline reference set');
       } else {
+        // every number here counts alleles, never samples or subjects, so each
+        // line says so: "in the genomic database: 1,023" reads as 1,023 people
         lines.push(this.levelOf(i), '');
-        lines.push(`${count(this.plan.value[i], 'allele')}, `
-                   + `${novel[i].toLocaleString()} not in the baseline reference`);
-        lines.push(`Recorded in genomic data: ${nG[i].toLocaleString()}`);
-        lines.push(`Recorded in AIRR-seq data: ${nA[i].toLocaleString()}`);
+        lines.push(`${count(this.plan.value[i], 'allele')} in total`);
+        lines.push(`${novel[i].toLocaleString()} of them not in the baseline reference set`);
+        lines.push(`${nG[i].toLocaleString()} of them held in the genomic database`);
+        lines.push(`${nA[i].toLocaleString()} of them held in the AIRR-seq database`);
       }
       return lines.join('<br>');
     });
@@ -244,6 +247,61 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
       // label too small to read - the hover still names it.
       uniformtext: { mode: 'hide', minsize: 9 },
     };
+  }
+
+  /**
+   * Put every label in the middle of its own arc.
+   *
+   * Plotly centres sunburst text on the largest rectangle that fits inside the
+   * arc, which for an arc this uneven is nowhere near its middle: the labels
+   * drift outward and to one side, differently for every arc. There is no
+   * setting for it, so this moves them afterwards.
+   *
+   * It uses Plotly's own geometry rather than recomputing any: each slice
+   * carries `pxmid`, the offset from the centre to its outer edge along its mid
+   * angle, and `rpx0`/`rpx1`, its radii. Scaling that offset to the mid radius
+   * lands on the middle of the arc, and it stays right through a drill because
+   * Plotly rewrites those values when it re-roots. Only the translate is
+   * touched; the rotation and the uniform scale are Plotly's.
+   *
+   * If the shape it reads is ever not there, it leaves every label alone.
+   */
+  centreLabels(): void {
+    const slices = this.host.nativeElement.querySelectorAll('.sunburstlayer .slice');
+    let centre: { x: number; y: number } = null;
+
+    slices.forEach(slice => {
+      const data = (slice as unknown as { __data__?: { rpx0?: number } }).__data__;
+      const path = slice.querySelector('path');
+      if (data && data.rpx0 === 0 && path) {
+        // the innermost node is a full disc, so its box is centred on the origin
+        const box = (path as SVGPathElement).getBBox();
+        centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+      }
+    });
+    if (!centre) {
+      return;
+    }
+
+    slices.forEach(slice => {
+      const data = (slice as unknown as {
+        __data__?: { rpx0?: number; rpx1?: number; pxmid?: number[] };
+      }).__data__;
+      const text = slice.querySelector('text');
+      if (!text || !data || !data.pxmid || !data.rpx1) {
+        return;
+      }
+
+      // the middle node has no meaningful angle: it is the centre
+      const scale = data.rpx0 ? (data.rpx0 + data.rpx1) / 2 / data.rpx1 : 0;
+      const x = centre.x + data.pxmid[0] * scale;
+      const y = centre.y + data.pxmid[1] * scale;
+
+      const rest = (text.getAttribute('transform') ?? '').replace(/^translate\([^)]*\)/, '');
+      text.setAttribute('transform', `translate(${x},${y})${rest}`);
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('dominant-baseline', 'central');
+    });
   }
 
   onPlotClick(event: { points?: { pointNumber?: number }[] }): void {

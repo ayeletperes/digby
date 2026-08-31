@@ -27,6 +27,7 @@
 
     <!-- a sunburst arc raises sunburstclick, not click: plotlyClick never fires here -->
     <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"
-                 (sunburstclick)="onPlotClick($event)"></plotly-plot>
+                 (sunburstclick)="onPlotClick($event)"
+                 (afterPlot)="centreLabels()"></plotly-plot>
   </div>
 }
