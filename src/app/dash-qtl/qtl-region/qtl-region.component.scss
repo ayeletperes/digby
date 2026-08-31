@@ -49,7 +49,10 @@
 /* the selected variant is the reason the panel is open, so it outranks colour */
 .mark.on { fill: var(--vdj-teal); opacity: 1; stroke: var(--vdj-ink); stroke-width: 1.2; }
 
-.gene { stroke: var(--vdj-teal-border); stroke-width: 0.5; }
+.gene { stroke: var(--vdj-teal-border); stroke-width: 0.5; cursor: pointer; }
+.gene.open, .gene-label.open { stroke: var(--vdj-ink); stroke-width: 1.1; }
+.gene-label { cursor: pointer; }
+.gene-label.open { fill: var(--vdj-teal); stroke: none; }
 .element { stroke: #fff; stroke-width: 0.4; }
 .gene:hover, .element:hover { stroke: var(--vdj-ink); stroke-width: 1; }
 
@@ -103,3 +106,10 @@
 }
 .detail-sub { font-size: 0.74rem; color: var(--vdj-muted); }
 .detail { width: 100%; height: auto; display: block; overflow: visible; }
+
+.detail-close {
+  border: 0; background: none; color: var(--vdj-muted); cursor: pointer;
+  font-size: 1rem; line-height: 1; padding: 0 0.2rem; margin-left: auto;
+}
+.detail-close:hover { color: #d62839; }
+.detail-hint { font-style: italic; }

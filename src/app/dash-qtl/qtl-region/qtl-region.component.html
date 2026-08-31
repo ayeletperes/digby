@@ -78,12 +78,16 @@
 
     <!-- genes -->
     @for (b of geneBoxes; track b.title) {
-      <rect class="gene" [attr.x]="b.x" [attr.y]="b.y"
-            [attr.width]="b.width" [attr.height]="b.height" [attr.fill]="b.fill">
-        <title>{{ b.title }}</title>
+      <rect class="gene" [class.open]="b.label === detailGene"
+            [attr.x]="b.x" [attr.y]="b.y"
+            [attr.width]="b.width" [attr.height]="b.height" [attr.fill]="b.fill"
+            (click)="showGene(b.label)">
+        <title>{{ b.title }}&#10;click for its structure</title>
       </rect>
       @if (b.showLabel) {
-        <text class="gene-label" [attr.x]="b.labelX" [attr.y]="b.y - 3">{{ b.label }}</text>
+        <text class="gene-label" [class.open]="b.label === detailGene"
+              [attr.x]="b.labelX" [attr.y]="b.y - 3"
+              (click)="showGene(b.label)">{{ b.label }}</text>
       }
     }
 
@@ -105,7 +109,8 @@
     @for (t of ticks; track t.label) {
       <line class="axis" [attr.x1]="t.x" [attr.x2]="t.x"
             [attr.y1]="axisY" [attr.y2]="axisY + 4"></line>
-      <text class="tick" [attr.x]="t.x" [attr.y]="axisY + 14">{{ t.label }}</text>
+      <text class="tick" [attr.x]="t.x" [attr.y]="axisY + 14"
+            [attr.text-anchor]="t.anchor">{{ t.label }}</text>
     }
 
     <!-- the range being dragged, drawn last so it sits over everything -->
@@ -129,6 +134,8 @@
           · the selected variant falls inside it
         }
       </span>
+      <button type="button" class="detail-close" (click)="closeGene()"
+              title="Close the gene model">×</button>
     </div>
 
     <svg class="detail" [class.busy]="isFetching"
@@ -169,13 +176,21 @@
       @for (t of detailTicks; track t.label) {
         <line class="axis" [attr.x1]="t.x" [attr.x2]="t.x"
               [attr.y1]="detailAxisY" [attr.y2]="detailAxisY + 4"></line>
-        <text class="tick" [attr.x]="t.x" [attr.y]="detailAxisY + 15">{{ t.label }}</text>
+        <text class="tick" [attr.x]="t.x" [attr.y]="detailAxisY + 15"
+              [attr.text-anchor]="t.anchor">{{ t.label }}</text>
       }
     </svg>
 
     @if (detailNote) {
       <p class="note warn">{{ detailNote }}</p>
     }
+  }
+
+  @if (!detailGene && genesInWindow.length) {
+    <p class="note detail-hint">
+      Click a gene above for its structure at its own scale — leader, coding, RSS
+      and UTR are sub-pixel at this width and only legible there.
+    </p>
   }
 
   <div class="legend">

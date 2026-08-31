@@ -123,6 +123,19 @@ interface Box {
   labelX: number;
 }
 
+/**
+ * An axis label, with where it hangs from its tick.
+ *
+ * The first and last labels are centred on ticks that sit on the very edge of
+ * the viewBox, so a centred anchor puts half of each outside it and the browser
+ * clips them. They anchor inward instead.
+ */
+interface Tick {
+  x: number;
+  label: string;
+  anchor: 'start' | 'middle' | 'end';
+}
+
 interface Mark {
   cx: number;
   cy: number;
@@ -160,6 +173,10 @@ export class QtlRegionComponent implements OnChanges {
    */
   private range: { start: number; end: number } | null = null;
 
+  /** Genes in the window, kept so a click can rebuild the detail without refetching. */
+  private windowGenes: RegionFeature[] = [];
+  private windowFeatures: RegionFeature[] = [];
+
   isFetching = false;
   error: string | null = null;
 
@@ -175,17 +192,25 @@ export class QtlRegionComponent implements OnChanges {
   geneBoxes: Box[] = [];
   elementBoxes: Box[] = [];
   marks: Mark[] = [];
-  ticks: { x: number; label: string }[] = [];
+  ticks: Tick[] = [];
   thresholdY: number | null = null;
   yTicks: { y: number; label: string }[] = [];
 
   // ------------------------------------------------------------ gene detail
+  /**
+   * The gene whose structure is drawn below, or null.
+   *
+   * Nothing until a gene is clicked. It used to open on whichever gene was
+   * nearest the variant, which for an intergenic hit is a gene several kb away -
+   * a zoomed model of something nobody asked about, presented as though it were
+   * the subject.
+   */
   detailGene: string | null = null;
   detailStart = 0;
   detailEnd = 0;
   detailBoxes: Box[] = [];
   detailGeneBox: Box | null = null;
-  detailTicks: { x: number; label: string }[] = [];
+  detailTicks: Tick[] = [];
   /** Where the selected variant sits in the detail, or null if it is outside. */
   detailVariantX: number | null = null;
   detailNote: string | null = null;
@@ -301,6 +326,8 @@ export class QtlRegionComponent implements OnChanges {
     this.genesInWindow = [];
     this.variantCount = 0;
     this.detailGene = null;
+    this.windowGenes = [];
+    this.windowFeatures = [];
     this.detailBoxes = [];
     this.detailGeneBox = null;
     this.detailTicks = [];
@@ -377,20 +404,41 @@ export class QtlRegionComponent implements OnChanges {
     const step = (this.end - this.start) / 4;
     this.ticks = [0, 1, 2, 3, 4].map(i => {
       const pos = Math.round(this.start + i * step);
-      return { x: this.x(pos), label: kb(pos) };
+      return { x: this.x(pos), label: kb(pos), anchor: anchorFor(i, 4) };
     });
 
-    this.buildDetail(genes, features);
+    this.windowGenes = genes;
+    this.windowFeatures = features;
+    // a gene that has left the window cannot keep its detail row open
+    if (this.detailGene && !genes.some(g => g.name === this.detailGene)) {
+      this.detailGene = null;
+    }
+    this.buildDetail();
+  }
+
+  /** Open, close or swap the gene whose structure is drawn. */
+  showGene(name: string): void {
+    if (this.dragged) {
+      return;                       // a drag that ends on a gene is a zoom
+    }
+    this.detailGene = this.detailGene === name ? null : name;
+    this.buildDetail();
+  }
+
+  closeGene(): void {
+    this.detailGene = null;
+    this.buildDetail();
   }
 
   /**
    * One gene drawn to its own scale, which is the only scale its parts survive.
    *
-   * The gene the variant sits in, or failing that the nearest one in the window:
-   * an intergenic variant is still asking "near what?", and the answer is the
-   * gene it is nearest to - the same gene the association panel names it against.
+   * Only the gene that was asked for. Which gene is worth looking at is the
+   * reader's call: a variant inside a gene and a variant 6 kb from one are
+   * different questions, and guessing the second wrongly fills the panel with a
+   * gene model nobody wanted.
    */
-  private buildDetail(genes: RegionFeature[], features: RegionFeature[]): void {
+  private buildDetail(): void {
     this.detailBoxes = [];
     this.detailGeneBox = null;
     this.detailTicks = [];
@@ -398,22 +446,19 @@ export class QtlRegionComponent implements OnChanges {
     this.detailNote = null;
     this.detailDistance = 0;
 
-    const gap = (g: RegionFeature) => this.centre < g.start ? g.start - this.centre
-                                    : this.centre > g.end ? this.centre - g.end : 0;
-    const nearest = genes.reduce<RegionFeature | null>(
-      (best, g) => best === null || gap(g) < gap(best) ? g : best, null);
-
-    this.detailGene = nearest?.name ?? null;
-    if (!nearest) {
+    const gene = this.windowGenes.find(g => g.name === this.detailGene);
+    if (!gene) {
       return;
     }
-    this.detailDistance = gap(nearest);
 
-    const own = features.filter(f => f.name === nearest.name);
+    this.detailDistance = this.centre < gene.start ? gene.start - this.centre
+                        : this.centre > gene.end ? this.centre - gene.end : 0;
+
+    const own = this.windowFeatures.filter(f => f.name === gene.name);
     // the gene together with its parts: an RSS sits outside the gene body, so the
     // span has to be the union or the heptamer falls off its own detail view
-    const lo = Math.min(nearest.start, ...own.map(f => f.start));
-    const hi = Math.max(nearest.end, ...own.map(f => f.end));
+    const lo = Math.min(gene.start, ...own.map(f => f.start));
+    const hi = Math.max(gene.end, ...own.map(f => f.end));
     const margin = Math.max(20, Math.round((hi - lo) * 0.08));
     this.detailStart = lo - margin;
     this.detailEnd = hi + margin;
@@ -428,10 +473,10 @@ export class QtlRegionComponent implements OnChanges {
                showLabel: width > label.length * 4.2, labelX: left + width / 2 };
     };
 
-    this.detailGeneBox = detailBox(nearest, DETAIL_GENE_Y, DETAIL_GENE_H,
-      FEATURE_COLOUR['gene'], nearest.name,
-      `${nearest.name}\n${fmt(nearest.start)}–${fmt(nearest.end)}  ` +
-      `(${fmt(nearest.end - nearest.start + 1)} bp)`);
+    this.detailGeneBox = detailBox(gene, DETAIL_GENE_Y, DETAIL_GENE_H,
+      FEATURE_COLOUR['gene'], gene.name,
+      `${gene.name}\n${fmt(gene.start)}–${fmt(gene.end)}  ` +
+      `(${fmt(gene.end - gene.start + 1)} bp)`);
 
     this.detailBoxes = own.map(f => detailBox(f, DETAIL_ELEMENT_Y, DETAIL_ELEMENT_H,
       FEATURE_COLOUR[f.feature] ?? FEATURE_COLOUR['utr'],
@@ -446,7 +491,7 @@ export class QtlRegionComponent implements OnChanges {
     const step = (this.detailEnd - this.detailStart) / 4;
     this.detailTicks = [0, 1, 2, 3, 4].map(i => {
       const pos = Math.round(this.detailStart + i * step);
-      return { x: at(pos), label: fmt(pos) };
+      return { x: at(pos), label: fmt(pos), anchor: anchorFor(i, 4) };
     });
 
     if (!own.length && this.annotated) {
@@ -454,7 +499,7 @@ export class QtlRegionComponent implements OnChanges {
       // the very edge can arrive without its parts. Said out loud, because an
       // empty detail row otherwise reads as "this gene has no annotated
       // structure", which is a different claim entirely.
-      this.detailNote = `No annotated parts of ${nearest.name} fall inside the `
+      this.detailNote = `No annotated parts of ${gene.name} fall inside the `
         + 'drawn window; widen it to see its structure.';
     }
   }
@@ -581,6 +626,11 @@ function describe(v: RegionVariant): string {
   }
   const kind = FEATURE_LABEL[v.sub_feature ?? ''] ?? v.feature ?? '';
   return `${kind} · ${v.gene}`;
+}
+
+/** Centre a label unless it is the first or last, which would overhang. */
+function anchorFor(index: number, last: number): 'start' | 'middle' | 'end' {
+  return index === 0 ? 'start' : index === last ? 'end' : 'middle';
 }
 
 function fmt(value: number): string {
