@@ -52,7 +52,7 @@ export class DashQtlComponent implements OnInit, OnDestroy {
    * searched - and that control lives in the tab rather than in the rail, so
    * there is exactly one place to make a choice at any moment.
    */
-  view: 'gene' | 'variant' | 'pairing' | 'summary' = 'gene';
+  view: 'gene' | 'variant' | 'pairing' | 'summary' = 'summary';
 
   /**
    * The other half of the pair being plotted, or absent when nothing is.
@@ -119,6 +119,38 @@ export class DashQtlComponent implements OnInit, OnDestroy {
                                       || b.best_neglog10_p - a.best_neglog10_p);
   }
 
+  /** Narrow the gene list by segment, by typed name, or both. */
+  ascSegment = '';
+  ascFilter = '';
+
+  /** Segments this locus actually scanned - IGH has three, the light chains two. */
+  get segmentsPresent(): string[] {
+    const order = ['V', 'D', 'J', 'C'];
+    const present = new Set(this.ascs.map(a => a.segment));
+    return order.filter(s => present.has(s))
+      .concat([...present].filter(s => !order.includes(s)).sort());
+  }
+
+  /**
+   * The gene list after the filters.
+   *
+   * Matched against the name as typed *and* as displayed: IGH's D clusters are
+   * stored `IGHD5-12` and the light chains' bare `V9-49`, so someone typing
+   * "IGHV3" or "V3" should find the same gene either way.
+   */
+  get filteredAscs(): QtlAsc[] {
+    const q = this.ascFilter.trim().toUpperCase();
+    return this.rankedAscs.filter(a =>
+      (!this.ascSegment || a.segment === this.ascSegment)
+      && (!q || a.asc.toUpperCase().includes(q)
+             || ascDisplayName(this.selection.locus, a.asc).toUpperCase().includes(q)));
+  }
+
+  /** A segment chip is a toggle, so clicking the open one clears the filter. */
+  toggleSegment(segment: string): void {
+    this.ascSegment = this.ascSegment === segment ? '' : segment;
+  }
+
   onSpeciesChange(): void {
     this.selection = { ...this.selection, locus: this.lociFor(this.selection.species)[0],
                        asc: undefined, variant: undefined };
@@ -127,6 +159,8 @@ export class DashQtlComponent implements OnInit, OnDestroy {
 
   onLocusChange(): void {
     // an ASC belongs to a locus, and so does a variant
+    this.ascSegment = '';
+    this.ascFilter = '';
     this.selection = { ...this.selection, asc: undefined, variant: undefined };
     this.loadAscs();
   }
@@ -180,6 +214,25 @@ export class DashQtlComponent implements OnInit, OnDestroy {
     } else {
       this.selection = { ...this.selection, variant };
     }
+    this.writeToUrl();
+  }
+
+  /**
+   * The locus-wide scan used as a variant picker in the variant tab.
+   *
+   * Deliberately without an ASC, so every point is a variant's strongest result
+   * across every gene - which is the right summary when the question is "which
+   * variant", not "which variant for this gene". A stored field for the same
+   * reason as `plotSelection`: a getter would hand the child a new object on
+   * every change-detection pass and it would refetch forever.
+   */
+  variantPickerSelection: QtlSelection = {};
+
+  /** A point on that map becomes the variant tab's subject. */
+  onVariantMapPick(event: { variant: string; asc?: string }): void {
+    this.selection = { ...this.selection, variant: event.variant };
+    this.plot = undefined;
+    this.pointAsc = undefined;
     this.writeToUrl();
   }
 
@@ -279,6 +332,13 @@ export class DashQtlComponent implements OnInit, OnDestroy {
     if (now.species !== next.species || now.locus !== next.locus
         || now.asc !== next.asc || now.variant !== next.variant) {
       this.plotSelection = next;
+    }
+
+    const picker = this.variantPickerSelection;
+    if (picker.species !== this.selection.species
+        || picker.locus !== this.selection.locus) {
+      this.variantPickerSelection = { species: this.selection.species,
+                                      locus: this.selection.locus };
     }
   }
 
@@ -401,7 +461,7 @@ export class DashQtlComponent implements OnInit, OnDestroy {
         locus: this.selection.locus ?? null,
         asc: this.selection.asc ?? null,
         variant: this.selection.variant ?? null,
-        view: this.view === 'gene' ? null : this.view,
+        view: this.view === 'summary' ? null : this.view,
         plot: this.plot ?? null,
       },
       queryParamsHandling: 'merge',
@@ -411,9 +471,10 @@ export class DashQtlComponent implements OnInit, OnDestroy {
 
   private restoreFromUrl(): void {
     const params = this.route.snapshot.queryParamMap;
+    // the summary is the landing view, so it is the one the URL leaves unsaid
     const asked = params.get('view');
-    this.view = asked === 'variant' || asked === 'pairing' || asked === 'summary'
-      ? asked : 'gene';
+    this.view = asked === 'variant' || asked === 'pairing' || asked === 'gene'
+      ? asked : 'summary';
     this.plot = params.get('plot') ?? undefined;
     this.selection = {
       species: params.get('species') ?? undefined,

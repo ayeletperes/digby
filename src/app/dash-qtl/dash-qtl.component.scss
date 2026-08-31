@@ -108,3 +108,13 @@
 }
 
 .rail-section.hidden { display: none; }
+
+.segment-chips { display: flex; gap: 0.25rem; margin-bottom: 0.35rem; flex-wrap: wrap; }
+.segment-chip {
+  font-size: 0.72rem; padding: 0.05rem 0.45rem; border-radius: 10px;
+  border: 1px solid #dadce0; background: #fff; color: #5f6368; cursor: pointer;
+}
+.segment-chip:hover { border-color: var(--vdj-teal); }
+.segment-chip.on { background: var(--vdj-teal); border-color: var(--vdj-teal); color: #fff; }
+.segment-chip.clear { font-style: italic; }
+.asc-filter { margin-bottom: 0.35rem; }

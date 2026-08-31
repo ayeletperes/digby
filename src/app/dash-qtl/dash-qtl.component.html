@@ -80,16 +80,48 @@
                  [class.hidden]="view === 'pairing' || view === 'summary'">
           @if (view === 'gene') {
             <h3 class="rail-heading">Gene</h3>
+
+            <!-- IGH scans 70 genes across three segments, which is more than a
+                 bare dropdown can be read through. Segment first, then type. -->
+            @if (segmentsPresent.length > 1) {
+              <div class="segment-chips">
+                @for (seg of segmentsPresent; track seg) {
+                  <button type="button" class="segment-chip"
+                          [class.on]="ascSegment === seg"
+                          (click)="toggleSegment(seg)"
+                          [title]="'Only ' + seg + ' genes'">{{ seg }}</button>
+                }
+                @if (ascSegment) {
+                  <button type="button" class="segment-chip clear"
+                          (click)="ascSegment = ''">all</button>
+                }
+              </div>
+            }
+
+            <input class="form-control form-control-sm asc-filter" type="text"
+                   [(ngModel)]="ascFilter" [disabled]="!ascs.length"
+                   placeholder="type a gene name…" />
+
             <select class="form-select form-select-sm" id="qtlAsc"
                     [(ngModel)]="selection.asc" (ngModelChange)="onAscChange()"
-                    [disabled]="!ascs.length">
+                    [disabled]="!ascs.length" [size]="filteredAscs.length > 8 ? 10 : 0">
               <option [ngValue]="undefined">All genes — best per variant</option>
-              @for (a of rankedAscs; track a.asc) {
+              @for (a of filteredAscs; track a.asc) {
                 <option [ngValue]="a.asc">
                   {{ ascName(selection.locus, a.asc) }} — {{ a.n_significant }} significant
                 </option>
               }
             </select>
+            @if (ascs.length && !filteredAscs.length) {
+              <p class="rail-note">
+                No gene matches{{ ascFilter ? ' “' + ascFilter + '”' : '' }}{{
+                  ascSegment ? ' in segment ' + ascSegment : '' }}.
+              </p>
+            } @else if (filteredAscs.length < ascs.length) {
+              <p class="rail-note">
+                {{ filteredAscs.length }} of {{ ascs.length }} genes shown.
+              </p>
+            }
           } @else {
             <h3 class="rail-heading">Variant</h3>
             <app-qtl-search [species]="selection.species" kind="variant"
@@ -147,10 +179,18 @@
                                 (drill)="onLookupDrill($event)">
         </app-qtl-variant-lookup>
       } @else {
+        <!-- The whole locus as the picker. Typing an id assumes you already have
+             one; this is every variant the scan tested, so one can be chosen by
+             where it sits and how strong it is rather than by name. -->
         <p class="qtl-status">
-          Enter a variant id in the sidebar to see which genes' usage it explains.
-          Only variants the scan actually tested are held.
+          Click any point below to open that variant, or type an id in the
+          sidebar. Each point is a variant's strongest result across every gene
+          in {{ selection.locus }} — only variants the scan actually tested are
+          held.
         </p>
+        <app-qtl-manhattan [selection]="variantPickerSelection"
+                           (variantPicked)="onVariantMapPick($event)">
+        </app-qtl-manhattan>
       }
     } @else {
       <app-qtl-manhattan [selection]="selection"
