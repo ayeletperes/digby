@@ -388,7 +388,10 @@ export class QtlRegionComponent implements OnChanges {
     this.marks = variants.map(v => ({
       cx: this.x(v.pos),
       cy: y(v.neglog10_p),
-      r: v.selected ? Math.max(5.5, r * 1.8) : v.significant ? Math.max(2.4, r) : r,
+      // a fixed 5.5 made the selected mark three times the radius of its
+      // neighbours in a crowded window - a blob, not a mark. It grows with the
+      // rest instead, enough to find and not enough to hide what is under it.
+      r: v.selected ? r + 1.8 : v.significant ? Math.max(2.4, r) : r,
       variant: v.variant,
       significant: v.significant,
       selected: v.selected,

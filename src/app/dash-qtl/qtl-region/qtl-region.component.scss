@@ -47,7 +47,13 @@
 .mark:hover { opacity: 1; }
 .mark.sig { fill: #d62839; opacity: 0.8; }
 /* the selected variant is the reason the panel is open, so it outranks colour */
-.mark.on { fill: var(--vdj-teal); opacity: 1; stroke: var(--vdj-ink); stroke-width: 1.2; }
+/* Selection is not a data class, so it is not given a data colour. It used to be
+   `--vdj-teal`, which is also the fill for coding sequence - the one mark that
+   must be unambiguous was drawn in the palette's busiest colour. A hollow ring
+   cannot collide with any feature or significance colour. */
+.mark.on {
+  fill: #fff; opacity: 1; stroke: var(--vdj-ink); stroke-width: 1.6;
+}
 
 .gene { stroke: var(--vdj-teal-border); stroke-width: 0.5; cursor: pointer; }
 .gene.open, .gene-label.open { stroke: var(--vdj-ink); stroke-width: 1.1; }
@@ -75,6 +81,7 @@
 .swatch.gene-swatch { background: #c8d5d4; }
 .swatch.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--vdj-muted); }
 .swatch.dot.sig { background: #d62839; }
+.swatch.dot.on { background: #fff; border: 1.5px solid var(--vdj-ink); }
 .swatch.line {
   width: 14px; height: 0; border: 0; border-top: 1px dashed #d62839;
   border-radius: 0; background: none;
