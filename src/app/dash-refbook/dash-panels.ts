@@ -75,8 +75,8 @@ export const DASH_PANELS: DashPanel[] = [
              'beneath it. Click a ring to drill in, click it again to step back out, click an ' +
              'allele to open it. Colour marks where you are, not what the data says. This is ' +
              'the reference content of the whole locus: every allele either database ' +
-             'holds, whichever filters are set. Drilled to a gene, it offers a link ' +
-             'that selects the gene and opens it in the gene-level panels.',
+             'holds, whichever filters are set. Drilled to a gene, it offers a way ' +
+             'to go on and explore that gene in the gene-level panels.',
     requires: [],
     multi: true,
     load: () => import('./dash-refbook-sunburst/dash-refbook-sunburst.component')
