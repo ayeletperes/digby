@@ -10,6 +10,7 @@ import { QtlManhattanComponent } from './qtl-manhattan/qtl-manhattan.component';
 import { QtlVariantComponent } from './qtl-variant/qtl-variant.component';
 import { QtlSearchComponent } from './qtl-search/qtl-search.component';
 import { QtlVariantLookupComponent } from './qtl-variant-lookup/qtl-variant-lookup.component';
+import { QtlRegionComponent } from './qtl-region/qtl-region.component';
 import { QtlAsc, QtlSelection } from '../shared/models/qtl-selection.model';
 
 /**
@@ -26,7 +27,7 @@ import { QtlAsc, QtlSelection } from '../shared/models/qtl-selection.model';
   styleUrls: ['./dash-qtl.component.scss'],
   standalone: true,
   imports: [CommonModule, FormsModule, QtlManhattanComponent, QtlVariantComponent,
-            QtlSearchComponent, QtlVariantLookupComponent],
+            QtlSearchComponent, QtlVariantLookupComponent, QtlRegionComponent],
 })
 export class DashQtlComponent implements OnInit, OnDestroy {
   selection: QtlSelection = {};
@@ -154,6 +155,23 @@ export class DashQtlComponent implements OnInit, OnDestroy {
     this.pointAsc = event.asc;
     if (!this.selection.asc && event.asc) {
       this.selection = { ...this.selection, asc: event.asc };
+    }
+    this.writeToUrl();
+  }
+
+  /**
+   * A neighbour in the region track becomes the variant on screen.
+   *
+   * Which field it lands in depends on the tab. The gene tab holds a gene and
+   * plots a variant against it, so the new variant is `plot`; the variant tab
+   * holds the variant itself, so it is `selection.variant` and whatever gene was
+   * being plotted stays. Either way the pair keeps the half that was not clicked.
+   */
+  onRegionVariant(variant: string): void {
+    if (this.view === 'gene') {
+      this.plot = variant;
+    } else {
+      this.selection = { ...this.selection, variant };
     }
     this.writeToUrl();
   }

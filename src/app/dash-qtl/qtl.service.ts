@@ -62,6 +62,23 @@ export class QtlService {
     return this.http.get<any>(`${this.base}/search/${enc(species)}`, { params });
   }
 
+  /**
+   * The annotated neighbourhood of one variant.
+   *
+   * `asc` narrows the neighbouring variants to one scan; without it each is
+   * drawn at its own strongest result, which is the only honest summary when no
+   * single gene has been chosen.
+   */
+  region(species: string, locus: string, variant: string,
+         window: number, asc?: string): Observable<any> {
+    let params = new HttpParams().set('window', String(window));
+    if (asc) {
+      params = params.set('asc', asc);
+    }
+    return this.http.get<any>(
+      `${this.base}/region/${enc(species)}/${enc(locus)}/${enc(variant)}`, { params });
+  }
+
   variantUsage(species: string, locus: string, variant: string, asc: string): Observable<any> {
     return this.http.get<any>(
       `${this.base}/variant_usage/${enc(species)}/${enc(locus)}/${enc(variant)}`,

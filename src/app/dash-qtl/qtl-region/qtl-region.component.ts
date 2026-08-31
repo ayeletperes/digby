@@ -1,10 +1,9 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { EMPTY } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-import { environment } from '../../../environments/environment';
+import { QtlService } from '../qtl.service';
 import { QtlSelection, QtlThreshold, usageThreshold } from '../../shared/models/qtl-selection.model';
 
 /**
@@ -165,7 +164,7 @@ export class QtlRegionComponent implements OnChanges {
     return this.selection?.asc ?? this.fallbackAsc;
   }
 
-  constructor(private http: HttpClient) {}
+  constructor(private qtl: QtlService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['selection'] || changes['fallbackAsc']) {
@@ -185,17 +184,10 @@ export class QtlRegionComponent implements OnChanges {
       return;
     }
 
-    let params = new HttpParams().set('window', String(this.window));
-    if (this.plottedAsc) {
-      params = params.set('asc', this.plottedAsc);
-    }
-
     this.isFetching = true;
     this.error = null;
 
-    this.http
-      .get<any>(`${environment.apiBasePath}/qtl/region/` +
-                `${enc(species)}/${enc(locus)}/${enc(variant)}`, { params })
+    this.qtl.region(species, locus, variant, this.window, this.plottedAsc)
       .pipe(catchError(err => {
         this.error = err?.error?.message ?? err?.message ?? 'Could not load this region';
         this.isFetching = false;
@@ -344,6 +336,3 @@ function kb(pos: number): string {
   return `${(pos / 1000).toFixed(pos > 1e6 ? 0 : 1)} kb`;
 }
 
-function enc(value: string): string {
-  return encodeURIComponent(String(value));
-}

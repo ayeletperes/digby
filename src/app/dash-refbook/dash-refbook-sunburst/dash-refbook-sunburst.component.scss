@@ -55,3 +55,19 @@
 
 .reset:hover { border-color: var(--vdj-teal); color: var(--vdj-teal-dark); }
 .reset:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 1px; }
+
+/* the way out of the map and into the gene-level panels */
+.open-gene {
+  margin-left: auto;
+  border: 1px solid var(--vdj-teal);
+  background: var(--vdj-teal);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.1rem 0.8rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.open-gene:hover { background: var(--vdj-teal-dark); border-color: var(--vdj-teal-dark); }
+.open-gene:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 2px; }

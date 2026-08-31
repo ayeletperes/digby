@@ -1,13 +1,13 @@
 import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { PlotlyModule } from 'angular-plotly.js';
 
 import { environment } from '../../../environments/environment';
 import { retryWithBackoff } from '../../shared/retry_with_backoff';
-import { SpeciesGeneSelection, sourcesParam } from '../../shared/models/species-gene-selection.model';
+import { SpeciesGeneSelection } from '../../shared/models/species-gene-selection.model';
 import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { fills, layout, SunburstLayout, SunburstPayload } from './sunburst-layout';
@@ -80,7 +80,9 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
   }
 
   private key(selection: SpeciesGeneSelection): string {
-    return [selection?.species, selection?.chain, sourcesParam(selection ?? {})].join('|');
+    // no sources: the map draws every allele the locus has in either database,
+    // so the Data toggle does not change it
+    return [selection?.species, selection?.chain].join('|');
   }
 
   private fetch(): void {
@@ -92,19 +94,13 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
       return;
     }
 
-    let params = new HttpParams();
-    const sources = sourcesParam(this.selection);
-    if (sources) {
-      params = params.set('sources', sources);
-    }
-
     this.isFetching = true;
     this.error = null;
 
     const url = `${environment.apiBasePath}/refbook/sunburst/`
       + `${encodeURIComponent(species)}/${encodeURIComponent(locus)}`;
 
-    this.http.get<SunburstPayload>(url, { params })
+    this.http.get<SunburstPayload>(url)
       .pipe(
         retryWithBackoff(),
         catchError(err => {
@@ -322,6 +318,27 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
     this.drilled = i === this.drilled ? (this.data.parent[i] || null) : i;
     this.centre = this.drilled ?? 0;
     this.draw();
+  }
+
+  /**
+   * The gene the map is drilled to, if it is drilled to one.
+   *
+   * Only the gene ring: a subgroup is not something the other panels take, and
+   * an allele already opens its own panel on click.
+   */
+  get drilledGene(): string {
+    if (this.drilled === null || !this.data) {
+      return null;
+    }
+    const geneDepth = this.data.levels.length - 2;
+    return this.plan.depth[this.drilled] === geneDepth ? this.data.label[this.drilled] : null;
+  }
+
+  /** Hand the drilled gene to the dashboard, which selects it and opens it. */
+  openGene(): void {
+    if (this.drilledGene) {
+      this.drill.drill('gene', this.drilledGene);
+    }
   }
 
   resetView(): void {

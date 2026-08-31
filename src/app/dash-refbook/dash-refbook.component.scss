@@ -153,6 +153,7 @@
 /* a control that still works but does not reach the open panel: dimmed so the
    eye skips it, labelled so it is not a mystery */
 .rail-section.not-applied,
+.source-toggle.not-applied,
 .rail-label.not-applied { opacity: 0.55; }
 
 .scoped-tag {

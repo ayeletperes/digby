@@ -97,3 +97,12 @@
   position: static; box-shadow: none; margin-top: 0.35rem;
 }
 .qtl-rail ::ng-deep .qtl-search .hits { max-height: 16rem; }
+
+.region-panel {
+  margin-top: 1rem; border: 1px solid #e8eaed; border-radius: 8px;
+  padding: 0.8rem 0.9rem; background: #fff; min-width: 0;
+}
+.region-panel h4 {
+  margin: 0 0 0.5rem; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: #5f6368;
+}

@@ -104,8 +104,15 @@
     Hover any block for its name and coordinates; click a variant to select it.
     Blocks narrower than a pixel are drawn at minimum width, so a seven-base
     heptamer is visible but its width is not to scale.
-    @if (annotationSource) { Annotation release {{ annotationSource }}. }
+    @if (annotationSource) { Annotated against {{ annotationSource }}. }
   </p>
+
+  @if (annotated && !annotationSource) {
+    <p class="note warn">
+      The annotation in use does not state its release. Feature calls are only
+      comparable to the scan if it is the release the scan was run against.
+    </p>
+  }
 
   @if (!genesInWindow.length && annotated) {
     <p class="note">No annotated gene falls in this window.</p>

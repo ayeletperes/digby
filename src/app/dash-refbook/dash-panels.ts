@@ -74,8 +74,9 @@ export const DASH_PANELS: DashPanel[] = [
              'gene, allele, from the centre out. An arc is as wide as the number of alleles ' +
              'beneath it. Click a ring to drill in, click it again to step back out, click an ' +
              'allele to open it. Colour marks where you are, not what the data says. This is ' +
-             'the reference content of the whole locus, so the gene, project and sample ' +
-             'filters do not change it.',
+             'the reference content of the whole locus: every allele either database ' +
+             'holds, whichever filters are set. Drilled to a gene, it offers a link ' +
+             'that selects the gene and opens it in the gene-level panels.',
     requires: [],
     multi: true,
     load: () => import('./dash-refbook-sunburst/dash-refbook-sunburst.component')

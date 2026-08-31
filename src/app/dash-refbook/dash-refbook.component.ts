@@ -318,8 +318,16 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
       }
 
     } else if (event.kind === 'gene') {
-      // zoom from comparing several genes to studying one
+      // a locus-wide panel has no gene scope of its own, so a gene arriving from
+      // one means "take me to this gene" - select it and open a panel that
+      // shows a gene. From a gene-level panel it only narrows the selection.
+      const fromLocusWide = this.activePanel?.multi;
       this.applyAscs([event.value], true);
+      if (fromLocusWide) {
+        this.selectedAlleles = [];
+        this.activePanelId = 'overview';
+        this.applySampleFilters();
+      }
     }
   }
 

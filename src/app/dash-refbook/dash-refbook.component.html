@@ -29,8 +29,11 @@
             }
           </select>
 
-          <label class="rail-label">Data</label>
-          <div class="source-toggle" role="group">
+          <label class="rail-label" [class.not-applied]="railScoped">
+            Data
+            @if (railScoped) { <span class="scoped-tag">{{ scopedNote }}</span> }
+          </label>
+          <div class="source-toggle" role="group" [class.not-applied]="railScoped">
             @for (source of dataSources; track source) {
               <button type="button" class="source-button"
                       [class.on]="isSourceOn(source)"

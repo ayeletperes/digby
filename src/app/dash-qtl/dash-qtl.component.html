@@ -134,5 +134,20 @@
                          (variantPicked)="onVariantPicked($event)">
       </app-qtl-manhattan>
     }
+
+    <!-- Wherever a variant is on screen, what it actually is. Not a third tab:
+         the association names a variant, this says what the variant sits in, so
+         it belongs under whichever view named it. `plotSelection` already carries
+         the variant in both tabs - the gene tab's plotted one, the variant tab's
+         own subject - and its `asc` is undefined when no single gene is chosen,
+         which is exactly when the track should fall back to the best per variant. -->
+    @if (!error && plotSelection.variant) {
+      <section class="region-panel">
+        <h4>Around {{ plotSelection.variant }}</h4>
+        <app-qtl-region [selection]="plotSelection" [fallbackAsc]="pointAsc"
+                        (variantPicked)="onRegionVariant($event)">
+        </app-qtl-region>
+      </section>
+    }
   </main>
 </div>
