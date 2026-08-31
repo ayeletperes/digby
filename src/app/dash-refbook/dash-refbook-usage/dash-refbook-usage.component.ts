@@ -10,13 +10,14 @@ import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { PlotlyModule } from 'angular-plotly.js';
 import { UsageData } from './dash-refbook-usage.model';
+import { PlotExportComponent } from '../plot-export/plot-export.component';
 
 @Component({
   selector: 'app-dash-refbook-usage',
   templateUrl: './dash-refbook-usage.component.html',
   styleUrls: ['./dash-refbook-usage.component.css'],
   standalone: true,
-  imports: [PlotlyModule, ScopeNoteComponent],
+  imports: [PlotlyModule, ScopeNoteComponent, PlotExportComponent],
 })
 
 export class DashRefbookUsageComponent implements OnInit, OnChanges {

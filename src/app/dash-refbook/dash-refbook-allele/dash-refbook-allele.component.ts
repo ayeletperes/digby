@@ -15,6 +15,7 @@ import {
 } from '../../shared/models/species-gene-selection.model';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
+import { PlotExportComponent } from '../plot-export/plot-export.component';
 
 interface Partner {
   name: string;
@@ -54,7 +55,7 @@ const SET_CHART_SHARE = 0.18;
   templateUrl: './dash-refbook-allele.component.html',
   styleUrls: ['./dash-refbook-allele.component.scss'],
   standalone: true,
-  imports: [CommonModule, PlotlyModule, ScopeNoteComponent],
+  imports: [CommonModule, PlotlyModule, ScopeNoteComponent, PlotExportComponent],
 })
 export class DashRefbookAlleleComponent
   implements OnInit, OnChanges, AfterViewInit, OnDestroy {

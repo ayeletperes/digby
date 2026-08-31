@@ -62,6 +62,11 @@
             in <span class="n">{{ usageCount }}</span> samples
           </p>
           <plotly-plot [data]="usagePlot" [layout]="usageLayout" [config]="plotConfig"></plotly-plot>
+          <app-plot-export [data]="usagePlot" [layout]="usageLayout"
+                           [name]="allele + '_usage_by_project'"
+                           [title]="'Relative usage of ' + allele + ' by project'"
+                           [source]="'/api/refbook/asc_usage/' + selection.species + '/'
+                                     + selection.chain + '/' + selection.asc"></app-plot-export>
           <p class="note">Share of repertoire per sample, split by project.</p>
         } @else {
           <p class="note">No AIRR-seq usage for this allele under the current filters.</p>
@@ -77,6 +82,11 @@
           </ul>
           @if (carrierProjects.length) {
             <plotly-plot [data]="carrierPlot" [layout]="carrierLayout" [config]="plotConfig"></plotly-plot>
+            <app-plot-export [data]="carrierPlot" [layout]="carrierLayout"
+                             [name]="allele + '_carriers_by_project'"
+                             [title]="'Samples carrying ' + allele + ', by project'"
+                             [source]="'/api/refbook/ascs_overview/' + selection.species + '/'
+                                       + selection.chain + '/' + selection.asc"></app-plot-export>
             <p class="note">
               Samples carrying it, by project and database. Hover for the share of the
               project. A database with no bar for a project does not hold that project.

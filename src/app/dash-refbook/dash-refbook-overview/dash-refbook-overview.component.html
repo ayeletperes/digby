@@ -82,6 +82,11 @@
             <div class="drill-chart">
               <plotly-plot [data]="projectData" [layout]="projectLayout"
                            [config]="plotConfig"></plotly-plot>
+              <app-plot-export [data]="projectData" [layout]="projectLayout"
+                               [name]="selection.asc + '_by_project'"
+                               [title]="selection.asc + ' samples by project'"
+                               [source]="'/api/refbook/projects/' + selection.species + '/'
+                                         + selection.chain"></app-plot-export>
             </div>
             <p class="drill-note">
               Samples per project, split by the database they came from. A project
@@ -119,6 +124,11 @@
         <div class="chart-container" [style.height.px]="chartHeight">
           <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"
                        (plotlyClick)="onPlotClick($event)"></plotly-plot>
+          <app-plot-export [data]="plotData" [layout]="plotLayout"
+                           [name]="selection.asc + '_alleles'"
+                           [title]="'Alleles of ' + selection.asc + ', by samples carrying them'"
+                           [source]="'/api/refbook/ascs_overview/' + selection.species + '/'
+                                     + selection.chain + '/' + selection.asc"></app-plot-export>
         </div>
       </div>
     </div>

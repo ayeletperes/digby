@@ -12,6 +12,7 @@ import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { OverviewData } from './dash-refbook-overview.model';
+import { PlotExportComponent } from '../plot-export/plot-export.component';
 
 
 @Component({
@@ -19,7 +20,7 @@ import { OverviewData } from './dash-refbook-overview.model';
   templateUrl: './dash-refbook-overview.component.html',
   styleUrls: ['./dash-refbook-overview.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, PlotlyModule, ScopeNoteComponent]
+  imports: [CommonModule, FormsModule, PlotlyModule, ScopeNoteComponent, PlotExportComponent]
 })
 
 export class DashRefbookOverviewComponent implements OnInit, OnChanges {
