@@ -9,6 +9,7 @@ import {
   QtlLead, QtlPoint, QtlSelection, QtlThreshold, usageThreshold,
 } from '../../shared/models/qtl-selection.model';
 import { ascDisplayName } from '../../shared/models/gene-naming';
+import { exportButtons } from '../../shared/plot-export/plot-export';
 
 /**
  * Association strength along the locus.
@@ -62,7 +63,17 @@ export class QtlManhattanComponent implements OnChanges {
 
   plotData: unknown[] = [];
   plotLayout: Record<string, unknown> = {};
-  readonly plotConfig = { responsive: true, displaylogo: false };
+  readonly plotConfig = {
+    responsive: true, displaylogo: false,
+    modeBarButtonsToAdd: exportButtons(() => ({
+      name: `${this.selection?.locus}_${this.selection?.asc ?? 'all_genes'}_scan`,
+      title: this.selection?.asc
+        ? `Every variant tested against ${this.selection.locus}${this.selection.asc}`
+        : `Each variant's strongest result across every gene in ${this.selection?.locus}`,
+      source: `/api/qtl/manhattan/${this.selection?.species}/${this.selection?.locus}`,
+      data: this.plotData, layout: this.plotLayout,
+    })),
+  };
 
   constructor(private qtl: QtlService) {}
 

@@ -207,6 +207,9 @@
     </p>
   }
 
+  <app-plot-export [overrideTable]="exportTable" [name]="exportName"
+                   [title]="exportTitle" [source]="exportSource"></app-plot-export>
+
   <div class="legend">
     <span class="key"><i class="swatch gene-swatch"></i>gene body</span>
     @for (entry of legend; track entry.feature) {

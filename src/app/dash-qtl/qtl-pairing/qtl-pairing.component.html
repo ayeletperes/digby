@@ -170,7 +170,7 @@
             @for (r of rows; track r.anchor) {
               <div class="fig-left">
                 <plotly-plot [data]="r.marginalData" [layout]="r.marginalLayout"
-                             [config]="plotConfig"></plotly-plot>
+                             [config]="marginalConfig(r.anchor)"></plotly-plot>
               </div>
               <div class="fig-right">
                 <div class="row-head">
@@ -192,17 +192,17 @@
                   }
                 </div>
                 <plotly-plot [data]="r.gridData" [layout]="r.gridLayout"
-                             [config]="plotConfig"></plotly-plot>
+                             [config]="gridConfig(r.anchor)"></plotly-plot>
               </div>
             }
 
             <div class="fig-left counts">
               <plotly-plot [data]="countsData" [layout]="countsLayout"
-                           [config]="plotConfig"></plotly-plot>
+                           [config]="countsConfig"></plotly-plot>
             </div>
             <div class="fig-right">
               <plotly-plot [data]="partnerData" [layout]="partnerLayout"
-                           [config]="plotConfig"></plotly-plot>
+                           [config]="partnerConfig"></plotly-plot>
             </div>
           </div>
 

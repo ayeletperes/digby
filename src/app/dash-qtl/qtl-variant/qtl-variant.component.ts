@@ -7,6 +7,7 @@ import { catchError } from 'rxjs/operators';
 import { QtlService } from '../qtl.service';
 import { QtlRegionComponent } from '../qtl-region/qtl-region.component';
 import { ascDisplayName } from '../../shared/models/gene-naming';
+import { exportButtons } from '../../shared/plot-export/plot-export';
 import {
   QtlAssociation, QtlFit, QtlSelection, QtlVariant,
 } from '../../shared/models/qtl-selection.model';
@@ -81,7 +82,43 @@ export class QtlVariantComponent implements OnChanges {
   /** Group sizes, shown beside the boxes: a class of five is not a distribution. */
   countsPlot: unknown[] = [];
   countsLayout: Record<string, unknown> = {};
-  readonly plotConfig = { responsive: true, displaylogo: false };
+  /**
+   * The usage boxplot exports its own points: the traces hold one usage value
+   * per subject, which is the data and not a summary of it. The stats that
+   * qualify the whole figure - effect, p, and the smallest genotype class -
+   * ride in the title, so a downloaded table cannot be read without them.
+   */
+  readonly plotConfig = {
+    responsive: true, displaylogo: false,
+    modeBarButtonsToAdd: exportButtons(() => ({
+      name: `${this.variant?.variant}_${this.plottedAsc}_usage`,
+      title: `Usage of ${this.plottedAsc} by ${this.variant?.variant} genotype`
+        + (this.association
+            ? ` — effect ${this.association.beta.toFixed(3)},`
+              + ` p ${this.association.p_value.toExponential(2)},`
+              + ` n ${this.association.n}`
+              + (this.association.min_genotype_group !== null
+                  ? `, smallest genotype class ${this.association.min_genotype_group}`
+                    + (this.association.well_powered === false ? ' (not well powered)' : '')
+                  : '')
+            : ''),
+      source: `/api/qtl/variant_usage/${this.selection?.species}/${this.selection?.locus}`
+              + `/${this.variant?.variant}?asc=${this.plottedAsc}`,
+      data: this.plotData, layout: this.plotLayout,
+    })),
+  };
+
+  /** The genotype counts are a second figure and export themselves. */
+  readonly countsConfig = {
+    responsive: true, displaylogo: false,
+    modeBarButtonsToAdd: exportButtons(() => ({
+      name: `${this.variant?.variant}_genotype_counts`,
+      title: `Subjects carrying each ${this.variant?.variant} genotype`,
+      source: `/api/qtl/variant/${this.selection?.species}/${this.selection?.locus}`
+              + `/${this.variant?.variant}`,
+      data: this.countsPlot, layout: this.countsLayout,
+    })),
+  };
 
   constructor(private qtl: QtlService) {}
 

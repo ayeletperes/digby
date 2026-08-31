@@ -6,6 +6,7 @@ import { EMPTY } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { QtlService } from '../qtl.service';
+import { ExportTable, exportButtons } from '../../shared/plot-export/plot-export';
 
 /**
  * What a variant does to the company a gene keeps.
@@ -110,6 +111,110 @@ export class QtlPairingComponent implements OnChanges {
   partnerData: unknown[] = [];
   partnerLayout: Record<string, unknown> = {};
   readonly plotConfig = { responsive: true, displaylogo: false };
+
+  /**
+   * Every figure here exports its own table, because none of them holds its own
+   * data: the boxes arrive from the server already summarised, carried in
+   * `q1`/`median`/`q3` with no `y` at all, so the generic trace reader would
+   * hand over empty values.
+   *
+   * The summaries travel with what qualifies them - the group's `n`, the
+   * omnibus p, and the pipeline's own mark - because a downloaded quartile with
+   * no count behind it cannot be told apart from one resting on five subjects.
+   */
+  private boxRow(b: Box | null | undefined): (string | number)[] {
+    return b ? [b.n, b.min, b.q1, b.median, b.q3, b.max, b.mean] : ['', '', '', '', '', '', ''];
+  }
+
+  private readonly BOX_COLUMNS = ['n', 'min', 'q1', 'median', 'q3', 'max', 'mean'];
+
+  gridConfig(anchor: string): Record<string, unknown> {
+    return {
+      responsive: true, displaylogo: false,
+      modeBarButtonsToAdd: exportButtons(() => ({
+        name: `${this.variant}_${this.short(anchor)}_${this.conditional.replace(/[|()]/g, '')}`,
+        title: `${this.conditional} for ${this.short(anchor)} by ${this.variant} genotype`,
+        source: `/api/qtl/pairing/${this.species}/${this.locus}/${this.variant}`
+                + `?conditional=${encodeURIComponent(this.conditional)}`,
+        table: this.anchorTable(anchor),
+      })),
+    };
+  }
+
+  /** One row per (partner, genotype), with the mark and omnibus that qualify it. */
+  anchorTable(anchor: string): ExportTable {
+    const o = this.omnibus[anchor];
+    const marks = new Map(this.marks.filter(m => m.anchor === anchor)
+                                    .map(m => [m.partner, m]));
+    const rows: (string | number)[][] = [];
+    for (const partner of this.partners) {
+      for (const g of [0, 1, 2]) {
+        const cell = (this.data?.cells ?? []).find(
+          (c: Cell) => c.anchor === anchor && c.partner === partner && c.genotype === g);
+        const mk = marks.get(partner);
+        rows.push([this.short(anchor), this.short(partner), GENOTYPE_LABEL[g],
+                   ...this.boxRow(cell?.box),
+                   mk?.marked ? 'yes' : 'no', mk?.marked_strict ? 'yes' : 'no',
+                   mk?.p_value ?? '', o?.p_value ?? '', o?.significant ? 'yes' : 'no',
+                   o?.min_genotype_group ?? '']);
+      }
+    }
+    return {
+      columns: [this.anchorSide, this.partnerSide, 'genotype', ...this.BOX_COLUMNS,
+                'cell_marked', 'cell_marked_strict', 'cell_p_value',
+                'omnibus_p_value', 'omnibus_significant', 'smallest_genotype_class'],
+      rows,
+    };
+  }
+
+  marginalConfig(anchor: string): Record<string, unknown> {
+    return {
+      responsive: true, displaylogo: false,
+      modeBarButtonsToAdd: exportButtons(() => ({
+        name: `${this.variant}_${this.short(anchor)}_marginal`,
+        title: `Overall use of ${this.short(anchor)} by ${this.variant} genotype`,
+        source: `/api/qtl/pairing/${this.species}/${this.locus}/${this.variant}`
+                + `?conditional=${encodeURIComponent(this.conditional)}`,
+        table: {
+          columns: ['gene', 'genotype', ...this.BOX_COLUMNS],
+          rows: (this.data?.anchor_marginal ?? [])
+            .filter((m: any) => m.gene === anchor)
+            .map((m: any) => [this.short(m.gene), GENOTYPE_LABEL[m.genotype],
+                              ...this.boxRow(m.box)]),
+        },
+      })),
+    };
+  }
+
+  readonly partnerConfig = {
+    responsive: true, displaylogo: false,
+    modeBarButtonsToAdd: exportButtons(() => ({
+      name: `${this.variant}_${this.partnerSide}_marginal`,
+      title: `Overall use of each ${this.partnerSide} gene by ${this.variant} genotype`,
+      source: `/api/qtl/pairing/${this.species}/${this.locus}/${this.variant}`
+              + `?conditional=${encodeURIComponent(this.conditional)}`,
+      table: {
+        columns: ['gene', 'genotype', ...this.BOX_COLUMNS],
+        rows: (this.data?.partner_marginal ?? [])
+          .map((m: any) => [this.short(m.gene), GENOTYPE_LABEL[m.genotype],
+                            ...this.boxRow(m.box)]),
+      },
+    })),
+  };
+
+  readonly countsConfig = {
+    responsive: true, displaylogo: false,
+    modeBarButtonsToAdd: exportButtons(() => ({
+      name: `${this.variant}_genotype_counts`,
+      title: `Subjects carrying each ${this.variant} genotype`,
+      source: `/api/qtl/pairing/${this.species}/${this.locus}/${this.variant}`
+              + `?conditional=${encodeURIComponent(this.conditional)}`,
+      table: {
+        columns: ['genotype', 'subjects'],
+        rows: this.genotypes.map(g => [GENOTYPE_LABEL[g.genotype], g.n]),
+      },
+    })),
+  };
   readonly rowHeight = ROW_HEIGHT;
 
   constructor(private qtl: QtlService) {}

@@ -6,6 +6,7 @@ import { catchError } from 'rxjs/operators';
 
 import { QtlService } from '../qtl.service';
 import { ascDisplayName } from '../../shared/models/gene-naming';
+import { ExportTable, exportButtons } from '../../shared/plot-export/plot-export';
 
 /**
  * Where the significant variants are, across the whole run.
@@ -73,7 +74,44 @@ export class QtlSummaryComponent implements OnChanges {
 
   plotData: unknown[] = [];
   plotLayout: Record<string, unknown> = {};
-  readonly plotConfig = { responsive: true, displaylogo: false };
+  /**
+   * Its own table, not the traces.
+   *
+   * With more than one locus the x axis is multicategory, so a trace's `x` is
+   * two parallel arrays rather than one per bar - the generic reader would
+   * flatten that into nonsense. Building the table from the rows the endpoint
+   * returned also lets the denominator travel with the count, which a bar
+   * height cannot carry.
+   */
+  readonly plotConfig = {
+    responsive: true, displaylogo: false,
+    modeBarButtonsToAdd: exportButtons(() => ({
+      name: `guqtl_significant_by_location_${this.allLoci ? 'all_loci' : this.locus}`,
+      title: 'Significant gene-usage variants by locus, segment and where they sit'
+             + ' — distinct variants, so a variant significant for several genes of'
+             + ' one segment counts once',
+      source: `/api/qtl/usage_summary/${this.species}`,
+      table: this.exportTable,
+    })),
+  };
+
+  /** The chart's rows, each with the locus total it was drawn from. */
+  get exportTable(): ExportTable {
+    const shown = this.shownLoci;
+    const rows = (this.summary?.rows ?? [])
+      .filter((r: any) => shown.includes(r.locus))
+      .sort((a: any, b: any) => shown.indexOf(a.locus) - shown.indexOf(b.locus)
+                             || a.segment.localeCompare(b.segment)
+                             || b.n - a.n)
+      .map((r: any) => [r.locus, r.segment, r.feature, r.n,
+                        this.summary.totals[r.locus]?.n_significant ?? '',
+                        this.summary.totals[r.locus]?.n_variants ?? '']);
+    return {
+      columns: ['locus', 'segment', 'location', 'significant_variants',
+                'locus_significant_total', 'locus_variants_tested'],
+      rows,
+    };
+  }
 
   readonly ascName = ascDisplayName;
 

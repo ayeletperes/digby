@@ -4,6 +4,8 @@ import { EMPTY } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { QtlService } from '../qtl.service';
+import { ExportTable } from '../../shared/plot-export/plot-export';
+import { PlotExportComponent } from '../../shared/plot-export/plot-export.component';
 import { QtlSelection, QtlThreshold, usageThreshold } from '../../shared/models/qtl-selection.model';
 
 /**
@@ -151,7 +153,7 @@ interface Mark {
   templateUrl: './qtl-region.component.html',
   styleUrls: ['./qtl-region.component.scss'],
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PlotExportComponent],
 })
 export class QtlRegionComponent implements OnChanges {
   @Input() selection: QtlSelection;
@@ -196,6 +198,14 @@ export class QtlRegionComponent implements OnChanges {
   annotationSource: string | null = null;
   variantCount = 0;
   genesInWindow: string[] = [];
+  /**
+   * The variants as they arrived, kept for the download.
+   *
+   * The marks are viewBox geometry - exporting those would hand over the drawing
+   * instead of the numbers - so this track supplies its own table, as the
+   * dendrogram does.
+   */
+  private drawn: RegionVariant[] = [];
 
   geneBoxes: Box[] = [];
   elementBoxes: Box[] = [];
@@ -337,6 +347,7 @@ export class QtlRegionComponent implements OnChanges {
     this.ticks = [];
     this.genesInWindow = [];
     this.variantCount = 0;
+    this.drawn = [];
     this.detailGene = null;
     this.windowGenes = [];
     this.windowFeatures = [];
@@ -370,6 +381,7 @@ export class QtlRegionComponent implements OnChanges {
     const variants: RegionVariant[] = result.variants ?? [];
 
     this.variantCount = variants.length;
+    this.drawn = variants;
     this.genesInWindow = genes.map(g => g.name);
 
     this.geneBoxes = genes.map(g => this.box(g, GENE_Y, GENE_H,
@@ -534,6 +546,35 @@ export class QtlRegionComponent implements OnChanges {
       showLabel: width > label.length * 4.4,
       labelX: left + width / 2,
     };
+  }
+
+  /** Every tested variant in the drawn window, with where it sits. */
+  get exportTable(): ExportTable {
+    return {
+      columns: ['variant', 'contig', 'pos', 'neglog10_p', 'significant', 'asc',
+                'gene', 'feature', 'sub_feature', 'maf', 'selected'],
+      rows: this.drawn.map(v => [
+        v.variant, this.contig ?? '', v.pos, v.neglog10_p,
+        v.significant ? 'yes' : 'no', v.asc ?? '', v.gene ?? '', v.feature ?? '',
+        v.sub_feature ?? '', v.maf ?? '', v.selected ? 'yes' : 'no']),
+    };
+  }
+
+  get exportName(): string {
+    return `${this.selection?.variant}_region_${this.start}_${this.end}`;
+  }
+
+  get exportTitle(): string {
+    return `Variants in ${this.contig}:${this.start}-${this.end}`
+      + (this.plottedAsc ? ` tested against ${this.plottedAsc}`
+                         : ', each at its strongest result across every gene')
+      + (this.annotationSource ? ` — annotated against ${this.annotationSource}` : '');
+  }
+
+  get exportSource(): string {
+    return `/api/qtl/region/${this.selection?.species}/${this.selection?.locus}`
+      + `/${this.selection?.variant}?start=${this.start}&end=${this.end}`
+      + (this.plottedAsc ? `&asc=${this.plottedAsc}` : '');
   }
 
   get selectedX(): number {

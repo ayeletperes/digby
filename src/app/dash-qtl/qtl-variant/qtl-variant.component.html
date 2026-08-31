@@ -56,7 +56,7 @@
       @if (!counts.length) {
         <p class="note">No genotypes are held for this variant.</p>
       } @else {
-        <plotly-plot [data]="countsPlot" [layout]="countsLayout" [config]="plotConfig"></plotly-plot>
+        <plotly-plot [data]="countsPlot" [layout]="countsLayout" [config]="countsConfig"></plotly-plot>
         <p class="note">
           How many subjects carry each genotype. A class with only a handful of
           subjects cannot support a confident effect estimate, however small the
