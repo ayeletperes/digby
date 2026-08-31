@@ -29,6 +29,11 @@
       <h4>Variant</h4>
       @if (loadingVariants) {
         <p class="note">Loading the scan…</p>
+      } @else if (!hasScan) {
+        <p class="note none">
+          No partner-pairing scan has been run for {{ locus }}. This is a missing
+          scan, not a scan that found nothing — only IGH has one loaded.
+        </p>
       } @else {
         <input class="filter" type="text" [(ngModel)]="filter"
                placeholder="filter by id or gene" />

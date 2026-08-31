@@ -68,6 +68,8 @@ export class QtlPairingComponent implements OnChanges {
 
   variants: any[] = [];
   scanned = 0;
+  /** False when this locus has no pairing scan at all, as against no hits. */
+  hasScan = true;
   filter = '';
   variant: string | null = null;
 
@@ -194,6 +196,7 @@ export class QtlPairingComponent implements OnChanges {
         this.loadingVariants = false;
         this.variants = result.variants ?? [];
         this.scanned = result.n_variants_scanned ?? 0;
+        this.hasScan = !!result.scanned;
       });
   }
 
