@@ -54,6 +54,51 @@
           </app-check-dropdown>
         </section>
 
+        <!-- Restricts every panel, by resolving to an allele list that rides the
+             existing `alleles` parameter. A slider only appears for a database
+             actually being read. -->
+        @if (showGenomicRange || showAirrseqRange) {
+          <section class="rail-section">
+            <h3 class="rail-heading">
+              Seen in
+              @if (countFilterActive) {
+                <button type="button" class="link-button" (click)="resetSeenIn()">reset</button>
+              }
+            </h3>
+
+            @if (showAirrseqRange) {
+              <label class="rail-label" for="minAirrseq">
+                AIRR-seq samples
+                <span class="range-value">{{ minAirrseq }}+</span>
+              </label>
+              <input type="range" class="form-range" id="minAirrseq"
+                     min="0" [max]="maxAirrseq" step="1"
+                     [(ngModel)]="minAirrseq" (ngModelChange)="onSeenInChange()">
+              <div class="range-ends"><span>0</span><span>{{ maxAirrseq }}</span></div>
+            }
+
+            @if (showGenomicRange) {
+              <label class="rail-label" for="minGenomic">
+                Genomic samples
+                <span class="range-value">{{ minGenomic }}+</span>
+              </label>
+              <input type="range" class="form-range" id="minGenomic"
+                     min="0" [max]="maxGenomic" step="1"
+                     [(ngModel)]="minGenomic" (ngModelChange)="onSeenInChange()">
+              <div class="range-ends"><span>0</span><span>{{ maxGenomic }}</span></div>
+            }
+
+            <p class="rail-note">
+              @if (countFilterActive) {
+                <strong>{{ passingCount }}</strong> of {{ alleleCounts.length }} alleles
+                pass, across every panel.
+              } @else {
+                All {{ alleleCounts.length }} alleles. Drag to hide the rare ones.
+              }
+            </p>
+          </section>
+        }
+
         <section class="rail-section">
           <h3 class="rail-heading">
             Genes
@@ -114,6 +159,18 @@
       }
     </header>
 
+    <!-- an empty allele list would ride the wire as "no filter" and show
+         everything, which contradicts what the rail says is passing -->
+    @if (nothingPassesFilter) {
+      <div class="panel-blocked">
+        <p class="reason">No allele is seen in that many samples.</p>
+        <p class="description">
+          Nothing clears the thresholds in the sidebar, so there is nothing to draw.
+          Lower them, or <button type="button" class="link-button" (click)="resetSeenIn()">reset
+          the filter</button>.
+        </p>
+      </div>
+    } @else {
     @if (blockedReason(activePanel); as reason) {
       <div class="panel-blocked">
         <p class="reason">{{ reason }}</p>
@@ -142,6 +199,7 @@
       }
     } @else {
       <div class="panel-blocked"><p class="description">Loading…</p></div>
+    }
     }
   </main>
 </div>

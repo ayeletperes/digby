@@ -82,14 +82,20 @@ export class DashRefbookOverviewComponent implements OnInit, OnChanges {
     // left to right without rotation or truncation. A vertical chart cannot
     // show 384 of them at any width.
     indexAxis: 'y',
-    interaction: { mode: 'index', intersect: false },
+    // axis: 'y' matters. The categories run down y now, but Chart.js resolves
+    // interactions along x by default, so it was picking the nearest row by
+    // bar length rather than by pointer height.
+    interaction: { mode: 'index', intersect: false, axis: 'y' },
     plugins: {
       tooltip: {
         callbacks: {
           // a raw count means little without the cohort it came out of
           label: (item) => {
             const series = item.dataset.label ?? '';
-            const raw = item.parsed.y;
+            // `raw`, not parsed.y: these are horizontal bars, so the value sits
+            // on x and parsed.y is the category index - the tooltip was
+            // reporting the allele's position in the list as its sample count
+            const raw = item.raw as number | null;
             if (raw === null || raw === undefined) { return `${series}: not present`; }
             const n = Number(raw);
             const total = this.denominators[series] ?? 0;

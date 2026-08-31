@@ -38,6 +38,17 @@ export class SpeciesGeneSelection {
   alleles?: string[];
 
   /**
+   * Alleles passing the rail's "seen in N samples" thresholds, or undefined when
+   * no threshold is set.
+   *
+   * Kept apart from `alleles`, which is the drill-down: one is a filter the user
+   * set on the left, the other is the allele they clicked. `allelesParam` sends
+   * their intersection, so every panel - including the alignment, which is
+   * rendered server-side - honours the restriction without new plumbing.
+   */
+  countFilter?: string[];
+
+  /**
    * Selected projects split by the database they belong to.
    *
    * The two databases name entirely different studies, so a selection made from
@@ -79,8 +90,20 @@ export function samplesParam(selection: SpeciesGeneSelection): string | undefine
 
 /** Comma-separated allele list, or undefined for no filtering. */
 export function allelesParam(selection: SpeciesGeneSelection): string | undefined {
-  const alleles = selection?.alleles;
-  return alleles && alleles.length ? alleles.join(',') : undefined;
+  const drilled = selection?.alleles ?? [];
+  const passing = selection?.countFilter;
+
+  if (!passing) {
+    return drilled.length ? drilled.join(',') : undefined;
+  }
+  // both active: the drilled allele still has to clear the threshold
+  const kept = drilled.length ? drilled.filter(name => passing.includes(name)) : passing;
+  return kept.length ? kept.join(',') : undefined;
+}
+
+/** True when a threshold is set but nothing clears it, so panels have nothing to draw. */
+export function countFilterExcludesAll(selection: SpeciesGeneSelection): boolean {
+  return !!selection?.countFilter && selection.countFilter.length === 0;
 }
 
 /**

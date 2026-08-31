@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { EMPTY, Subject, Subscription } from 'rxjs';
+import { EMPTY, Subject, Subscription, forkJoin, of } from 'rxjs';
 import { catchError, debounceTime, takeUntil } from 'rxjs/operators';
 
 import {
   DataSource, DATA_SOURCES, DATA_SOURCE_LABELS,
-  SourceAvailability, SpeciesGeneSelection, sourcesParam,
+  SourceAvailability, SpeciesGeneSelection, sourcesParam, projectsParam, samplesParam,
+  countFilterExcludesAll,
 } from '../shared/models/species-gene-selection.model';
 import { DASH_PANELS, DashPanel, PANEL_GROUPS, panelBlockedReason } from './dash-panels';
 import { segmentLabel, segmentOf, segmentsIn } from '../shared/models/gene-naming';
@@ -73,6 +74,67 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
   selectedProjects: string[] = [];
   selectedSamples: string[] = [];
   selectedAlleles: string[] = [];
+
+  // ---------------------------------------------------------- seen-in filter
+
+  /**
+   * Per-allele sample counts for the genes on screen, and the thresholds set
+   * against them.
+   *
+   * The maxima come from the data rather than being fixed, so the slider spans
+   * exactly what this gene actually reaches - IGHV1-18*01 is in 336 AIRR-seq
+   * samples while most of its alleles are in one.
+   */
+  alleleCounts: { name: string; genomic: number; airrseq: number }[] = [];
+  minGenomic = 0;
+  minAirrseq = 0;
+
+  get maxGenomic(): number {
+    return this.alleleCounts.reduce((n, a) => Math.max(n, a.genomic), 0);
+  }
+  get maxAirrseq(): number {
+    return this.alleleCounts.reduce((n, a) => Math.max(n, a.airrseq), 0);
+  }
+  /** Only offered for a database the user is actually reading. */
+  get showGenomicRange(): boolean {
+    return this.isSourceOn('genomic') && this.maxGenomic > 1;
+  }
+  get showAirrseqRange(): boolean {
+    return this.isSourceOn('airrseq') && this.maxAirrseq > 1;
+  }
+  get countFilterActive(): boolean {
+    return (this.showGenomicRange && this.minGenomic > 0)
+        || (this.showAirrseqRange && this.minAirrseq > 0);
+  }
+  /** A threshold is set and nothing clears it, so every panel would be empty. */
+  get nothingPassesFilter(): boolean {
+    return countFilterExcludesAll(this.selection);
+  }
+
+  get passingCount(): number {
+    return this.passingAlleles()?.length ?? this.alleleCounts.length;
+  }
+
+  onSeenInChange(): void {
+    this.applySampleFilters();
+  }
+
+  resetSeenIn(): void {
+    this.minGenomic = 0;
+    this.minAirrseq = 0;
+    this.applySampleFilters();
+  }
+
+  /** Allele names clearing every active threshold, or undefined when none is set. */
+  private passingAlleles(): string[] | undefined {
+    if (!this.countFilterActive) {
+      return undefined;
+    }
+    return this.alleleCounts
+      .filter(a => (!this.showGenomicRange || a.genomic >= this.minGenomic)
+                && (!this.showAirrseqRange || a.airrseq >= this.minAirrseq))
+      .map(a => a.name);
+  }
 
   ascLoading = false;
   ascError: string | null = null;
@@ -311,6 +373,8 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     // the two databases hold different studies, so the lists have to be refetched
     this.loadProjects();
     this.writeToUrl();
+    // a database that is no longer read must not keep filtering
+    this.loadAlleleCounts();
   }
 
   // ------------------------------------------------------------------ genes
@@ -401,12 +465,52 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     return scope;
   }
 
+  /**
+   * Per-allele counts for the genes on screen, which is what the sliders span.
+   *
+   * One request per gene, capped at MAX_GENES, and the thresholds are clamped
+   * to the new maxima rather than silently filtering everything out when the
+   * gene changes to one with fewer carriers.
+   */
+  private loadAlleleCounts(): void {
+    const { species, chain } = this.selection;
+    const genes = this.selection.ascs ?? [];
+    if (!species || !chain || !genes.length) {
+      this.alleleCounts = [];
+      return;
+    }
+
+    const sources = sourcesParam(this.selection);
+    forkJoin(genes.map(gene =>
+      this.refbookService.getAscsOverview(species, chain, gene, sources,
+                                          undefined, projectsParam(this.selection),
+                                          samplesParam(this.selection))
+        .pipe(catchError(() => of(null)))))
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(results => {
+        const counts: { name: string; genomic: number; airrseq: number }[] = [];
+        for (const r of results as ({ alleles?: string[]; genomic_counts?: number[];
+                                      vdjbase_counts?: number[] } | null)[]) {
+          (r?.alleles ?? []).forEach((name, i) => counts.push({
+            name,
+            genomic: r?.genomic_counts?.[i] ?? 0,
+            airrseq: r?.vdjbase_counts?.[i] ?? 0,
+          }));
+        }
+        this.alleleCounts = counts;
+        this.minGenomic = Math.min(this.minGenomic, this.maxGenomic);
+        this.minAirrseq = Math.min(this.minAirrseq, this.maxAirrseq);
+        this.applySampleFilters();
+      });
+  }
+
   private applySampleFilters(): void {
     this.selection = {
       ...this.selection,
       projects: [...this.selectedProjects],
       samples: [...this.selectedSamples],
       alleles: [...this.selectedAlleles],
+      countFilter: this.passingAlleles(),
       projectScope: this.projectScope(),
     };
     this.facetCache.clear();
@@ -493,6 +597,8 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
                        alleles: [...this.selectedAlleles] };
     this.facetCache.clear();
     this.writeToUrl();
+    // the sliders span this gene's counts, so they follow the gene
+    this.loadAlleleCounts();
   }
 
   /**
