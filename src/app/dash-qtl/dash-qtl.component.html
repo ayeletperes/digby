@@ -56,13 +56,20 @@
                 <span class="panel-name">Start from a variant</span>
               </button>
             </li>
+            <li>
+              <button type="button" class="panel-link" [class.on]="view === 'pairing'"
+                      title="Which partner a gene recombines with"
+                      (click)="showView('pairing')">
+                <span class="panel-name">Gene pairing</span>
+              </button>
+            </li>
           </ul>
           <p class="rail-note">{{ viewNote }}</p>
         </section>
 
         <!-- The open analysis's own subject, in the shape its question needs:
              ~35 genes are worth browsing, thousands of variants must be typed. -->
-        <section class="rail-section">
+        <section class="rail-section" [class.hidden]="view === 'pairing'">
           @if (view === 'gene') {
             <h3 class="rail-heading">Gene</h3>
             <select class="form-select form-select-sm" id="qtlAsc"
@@ -112,6 +119,9 @@
 
     @if (error) {
       <p class="qtl-status error">{{ error }}</p>
+    } @else if (view === 'pairing') {
+      <app-qtl-pairing [species]="selection.species" [locus]="selection.locus">
+      </app-qtl-pairing>
     } @else if (isPlotting) {
       <app-qtl-variant [selection]="plotSelection" [fallbackAsc]="pointAsc"
                        (ascPicked)="onAscPicked($event)">
@@ -141,7 +151,7 @@
          the variant in both tabs - the gene tab's plotted one, the variant tab's
          own subject - and its `asc` is undefined when no single gene is chosen,
          which is exactly when the track should fall back to the best per variant. -->
-    @if (!error && plotSelection.variant) {
+    @if (!error && view !== 'pairing' && plotSelection.variant) {
       <section class="region-panel">
         <h4>Around {{ plotSelection.variant }}</h4>
         <app-qtl-region [selection]="plotSelection" [fallbackAsc]="pointAsc"

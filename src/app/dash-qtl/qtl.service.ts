@@ -84,6 +84,29 @@ export class QtlService {
       `${this.base}/region/${enc(species)}/${enc(locus)}/${enc(variant)}`, { params });
   }
 
+  /**
+   * Variants with a partner-pairing scan, strongest first.
+   *
+   * `conditional` is not optional and has no default: P(J|D) and P(D|J) are two
+   * scans over the same variants, so guessing one would make the answer depend
+   * on what the caller forgot to say.
+   */
+  pairingVariants(species: string, locus: string, conditional: string,
+                  limit = 200): Observable<any> {
+    return this.http.get<any>(
+      `${this.base}/pairing_variants/${enc(species)}/${enc(locus)}`,
+      { params: new HttpParams().set('conditional', conditional)
+                                .set('limit', String(limit)) });
+  }
+
+  /** One variant's partner distributions, by genotype. */
+  pairing(species: string, locus: string, variant: string,
+          conditional: string): Observable<any> {
+    return this.http.get<any>(
+      `${this.base}/pairing/${enc(species)}/${enc(locus)}/${enc(variant)}`,
+      { params: new HttpParams().set('conditional', conditional) });
+  }
+
   variantUsage(species: string, locus: string, variant: string, asc: string): Observable<any> {
     return this.http.get<any>(
       `${this.base}/variant_usage/${enc(species)}/${enc(locus)}/${enc(variant)}`,
