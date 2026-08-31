@@ -12,7 +12,9 @@ import { shortenAlleleName } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 
-/** /refbook/asc_tree: scipy-style linkage over the alleles of one gene. */
+/** /refbook/asc_tree: scipy-style linkage over the alleles of one gene.
+ *  Shown as "Group clustering": it groups by sequence similarity and makes
+ *  no claim about ancestry. */
 interface TreeData {
   labels: string[];
   /** [left, right, height, size]; leaves are 0..n-1, merge k creates node n+k. */
@@ -102,7 +104,7 @@ export class DashRefbookTreeComponent implements OnInit, OnChanges {
       .pipe(
         retryWithBackoff(),
         catchError(err => {
-          this.error = err?.error?.message ?? err?.message ?? 'Could not load the tree';
+          this.error = err?.error?.message ?? err?.message ?? 'Could not load the grouping';
           this.isFetching = false;
           this.tree = null;
           this.plotData = [];

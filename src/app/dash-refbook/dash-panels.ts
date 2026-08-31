@@ -114,16 +114,18 @@ export const DASH_PANELS: DashPanel[] = [
       .then(m => m.DashRefbookAlignmentComponent),
   },
   {
+    // the id is in the URL, so it stays 'tree' even though the panel is not one
     id: 'tree',
     group: 'Reference',
-    label: 'Allele tree',
-    description: 'How the alleles of the gene relate to each other by sequence.',
-    caption: 'Clusters the alleles of the gene by how much their sequences differ, over the ' +
-             'IMGT-gapped positions that vary between them. Height is the distance at which ' +
-             'two branches join, so alleles joining low are near-identical. Alleles with ' +
-             'identical sequences over the compared positions are collapsed to one leaf and ' +
-             'listed together. The distance is computed on aligned positions only, never on ' +
-             'names.',
+    label: 'Group clustering',
+    description: 'Which alleles of the gene group together by sequence.',
+    caption: 'Groups the alleles of the gene by how much their sequences differ, counted ' +
+             'over the IMGT-gapped positions that vary between them. Two groups join at the ' +
+             'distance of their furthest pair, so where a join sits is that distance, not ' +
+             'each allele\'s distance to the rest. Alleles identical over the compared ' +
+             'positions are listed together rather than drawn twice. This groups by ' +
+             'similarity and says nothing about ancestry: sequences that differ by one ' +
+             'position group closely whether or not they are related that way.',
     requires: [],
     multi: false,
     load: () => import('./dash-refbook-tree/dash-refbook-tree.component')
