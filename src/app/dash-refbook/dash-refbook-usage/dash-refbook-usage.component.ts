@@ -9,7 +9,7 @@ import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { PlotlyModule } from 'angular-plotly.js';
-import { exportButtons } from '../plot-export/plot-export';
+import { exportButtons } from '../../shared/plot-export/plot-export';
 
 export class UsageData {
   alleles: {

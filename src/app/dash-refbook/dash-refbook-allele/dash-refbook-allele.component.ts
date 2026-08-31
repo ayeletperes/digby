@@ -15,7 +15,7 @@ import {
 } from '../../shared/models/species-gene-selection.model';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
-import { PlotExportComponent } from '../plot-export/plot-export.component';
+import { PlotExportComponent } from '../../shared/plot-export/plot-export.component';
 
 interface Partner {
   name: string;

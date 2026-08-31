@@ -14,8 +14,8 @@ import { SpeciesGeneSelection, projectsParam, samplesParam, allelesParam, source
   from '../../shared/models/species-gene-selection.model';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
-import { PlotExportComponent } from '../plot-export/plot-export.component';
-import { ExportTable } from '../plot-export/plot-export';
+import { PlotExportComponent } from '../../shared/plot-export/plot-export.component';
+import { ExportTable } from '../../shared/plot-export/plot-export';
 
 /** Rough width of one character of the set label at its font size. */
 const LABEL_CHAR_PX = 6.2;

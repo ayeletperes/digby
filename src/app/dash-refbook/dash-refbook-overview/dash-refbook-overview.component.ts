@@ -11,7 +11,7 @@ import { SpeciesGeneSelection, sourcesParam, allelesParam, projectsParam, sample
 import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
-import { exportButtons } from '../plot-export/plot-export';
+import { exportButtons } from '../../shared/plot-export/plot-export';
 
 
 export class OverviewData {

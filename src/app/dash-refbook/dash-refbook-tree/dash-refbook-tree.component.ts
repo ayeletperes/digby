@@ -11,8 +11,8 @@ import { SpeciesGeneSelection, sourcesParam, allelesParam }
 import { shortenAlleleName } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
-import { ExportTable } from '../plot-export/plot-export';
-import { exportButtons } from '../plot-export/plot-export';
+import { ExportTable } from '../../shared/plot-export/plot-export';
+import { exportButtons } from '../../shared/plot-export/plot-export';
 
 /** /refbook/asc_tree: scipy-style linkage over the alleles of one gene.
  *  Shown as "Group clustering": it groups by sequence similarity and makes
