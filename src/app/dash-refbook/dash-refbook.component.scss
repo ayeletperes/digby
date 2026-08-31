@@ -138,4 +138,13 @@
   font-size: 0.68rem; color: var(--vdj-muted); font-variant-numeric: tabular-nums;
   margin-top: -0.15rem;
 }
-.rail-heading .link-button { font-size: 0.7rem; font-weight: 500; letter-spacing: 0; text-transform: none; }
+/* the same pill the gene chips and filter chips use, so the rail has one
+   button shape rather than a link among chips */
+.reset-pill {
+  border: 1px solid var(--vdj-rule); background: #fff; color: var(--vdj-body);
+  border-radius: 999px; padding: 0.1rem 0.6rem;
+  font-size: 0.7rem; font-weight: 500; letter-spacing: 0; text-transform: none;
+  cursor: pointer; transition: border-color 150ms ease, color 150ms ease;
+}
+.reset-pill:hover { border-color: var(--vdj-teal); color: var(--vdj-teal); }
+.reset-pill:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 2px; }

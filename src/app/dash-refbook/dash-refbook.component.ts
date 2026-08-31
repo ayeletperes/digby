@@ -89,6 +89,56 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
   minGenomic = 0;
   minAirrseq = 0;
 
+  /**
+   * The slider moves between stops, not over the raw range.
+   *
+   * Counts are heavily skewed - most alleles sit in one or two samples while a
+   * couple reach 336 - so a linear 0..145 track gives 1, 2 and 3 about two
+   * pixels each, which is where the useful thresholds are. These stops give
+   * every small value its own detent and compress the long tail.
+   */
+  genomicStops: number[] = [0];
+  airrseqStops: number[] = [0];
+  genomicIndex = 0;
+  airrseqIndex = 0;
+
+  private stopsFor(max: number): number[] {
+    if (max <= 12) {
+      return Array.from({ length: max + 1 }, (_, i) => i);
+    }
+    const ladder = [0, 1, 2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 50, 75, 100, 150, 200, 300, 500];
+    const stops = ladder.filter(v => v < max);
+    stops.push(max);
+    return stops;
+  }
+
+  /** Rebuild the stops for the current maxima, keeping the thresholds put. */
+  private rebuildStops(): void {
+    this.genomicStops = this.stopsFor(this.maxGenomic);
+    this.airrseqStops = this.stopsFor(this.maxAirrseq);
+    this.genomicIndex = this.nearestStop(this.genomicStops, this.minGenomic);
+    this.airrseqIndex = this.nearestStop(this.airrseqStops, this.minAirrseq);
+    this.minGenomic = this.genomicStops[this.genomicIndex];
+    this.minAirrseq = this.airrseqStops[this.airrseqIndex];
+  }
+
+  private nearestStop(stops: number[], value: number): number {
+    let best = 0;
+    stops.forEach((v, i) => {
+      if (Math.abs(v - value) < Math.abs(stops[best] - value)) { best = i; }
+    });
+    return best;
+  }
+
+  /** Live as the handle moves, so the readout tracks the drag. */
+  onStopInput(which: 'genomic' | 'airrseq'): void {
+    if (which === 'genomic') {
+      this.minGenomic = this.genomicStops[this.genomicIndex] ?? 0;
+    } else {
+      this.minAirrseq = this.airrseqStops[this.airrseqIndex] ?? 0;
+    }
+  }
+
   get maxGenomic(): number {
     return this.alleleCounts.reduce((n, a) => Math.max(n, a.genomic), 0);
   }
@@ -115,6 +165,12 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     return this.passingAlleles()?.length ?? this.alleleCounts.length;
   }
 
+  /**
+   * Fired on the range input's `change`, not its `input`, so the panels rebuild
+   * once when the handle is released rather than on every pixel of the drag.
+   * The readout beside the label still follows the drag, because ngModel is
+   * bound to `input`.
+   */
   onSeenInChange(): void {
     this.applySampleFilters();
   }
@@ -122,6 +178,8 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
   resetSeenIn(): void {
     this.minGenomic = 0;
     this.minAirrseq = 0;
+    this.genomicIndex = 0;
+    this.airrseqIndex = 0;
     this.applySampleFilters();
   }
 
@@ -500,6 +558,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
         this.alleleCounts = counts;
         this.minGenomic = Math.min(this.minGenomic, this.maxGenomic);
         this.minAirrseq = Math.min(this.minAirrseq, this.maxAirrseq);
+        this.rebuildStops();
         this.applySampleFilters();
       });
   }

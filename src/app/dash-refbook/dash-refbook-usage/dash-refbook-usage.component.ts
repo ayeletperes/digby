@@ -5,7 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import { SpeciesGeneSelection, projectsParam, samplesParam, allelesParam }
   from '../../shared/models/species-gene-selection.model';
-import { shortenAlleleName } from '../../shared/models/gene-naming';
+import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { PlotlyModule } from 'angular-plotly.js';
@@ -30,17 +30,27 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
   legend: { short: string; full: string }[] = [];
   showLegend = false;
 
+  /** Points on or off, for reading the boxes alone. */
+  showPoints = true;
+
+  togglePoints(): void {
+    this.showPoints = !this.showPoints;
+    this.updatePlot();
+  }
+
 
   plotData: any[] = [];
   plotLayout: any = {
     title: { text: 'Allele usage fractions' },
-    yaxis: { title: 'Fraction', rangemode: 'tozero', zeroline: true, automargin: true },
-    xaxis: { title: 'Allele', tickangle: -45, automargin: true },
+    // horizontal, as the overview is: the allele names sit on the category axis
+    // and read without rotation, and the list grows downwards rather than
+    // running out of width
+    xaxis: { title: 'Fraction of the sample\'s rearrangements', rangemode: 'tozero',
+             zeroline: true, automargin: true },
+    yaxis: { title: 'Allele', automargin: true },
     boxmode: 'group',
-    // no fixed width: the plot fills its column, and several of these are stacked
-    autosize: true,
     height: 420,
-    margin: { l: 60, r: 20, t: 40, b: 80 },
+    margin: { l: 60, r: 20, t: 40, b: 60 },
     showlegend: false,
   };
   plotConfig = { responsive: true, displaylogo: false };
@@ -122,24 +132,34 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
 
     // Axis ticks cannot carry a name like IGHV1-2*02_t211c_t213c_g225a, so the
     // tick is shortened and the full name is kept for the hover box.
+    const display = shortenAlleleNames(nonEmpty.map(a => a.name));
     const traces = nonEmpty.map(a => ({
       type: 'box',
-      name: shortenAlleleName(a.name),
-      y: a.usage,                 // array of fractions for this allele across samples
-      customdata: a.samples,      // array of sample names corresponding to each fraction
-      boxpoints: 'all',           // show points
-      jitter: 0.35,               // spread points horizontally
-      pointpos: -1.5,             // center points on the box
+      name: display.get(a.name) ?? a.name,
+      x: a.usage,                 // horizontal: the value axis is x
+      customdata: a.samples,      // sample name behind each point
+      orientation: 'h',
+      // without this a box is a hairline: plotly sizes it from the category slot,
+      // which shrinks as alleles are added
+      width: 0.65,
+      boxpoints: this.showPoints ? 'all' : false,
+      jitter: 0.35,
+      pointpos: 0,
       marker: { size: 6, opacity: 0.6 },
       line: { width: 1 },
-      hovertemplate: 'Sample: %{customdata}<br>Fraction: %{y:.3f}<extra>' + a.name + '</extra>'
+      hovertemplate: 'Sample: %{customdata}<br>Fraction: %{x:.3f}<extra>' + a.name + '</extra>'
     }));
 
     this.plotData = traces;
     this.alleleByCurve = nonEmpty.map(a => a.name);
     this.legend = nonEmpty
-      .map(a => ({ short: shortenAlleleName(a.name), full: a.name }))
+      .map(a => ({ short: display.get(a.name) ?? a.name, full: a.name }))
       .filter(entry => entry.short !== entry.full);
+
+    // one row per allele, so the plot grows with the list instead of squeezing
+    this.plotLayout = { ...this.plotLayout,
+                        // enough per row that the box has depth, not just a line
+                        height: Math.max(320, 48 * nonEmpty.length + 120) };
 
     // the bottom margin has to hold the rotated tick labels, so it follows the
     // longest one rather than being fixed

@@ -62,7 +62,8 @@
             <h3 class="rail-heading">
               Seen in
               @if (countFilterActive) {
-                <button type="button" class="link-button" (click)="resetSeenIn()">reset</button>
+                <button type="button" class="reset-pill" (click)="resetSeenIn()"
+                        title="Clear both thresholds">reset</button>
               }
             </h3>
 
@@ -72,8 +73,9 @@
                 <span class="range-value">{{ minAirrseq }}+</span>
               </label>
               <input type="range" class="form-range" id="minAirrseq"
-                     min="0" [max]="maxAirrseq" step="1"
-                     [(ngModel)]="minAirrseq" (ngModelChange)="onSeenInChange()">
+                     min="0" [max]="airrseqStops.length - 1" step="1"
+                     [(ngModel)]="airrseqIndex"
+                     (ngModelChange)="onStopInput('airrseq')" (change)="onSeenInChange()">
               <div class="range-ends"><span>0</span><span>{{ maxAirrseq }}</span></div>
             }
 
@@ -83,8 +85,9 @@
                 <span class="range-value">{{ minGenomic }}+</span>
               </label>
               <input type="range" class="form-range" id="minGenomic"
-                     min="0" [max]="maxGenomic" step="1"
-                     [(ngModel)]="minGenomic" (ngModelChange)="onSeenInChange()">
+                     min="0" [max]="genomicStops.length - 1" step="1"
+                     [(ngModel)]="genomicIndex"
+                     (ngModelChange)="onStopInput('genomic')" (change)="onSeenInChange()">
               <div class="range-ends"><span>0</span><span>{{ maxGenomic }}</span></div>
             }
 

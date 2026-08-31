@@ -101,10 +101,11 @@ export const DASH_PANELS: DashPanel[] = [
     group: 'Reference',
     label: 'Allele Usage',
     description: 'Usage of each allele across samples. Needs AIRR-seq data.',
-    caption: 'For each allele, the distribution across samples of how much of that sample\'s ' +
-             'repertoire it accounts for. Each box is one allele; each point is one sample. ' +
-             'Only samples in which the allele was detected contribute a point, so a narrow ' +
-             'box can mean a consistent allele or simply a rare one.',
+    // describes what is plotted, and stops there - what a narrow box means is
+    // the reader's call, not the caption's
+    caption: 'Relative usage of each allele: the fraction of a sample\'s rearrangements ' +
+             'assigned to it. Each box is one allele, each point one sample. A sample in ' +
+             'which the allele was not detected contributes no point.',
     requires: ['airrseq'],
     multi: false,
     load: () => import('./dash-refbook-usage/dash-refbook-usage.component')

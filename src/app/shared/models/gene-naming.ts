@@ -63,6 +63,26 @@ export function segmentLabel(code: string): string {
  */
 export const NAME_LIMIT = 26;
 
+/** FNV-1a 32-bit, mirrored byte-for-byte in refbook.py. */
+function fnv1a(text: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h >>> 0;
+}
+
+/** Three base36 characters of that hash - stable for an allele, whatever else is loaded. */
+function suffixToken(suffix: string): string {
+  const B36 = '0123456789abcdefghijklmnopqrstuvwxyz';
+  let h = fnv1a(suffix);
+  let out = '';
+  for (let i = 0; i < 3; i++) { out += B36[h % 36]; h = Math.floor(h / 36); }
+  return out;
+}
+
+
 /** One name, with no knowledge of its neighbours - use only where a clash is impossible. */
 export function shortenAlleleName(name: string, limit = NAME_LIMIT): string {
   if (!name || name.length <= limit) {
@@ -75,7 +95,12 @@ export function shortenAlleleName(name: string, limit = NAME_LIMIT): string {
   const star = name.indexOf('*');
   const cut = name.indexOf('_', star >= 0 ? star + 1 : 0);
   if (cut >= 0) {
-    return `${name.slice(0, cut)}+${name.slice(cut + 1).split('_').length}`;
+    const suffix = name.slice(cut + 1);
+    // the mutation count alone is not distinguishing enough: of the 793 names
+    // over the limit in the full HUSA set, 231 - 29% - share a stem and a count
+    // with another allele. The token is derived from the allele's own suffix, so
+    // it never changes when more data is loaded, which a positional #N does.
+    return `${name.slice(0, cut)}+${suffix.split('_').length}~${suffixToken(suffix)}`;
   }
   return `${name.slice(0, limit - 1)}~`;
 }

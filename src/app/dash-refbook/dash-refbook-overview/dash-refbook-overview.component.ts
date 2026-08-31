@@ -120,7 +120,21 @@ export class DashRefbookOverviewComponent implements OnInit, OnChanges {
         stacked: false,
         beginAtZero: true,
         title: { display: true, text: 'Samples carrying the allele' },
-        grid: { drawTicks: true, tickLength: 6 },
+        // vertical rules are wanted now the bars are horizontal: they run across
+        // the bars rather than along them, and they are what lets a value be read
+        // in the middle of a long scroll, where neither axis is on screen
+        grid: { display: true, drawOnChartArea: true, drawTicks: true, tickLength: 6,
+                color: 'rgba(0,0,0,0.06)' },
+      },
+      // A copy of the value axis along the top, so it is in view when the list is
+      // scrolled to the start. Only added when the chart is tall enough to
+      // scroll at all - on a short gene it is just clutter.
+      x2: {
+        display: false,
+        position: 'top',
+        beginAtZero: true,
+        grid: { drawOnChartArea: false, drawTicks: true, tickLength: 6 },
+        title: { display: true, text: 'Samples carrying the allele' },
       },
       y: {
         stacked: false,
@@ -147,7 +161,22 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
   private resizeChart(): void {
     setTimeout(() => {
       const canvas = this.host.nativeElement.querySelector('canvas');
-      if (canvas) { Chart.getChart(canvas)?.resize(); }
+      if (!canvas) { return; }
+      const chart = Chart.getChart(canvas);
+      if (!chart) { return; }
+      chart.resize();
+
+      // No dataset is attached to the mirrored axis, so Chart.js would scale it
+      // 0..1. Copy the real axis's bounds once they have been computed.
+      const x = chart.scales['x'], x2 = chart.scales['x2'];
+      if (x && x2 && (x2.max !== x.max || x2.min !== x.min)) {
+        const opts = chart.options.scales?.['x2'] as { min?: number; max?: number } | undefined;
+        if (opts) {
+          opts.min = x.min;
+          opts.max = x.max;
+          chart.update('none');
+        }
+      }
     });
   }
 
@@ -257,6 +286,18 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
   /** Rows are a fixed height and the panel scrolls; squeezing 384 into a box is unreadable. */
   get chartHeight(): number {
     return Math.max(320, 26 * (this.chartData.labels?.length ?? 0) + 90);
+  }
+
+  /** Beyond this the chart is taller than its box, so the bottom axis scrolls away. */
+  private static readonly SCROLLS_ABOVE = 22;
+
+  /** Mirror the value axis on top once the list is long enough to scroll. */
+  private syncMirrorAxis(): void {
+    const rows = this.chartData.labels?.length ?? 0;
+    const scales = this.chartOptions.scales as Record<string, { display?: boolean; max?: number }>;
+    if (scales?.['x2']) {
+      scales['x2'].display = rows > DashRefbookOverviewComponent.SCROLLS_ABOVE;
+    }
   }
   private lastOverview: (OverviewData & { genomic_counts?: number[]; vdjbase_counts?: number[] }) | null = null;
 
@@ -392,6 +433,7 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
           ...rest, data: keep.map(i => (values?.[i] ?? 0) || null),
         })),
       };
+      this.syncMirrorAxis();
       this.resizeChart();
     } catch (error) {
       // Silently handle any chart update errors

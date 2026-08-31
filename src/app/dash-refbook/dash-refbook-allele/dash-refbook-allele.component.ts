@@ -422,9 +422,15 @@ export class DashRefbookAlleleComponent
     try {
       const { sets, combinations } = UpSetJS.extractCombinations(withPartners);
 
-      // a detail inside a card, not the full zygosity panel: shorter rows and a
-      // lower ceiling, but still following the set count so rows cannot overlap
-      const height = Math.min(340, Math.max(150, 96 + sets.length * 16));
+      // Height is split between the combination chart on top and the matrix
+      // below, so a single figure starved both: with two sets the whole plot got
+      // 150px and the bars were drawn past their own axis. Give the combination
+      // chart a fixed slice, size the matrix from the set count, and hand
+      // UpSetJS the split explicitly rather than letting it default to 60/40.
+      const COMBO_PX = 150;
+      const matrixPx = Math.max(56, sets.length * 24 + 28);
+      const height = Math.min(520, COMBO_PX + matrixPx);
+      const comboShare = COMBO_PX / height;
 
       // Allele names are long (IGHV1-2*02_c135t and worse) and the default label
       // column is 19% of the width, which truncates them. Size it from the longest
@@ -439,6 +445,7 @@ export class DashRefbookAlleleComponent
       UpSetJS.renderUpSet(el, {
         sets, combinations, width: drawWidth, height,
         widthRatios: [SET_CHART_SHARE, labelPx / drawWidth],
+        heightRatios: [comboShare],
         fontSizes: { setLabel: '9px', axisTick: '8px', chartLabel: '10px' },
         onClick: (selected) => {
           const chosen = selected as unknown as { name?: string; type?: string };
