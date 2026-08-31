@@ -332,6 +332,22 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     this.captionOpen = { ...this.captionOpen, [id]: !this.captionOpen[id] };
   }
 
+  /**
+   * True when the open panel is drawn from the whole locus, so the gene and
+   * sample controls in the rail do not reach it.
+   *
+   * They stay live rather than disabled: setting up a gene while looking at the
+   * map is reasonable, and the other panels will use it. Dimmed and labelled is
+   * the honest state - a control that works but does not apply here.
+   */
+  get railScoped(): boolean {
+    return !!this.activePanel?.multi;
+  }
+
+  get scopedNote(): string {
+    return `not used by the ${this.activePanel?.label?.toLowerCase() ?? 'panel'}`;
+  }
+
   blockedReason(panel: DashPanel): string | null {
     return panelBlockedReason(panel, this.selection.sources ?? [], this.available,
                               this.selection.ascs?.length ?? 0, this.selectedAlleles.length);

@@ -16,7 +16,10 @@
                                    [showRepseq]="false" [showCommon]="true">
           </app-gene-table-selector>
 
-          <label class="rail-label" for="selectSegment">Segment</label>
+          <label class="rail-label" for="selectSegment" [class.not-applied]="railScoped">
+            Segment
+            @if (railScoped) { <span class="scoped-tag">{{ scopedNote }}</span> }
+          </label>
           <select class="form-select form-select-sm" id="selectSegment"
                   [(ngModel)]="segment" (ngModelChange)="onSegmentChange()"
                   [disabled]="!segments.length">
@@ -42,8 +45,11 @@
           </div>
         </section>
 
-        <section class="rail-section">
-          <h3 class="rail-heading">Samples</h3>
+        <section class="rail-section" [class.not-applied]="railScoped">
+          <h3 class="rail-heading">
+            Samples
+            @if (railScoped) { <span class="scoped-tag">{{ scopedNote }}</span> }
+          </h3>
           <app-check-dropdown label="Project" [options]="projectOptions"
                               [selected]="selectedProjects" [disabled]="!sampleFiltersEnabled"
                               (selectedChange)="onProjectsChange($event)">
@@ -58,9 +64,10 @@
              existing `alleles` parameter. A slider only appears for a database
              actually being read. -->
         @if (showGenomicRange || showAirrseqRange) {
-          <section class="rail-section">
+          <section class="rail-section" [class.not-applied]="railScoped">
             <h3 class="rail-heading">
               Seen in
+              @if (railScoped) { <span class="scoped-tag">{{ scopedNote }}</span> }
               @if (countFilterActive) {
                 <button type="button" class="reset-pill" (click)="resetSeenIn()"
                         title="Clear both thresholds">reset</button>
@@ -102,10 +109,14 @@
           </section>
         }
 
-        <section class="rail-section">
+        <section class="rail-section" [class.not-applied]="railScoped">
           <h3 class="rail-heading">
             Genes
-            <span class="heading-note">{{ selection.ascs?.length ?? 0 }} of {{ maxGenes }}</span>
+            @if (railScoped) {
+              <span class="scoped-tag">{{ scopedNote }}</span>
+            } @else {
+              <span class="heading-note">{{ selection.ascs?.length ?? 0 }} of {{ maxGenes }}</span>
+            }
           </h3>
           <app-gene-picker [genes]="availableAscs" [selected]="selection.ascs ?? []"
                            [loading]="ascLoading" [error]="ascError" [max]="maxGenes"
@@ -152,7 +163,7 @@
         <!-- a locus-wide panel is drawn from the whole locus, so the gene and
              sample chips would sit above a figure none of them narrows -->
         @if (activePanel.multi) {
-          <span class="chips-note">whole locus &mdash; the filters below do not narrow this</span>
+          <span class="chips-note">whole locus &mdash; the gene and sample filters do not apply</span>
         } @else {
           @for (chip of activeChips; track chip.key) {
             <button type="button" class="chip" (click)="removeChip(chip.key)"
