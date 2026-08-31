@@ -282,8 +282,10 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
 
       this.plotLayout = {
         barmode: 'group',
-        height: Math.max(320, 26 * rows + (mirrored ? 130 : 90)),
-        margin: { l: 200, r: 20, t: mirrored ? 70 : 30, b: 50 },
+        height: Math.max(320, 26 * rows + (mirrored ? 155 : 100)),
+        // the top band holds the legend, then the mirrored axis title, then its
+        // ticks; 70 was only enough for the axis and the legend landed on it
+        margin: { l: 200, r: 20, t: mirrored ? 95 : 40, b: 50 },
         xaxis: {
           title: { text: 'Samples carrying the allele' }, rangemode: 'tozero',
           // vertical rules run across horizontal bars, not along them, and are
@@ -297,8 +299,12 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
         },
         yaxis: { title: { text: 'Allele' }, type: 'category', automargin: true,
                  ticks: 'outside', showgrid: false },
-        legend: { orientation: 'h', y: 1.02, x: 0.5, xanchor: 'center',
-                  yanchor: 'bottom' },
+        // anchored to the figure rather than the plotting area: a legend placed
+        // just above the plot sits exactly where the mirrored axis draws, and
+        // "just above" moves with the chart's height, which varies with the
+        // number of alleles. The top of the container does not move.
+        legend: { orientation: 'h', x: 0.5, xanchor: 'center',
+                  yref: 'container', y: 1, yanchor: 'top' },
         hovermode: 'closest',
       };
     } catch (error) {
