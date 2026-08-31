@@ -7,3 +7,8 @@
   <p class="upset-status">No samples match the current selection. Remove a filter above to widen it.</p>
 }
 <div #upsetContainer class="upset-chart"></div>
+<!-- UpSet draws its own SVG and has no Plotly toolbar, so the two downloads
+     sit under the figure rather than beside the camera -->
+<app-plot-export [overrideTable]="exportTable" [overrideScript]="exportScript"
+                 [name]="selection.asc + '_zygosity'"
+                 [title]="selection.asc + ' - alleles carried together'"></app-plot-export>

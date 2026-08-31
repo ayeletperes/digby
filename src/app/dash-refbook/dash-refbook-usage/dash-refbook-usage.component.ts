@@ -10,14 +10,14 @@ import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { PlotlyModule } from 'angular-plotly.js';
 import { UsageData } from './dash-refbook-usage.model';
-import { PlotExportComponent } from '../plot-export/plot-export.component';
+import { exportButtons } from '../plot-export/plot-export';
 
 @Component({
   selector: 'app-dash-refbook-usage',
   templateUrl: './dash-refbook-usage.component.html',
   styleUrls: ['./dash-refbook-usage.component.css'],
   standalone: true,
-  imports: [PlotlyModule, ScopeNoteComponent, PlotExportComponent],
+  imports: [PlotlyModule, ScopeNoteComponent],
 })
 
 export class DashRefbookUsageComponent implements OnInit, OnChanges {
@@ -62,7 +62,16 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
     margin: { l: 60, r: 20, t: 40, b: 60 },
     showlegend: false,
   };
-  plotConfig = { responsive: true, displaylogo: false };
+  plotConfig = {
+    responsive: true, displaylogo: false,
+    modeBarButtonsToAdd: exportButtons(() => ({
+      name: `${this.selection?.asc}_usage`,
+      title: `Relative usage of the alleles of ${this.selection?.asc}`,
+      source: `/api/refbook/asc_usage/${this.selection?.species}/${this.selection?.chain}`
+              + `/${this.selection?.asc}`,
+      data: this.plotData, layout: this.plotLayout,
+    })),
+  };
 
   constructor(private refbookService: RefbookService, private drill: DashDrillService) {}
 

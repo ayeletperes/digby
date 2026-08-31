@@ -26,8 +26,3 @@
 </div>
 <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"
              (plotlyClick)="onPlotClick($event)"></plotly-plot>
-<app-plot-export [data]="plotData" [layout]="plotLayout"
-                 [name]="selection.asc + '_usage'"
-                 [title]="'Relative usage of the alleles of ' + selection.asc"
-                 [source]="'/api/refbook/asc_usage/' + selection.species + '/'
-                           + selection.chain + '/' + selection.asc"></app-plot-export>

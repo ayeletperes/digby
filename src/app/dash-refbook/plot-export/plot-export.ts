@@ -172,3 +172,92 @@ ax.boxplot(data, labels=groups, vert=${flip ? 'False' : 'True'})
 ax.set_xlabel(${quote(flip ? value : category)})
 ax.set_ylabel(${quote(flip ? category : value)})`;
 }
+
+
+// ---------------------------------------------------------------- downloads
+
+/** Allele names carry * and other characters a filename should not. */
+export function safeStem(name: string): string {
+  return (name || 'figure').replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-|-$/g, '');
+}
+
+export function saveText(text: string, filename: string, type: string): void {
+  const url = URL.createObjectURL(new Blob([text], { type: `${type};charset=utf-8` }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+/** What a panel has to say about its figure for the two downloads to work. */
+export interface ExportSpec {
+  name: string;
+  title: string;
+  source?: string;
+  data?: ExportTrace[];
+  layout?: ExportLayout;
+  /** For a figure whose traces are not its data. */
+  table?: ExportTable;
+  script?: string;
+}
+
+/**
+ * Icons drawn here rather than taken from Plotly.Icons: the config is built
+ * before Plotly has necessarily loaded, and these are two paths.
+ */
+const DOWNLOAD_ICON = {
+  width: 1000, height: 1000,
+  path: 'M440 120 h120 v330 h170 L500 700 L270 450 h170 Z M180 760 h640 v120 H180 Z',
+};
+
+const CODE_ICON = {
+  width: 1000, height: 1000,
+  path: 'M336 128 L128 500 L336 872 L420 800 L272 500 L420 200 Z '
+      + 'M664 128 L580 200 L728 500 L580 800 L664 872 L872 500 Z',
+};
+
+/**
+ * The two downloads as Plotly modebar buttons.
+ *
+ * They live beside "Download plot as a PNG" because they are the same act -
+ * take this figure away - and a panel that already has a toolbar does not need
+ * a second row of controls under it.
+ *
+ * The spec is read at click time, not at build time: the config object is made
+ * once and the figure changes under it.
+ */
+export function exportButtons(spec: () => ExportSpec): unknown[] {
+  const rows = () => {
+    const it = spec();
+    return it.table ?? table(it.data ?? [], it.layout ?? {});
+  };
+
+  return [
+    {
+      name: 'downloadData',
+      title: 'Download the plotted data (TSV)',
+      icon: DOWNLOAD_ICON,
+      click: () => {
+        const it = spec();
+        saveText(tsv(rows()), `${safeStem(it.name)}.tsv`, 'text/tab-separated-values');
+      },
+    },
+    {
+      name: 'downloadCode',
+      title: 'Download a Python script that redraws this figure',
+      icon: CODE_ICON,
+      click: () => {
+        const it = spec();
+        const traces = it.data ?? [];
+        const script = it.script ?? python(rows(), {
+          title: it.title || it.name,
+          source: it.source ?? '',
+          kind: traces.find(t => t?.type)?.type ?? 'bar',
+          horizontal: traces.some(t => t?.orientation === 'h'),
+        });
+        saveText(script, `${safeStem(it.name)}.py`, 'text/x-python');
+      },
+    },
+  ];
+}

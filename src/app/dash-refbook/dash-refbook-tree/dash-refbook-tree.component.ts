@@ -11,8 +11,8 @@ import { SpeciesGeneSelection, sourcesParam, allelesParam }
 import { shortenAlleleName } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
-import { PlotExportComponent } from '../plot-export/plot-export.component';
 import { ExportTable } from '../plot-export/plot-export';
+import { exportButtons } from '../plot-export/plot-export';
 
 /** /refbook/asc_tree: scipy-style linkage over the alleles of one gene.
  *  Shown as "Group clustering": it groups by sequence similarity and makes
@@ -33,7 +33,7 @@ interface TreeData {
   templateUrl: './dash-refbook-tree.component.html',
   styleUrls: ['./dash-refbook-tree.component.css'],
   standalone: true,
-  imports: [PlotlyModule, ScopeNoteComponent, PlotExportComponent],
+  imports: [PlotlyModule, ScopeNoteComponent],
 })
 export class DashRefbookTreeComponent implements OnInit, OnChanges {
   @Input() selection: SpeciesGeneSelection;
@@ -49,7 +49,14 @@ export class DashRefbookTreeComponent implements OnInit, OnChanges {
 
   plotData: any[] = [];
   plotLayout: any = {};
-  plotConfig = { responsive: true, displaylogo: false };
+  plotConfig = {
+    responsive: true, displaylogo: false,
+    modeBarButtonsToAdd: exportButtons(() => ({
+      name: `${this.selection?.asc}_clustering`,
+      title: `${this.selection?.asc} allele group clustering`,
+      table: this.exportTable, script: this.exportScript,
+    })),
+  };
 
   constructor(private http: HttpClient, private drill: DashDrillService) {}
 

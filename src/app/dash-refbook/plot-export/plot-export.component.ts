@@ -1,15 +1,16 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { ExportLayout, ExportTable, ExportTrace, python, table, tsv } from './plot-export';
+import { ExportLayout, ExportTable, ExportTrace, python, safeStem, saveText, table, tsv }
+  from './plot-export';
 
 /**
- * Two downloads for the figure beside it: the numbers, and a script that
- * redraws them.
+ * Two downloads as buttons under the figure, for a panel that has no Plotly
+ * modebar to put them in.
  *
- * A panel adds this by handing over the traces and layout it already built, so
- * what leaves is what was drawn - filters, ordering and all - and there is no
- * second data path to keep in step with the first.
+ * Plotly panels use `exportButtons` instead, which puts the same two actions
+ * beside "Download plot as a PNG" where they belong. This is for the UpSet
+ * plot, which draws its own SVG and has no toolbar.
  */
 @Component({
   selector: 'app-plot-export',
@@ -77,7 +78,7 @@ export class PlotExportComponent {
   }
 
   downloadData(): void {
-    this.save(tsv(this.rows()), `${this.stem}.tsv`, 'text/tab-separated-values');
+    this.save(tsv(this.rows()), `${safeStem(this.name)}.tsv`, 'text/tab-separated-values');
   }
 
   downloadCode(): void {
@@ -87,20 +88,10 @@ export class PlotExportComponent {
       kind: this.kind,
       horizontal: this.horizontal,
     });
-    this.save(script, `${this.stem}.py`, 'text/x-python');
-  }
-
-  /** Allele names carry * and other characters a filename should not. */
-  private get stem(): string {
-    return (this.name || 'figure').replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^-|-$/g, '');
+    this.save(script, `${safeStem(this.name)}.py`, 'text/x-python');
   }
 
   private save(text: string, filename: string, type: string): void {
-    const url = URL.createObjectURL(new Blob([text], { type: `${type};charset=utf-8` }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
+    saveText(text, filename, type);
   }
 }

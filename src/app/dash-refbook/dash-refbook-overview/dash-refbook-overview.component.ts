@@ -12,7 +12,7 @@ import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { OverviewData } from './dash-refbook-overview.model';
-import { PlotExportComponent } from '../plot-export/plot-export.component';
+import { exportButtons } from '../plot-export/plot-export';
 
 
 @Component({
@@ -20,7 +20,7 @@ import { PlotExportComponent } from '../plot-export/plot-export.component';
   templateUrl: './dash-refbook-overview.component.html',
   styleUrls: ['./dash-refbook-overview.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, PlotlyModule, ScopeNoteComponent, PlotExportComponent]
+  imports: [CommonModule, FormsModule, PlotlyModule, ScopeNoteComponent]
 })
 
 export class DashRefbookOverviewComponent implements OnInit, OnChanges {
@@ -42,7 +42,27 @@ export class DashRefbookOverviewComponent implements OnInit, OnChanges {
   /** Plotly traces and layout. One trace per database. */
   plotData: unknown[] = [];
   plotLayout: Record<string, unknown> = {};
-  readonly plotConfig = { responsive: true, displaylogo: false };
+  readonly plotConfig = {
+    responsive: true, displaylogo: false,
+    modeBarButtonsToAdd: exportButtons(() => ({
+      name: `${this.selection?.asc}_alleles`,
+      title: `Alleles of ${this.selection?.asc}, by samples carrying them`,
+      source: `/api/refbook/ascs_overview/${this.selection?.species}/${this.selection?.chain}`
+              + `/${this.selection?.asc}`,
+      data: this.plotData, layout: this.plotLayout,
+    })),
+  };
+
+  /** The project breakdown is a second figure and exports itself. */
+  readonly projectConfig = {
+    responsive: true, displaylogo: false,
+    modeBarButtonsToAdd: exportButtons(() => ({
+      name: `${this.selection?.asc}_by_project`,
+      title: `${this.selection?.asc} samples by project`,
+      source: `/api/refbook/projects/${this.selection?.species}/${this.selection?.chain}`,
+      data: this.projectData, layout: this.projectLayout,
+    })),
+  };
 
   /** Full allele names by row, since the tick text is the shortened label. */
   private alleleByIndex: string[] = [];
