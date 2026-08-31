@@ -13,9 +13,15 @@
     </p>
     <label class="window-pick">
       Window
-      <select [value]="window" (change)="setWindow($any($event.target).value)">
+      <!-- selected on the options, not `[value]` on the select: the select's
+           value is written before its options exist, so on every re-render the
+           control fell back to the first one and read "2 kb" while the track
+           below kept drawing whatever window was actually fetched. -->
+      <select (change)="setWindow($any($event.target).value)">
         @for (w of windows; track w) {
-          <option [value]="w">{{ w >= 1000 ? (w / 1000) + ' kb' : w + ' bp' }}</option>
+          <option [value]="w" [selected]="w === window">
+            {{ w >= 1000 ? (w / 1000) + ' kb' : w + ' bp' }}
+          </option>
         }
       </select>
     </label>
