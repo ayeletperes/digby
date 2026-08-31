@@ -1,0 +1,95 @@
+@if (error) {
+  <p class="qtl-status error">{{ error }}</p>
+} @else if (loading) {
+  <p class="qtl-status">Loading the summary…</p>
+} @else if (summary) {
+
+  <section class="card">
+    <div class="card-head">
+      <h4>Significant gene-usage variants, by segment and location</h4>
+      <button type="button" class="scale-toggle" (click)="toggleScale()">
+        {{ logScale ? 'log scale' : 'linear scale' }}
+      </button>
+    </div>
+
+    <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"></plotly-plot>
+
+    <p class="note">
+      Distinct variants, not associations: a variant significant for six V genes
+      is one V variant, because the question is how many <em>sites</em> matter. A
+      variant significant against both a V and a J counts under each, so the bars
+      within a locus need not sum to its total.
+      @for (l of summary.loci; track l) {
+        <span class="tot">{{ l }}: {{ summary.totals[l].n_significant | number }}
+          of {{ summary.totals[l].n_variants | number }} tested</span>
+      }
+    </p>
+    <p class="note">
+      <strong>UTR is its own class here.</strong> The manuscript figure folds it
+      into intergenic; the database keeps them apart, and that is the whole
+      difference between these counts and the printed ones.
+    </p>
+  </section>
+
+  @if (genes) {
+    <section class="card">
+      <div class="card-head">
+        <h4>Per gene — {{ locus }}</h4>
+        <span class="head-note">
+          {{ genes.n_genes_with_signal }} of {{ genes.n_genes_scanned }} genes
+          scanned have a significant variant
+          @if (inFeatureShare; as s) {
+            · of the bars above for {{ locus }}, {{ s.n | number }} of
+            {{ s.total | number }} land in an annotated feature rather than
+            intergenic
+          }
+        </span>
+      </div>
+
+      <table class="gene-table">
+        <tr>
+          <th>gene</th><th>seg</th><th class="n">significant</th>
+          @for (f of features; track f) {
+            <th class="n"><i class="swatch" [style.background]="colourOf(f)"></i>{{ f }}</th>
+          }
+          <th>strongest variant</th>
+        </tr>
+        @for (g of rankedGenes; track g.asc) {
+          <tr [class.quiet]="!g.n_significant">
+            <td>
+              <button type="button" class="link-button"
+                      (click)="genePicked.emit({ locus: locus!, asc: g.asc })">
+                {{ ascName(locus, g.asc) }}
+              </button>
+            </td>
+            <td class="muted">{{ g.segment }}</td>
+            <td class="n"><strong>{{ g.n_significant | number }}</strong>
+              <span class="muted"> / {{ g.n_tested | number }}</span></td>
+            @for (f of features; track f) {
+              <td class="n" [class.zero]="!countFor(g, f)">
+                {{ countFor(g, f) || '·' }}
+              </td>
+            }
+            <td>
+              @if (g.lead) {
+                <button type="button" class="link-button mono"
+                        (click)="variantPicked.emit({ locus: locus!, variant: g.lead.variant })">
+                  {{ g.lead.variant }}
+                </button>
+                <span class="muted"> −log10 p {{ g.lead.neglog10_p | number:'1.1-1' }}</span>
+              } @else {
+                <span class="muted">none</span>
+              }
+            </td>
+          </tr>
+        }
+      </table>
+      <p class="note">
+        These counts are per gene, so unlike the chart above they do sum: a
+        variant significant for two genes is counted under each. Genes with
+        nothing are listed too — a table of only the genes that hit would read as
+        though the rest were never looked at.
+      </p>
+    </section>
+  }
+}

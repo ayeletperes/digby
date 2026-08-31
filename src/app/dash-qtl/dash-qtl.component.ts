@@ -12,6 +12,7 @@ import { QtlSearchComponent } from './qtl-search/qtl-search.component';
 import { QtlVariantLookupComponent } from './qtl-variant-lookup/qtl-variant-lookup.component';
 import { QtlRegionComponent } from './qtl-region/qtl-region.component';
 import { QtlPairingComponent } from './qtl-pairing/qtl-pairing.component';
+import { QtlSummaryComponent } from './qtl-summary/qtl-summary.component';
 import { QtlAsc, QtlSelection } from '../shared/models/qtl-selection.model';
 import { ascDisplayName } from '../shared/models/gene-naming';
 
@@ -30,7 +31,7 @@ import { ascDisplayName } from '../shared/models/gene-naming';
   standalone: true,
   imports: [CommonModule, FormsModule, QtlManhattanComponent, QtlVariantComponent,
             QtlSearchComponent, QtlVariantLookupComponent, QtlRegionComponent,
-            QtlPairingComponent],
+            QtlPairingComponent, QtlSummaryComponent],
 })
 export class DashQtlComponent implements OnInit, OnDestroy {
   /** An ASC written as a gene name; IGH's D clusters already carry the locus. */
@@ -51,7 +52,7 @@ export class DashQtlComponent implements OnInit, OnDestroy {
    * searched - and that control lives in the tab rather than in the rail, so
    * there is exactly one place to make a choice at any moment.
    */
-  view: 'gene' | 'variant' | 'pairing' = 'gene';
+  view: 'gene' | 'variant' | 'pairing' | 'summary' = 'gene';
 
   /**
    * The other half of the pair being plotted, or absent when nothing is.
@@ -236,6 +237,10 @@ export class DashQtlComponent implements OnInit, OnDestroy {
         : `No single scan — each variant's best result across every gene in `
           + `${locus ?? 'the locus'}.`;
     }
+    if (this.view === 'summary') {
+      return 'Every significant variant in the run at once, by which segment\'s '
+           + 'genes it explains and what it sits in.';
+    }
     if (this.view === 'pairing') {
       return 'Which partner a gene recombines with, and whether a variant '
            + 'moves it. A separate scan from usage, on its own variants.';
@@ -310,7 +315,7 @@ export class DashQtlComponent implements OnInit, OnDestroy {
    * or the variant still there. Only the pair being plotted is specific to the
    * tab it was opened from.
    */
-  showView(view: 'gene' | 'variant' | 'pairing'): void {
+  showView(view: 'gene' | 'variant' | 'pairing' | 'summary'): void {
     this.view = view;
     this.plot = undefined;
     this.pointAsc = undefined;
@@ -344,6 +349,17 @@ export class DashQtlComponent implements OnInit, OnDestroy {
     } else {
       this.writeToUrl();
     }
+  }
+
+  /** A gene from the summary table opens its own scan. */
+  onSummaryGene(hit: { locus: string; asc: string }): void {
+    this.onSearchGene(hit);
+  }
+
+  /** A gene's strongest variant opens that variant's own table. */
+  onSummaryVariant(hit: { locus: string; variant: string }): void {
+    this.view = 'variant';
+    this.onSearchVariant(hit);
   }
 
   private loadAscs(): void {
@@ -396,7 +412,8 @@ export class DashQtlComponent implements OnInit, OnDestroy {
   private restoreFromUrl(): void {
     const params = this.route.snapshot.queryParamMap;
     const asked = params.get('view');
-    this.view = asked === 'variant' || asked === 'pairing' ? asked : 'gene';
+    this.view = asked === 'variant' || asked === 'pairing' || asked === 'summary'
+      ? asked : 'gene';
     this.plot = params.get('plot') ?? undefined;
     this.selection = {
       species: params.get('species') ?? undefined,

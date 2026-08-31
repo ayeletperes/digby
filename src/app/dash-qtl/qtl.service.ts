@@ -107,6 +107,16 @@ export class QtlService {
       { params: new HttpParams().set('conditional', conditional) });
   }
 
+  /** Significant variants by locus, segment and where they sit. */
+  usageSummary(species: string): Observable<any> {
+    return this.http.get<any>(`${this.base}/usage_summary/${enc(species)}`);
+  }
+
+  /** The same counts split per gene, for one locus. */
+  geneSummary(species: string, locus: string): Observable<any> {
+    return this.http.get<any>(`${this.base}/gene_summary/${enc(species)}/${enc(locus)}`);
+  }
+
   variantUsage(species: string, locus: string, variant: string, asc: string): Observable<any> {
     return this.http.get<any>(
       `${this.base}/variant_usage/${enc(species)}/${enc(locus)}/${enc(variant)}`,
