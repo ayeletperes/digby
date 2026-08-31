@@ -7,9 +7,14 @@
   <section class="card">
     <div class="card-head">
       <h4>Significant gene-usage variants, by segment and location</h4>
-      <button type="button" class="scale-toggle" (click)="toggleScale()">
-        {{ logScale ? 'log scale' : 'linear scale' }}
-      </button>
+      <span class="head-controls">
+        <button type="button" class="scale-toggle" (click)="toggleScope()">
+          {{ allLoci ? 'all loci' : locus }}
+        </button>
+        <button type="button" class="scale-toggle" (click)="toggleScale()">
+          {{ logScale ? 'log scale' : 'linear scale' }}
+        </button>
+      </span>
     </div>
 
     <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"></plotly-plot>
@@ -19,7 +24,7 @@
       is one V variant, because the question is how many <em>sites</em> matter. A
       variant significant against both a V and a J counts under each, so the bars
       within a locus need not sum to its total.
-      @for (l of summary.loci; track l) {
+      @for (l of shownLoci; track l) {
         <span class="tot">{{ l }}: {{ summary.totals[l].n_significant | number }}
           of {{ summary.totals[l].n_variants | number }} tested</span>
       }
@@ -39,7 +44,7 @@
           {{ genes.n_genes_with_signal }} of {{ genes.n_genes_scanned }} genes
           scanned have a significant variant
           @if (inFeatureShare; as s) {
-            · of the bars above for {{ locus }}, {{ s.n | number }} of
+            · of the bars above, {{ s.n | number }} of
             {{ s.total | number }} land in an annotated feature rather than
             intergenic
           }

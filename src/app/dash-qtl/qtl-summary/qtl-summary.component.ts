@@ -61,6 +61,16 @@ export class QtlSummaryComponent implements OnChanges {
   /** Counts span four orders of magnitude, so a linear axis hides the small bars. */
   logScale = true;
 
+  /**
+   * Just this locus, or all of them.
+   *
+   * The selected locus by default: it is the one every other panel is showing,
+   * and a chart that silently answers about three loci at once invites reading a
+   * number off the wrong group. All-loci is one click away because the
+   * comparison is the whole point of the printed version.
+   */
+  allLoci = false;
+
   plotData: unknown[] = [];
   plotLayout: Record<string, unknown> = {};
   readonly plotConfig = { responsive: true, displaylogo: false };
@@ -88,6 +98,17 @@ export class QtlSummaryComponent implements OnChanges {
     this.draw();
   }
 
+  toggleScope(): void {
+    this.allLoci = !this.allLoci;
+    this.draw();
+  }
+
+  /** The loci the chart is drawing. */
+  get shownLoci(): string[] {
+    const all: string[] = this.summary?.loci ?? [];
+    return this.allLoci || !this.locus ? all : all.filter(l => l === this.locus);
+  }
+
   /** Genes worth listing first: the ones that actually have a signal. */
   get rankedGenes(): any[] {
     return this.genes?.genes ?? [];
@@ -102,7 +123,7 @@ export class QtlSummaryComponent implements OnChanges {
     if (!this.summary) {
       return null;
     }
-    const rows = this.summary.rows.filter((r: any) => r.locus === this.locus);
+    const rows = this.summary.rows.filter((r: any) => this.shownLoci.includes(r.locus));
     const total = rows.reduce((s: number, r: any) => s + r.n, 0);
     const inFeature = rows.filter((r: any) => r.feature !== 'intergenic')
                           .reduce((s: number, r: any) => s + r.n, 0);
@@ -145,7 +166,7 @@ export class QtlSummaryComponent implements OnChanges {
       return;
     }
 
-    const loci: string[] = this.summary.loci;
+    const loci: string[] = this.shownLoci;
     const segments: string[] = this.summary.segments;
     // only the (locus, segment) pairs that were actually scanned; a column for
     // IGK D would say the D genes came up empty rather than that IGK has none
@@ -181,7 +202,8 @@ export class QtlSummaryComponent implements OnChanges {
       margin: { l: 70, r: 12, t: 26, b: 60 },
       barmode: 'group',
       // Plotly 3 drops a plain string title silently and draws nothing
-      xaxis: { type: 'multicategory', title: { text: 'Locus and segment' } },
+      xaxis: { type: 'multicategory',
+               title: { text: loci.length > 1 ? 'Locus and segment' : 'Segment' } },
       yaxis: {
         title: { text: this.logScale ? 'Significant variants (log scale)'
                                      : 'Significant variants' },
