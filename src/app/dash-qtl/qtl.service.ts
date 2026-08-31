@@ -69,11 +69,16 @@ export class QtlService {
    * drawn at its own strongest result, which is the only honest summary when no
    * single gene has been chosen.
    */
-  region(species: string, locus: string, variant: string,
-         window: number, asc?: string): Observable<any> {
+  region(species: string, locus: string, variant: string, window: number,
+         asc?: string, range?: { start: number; end: number } | null): Observable<any> {
     let params = new HttpParams().set('window', String(window));
     if (asc) {
       params = params.set('asc', asc);
+    }
+    // an explicit range is what a drag on the track produces, and it wins: it is
+    // not generally centred on the variant, so it cannot be said as a window
+    if (range) {
+      params = params.set('start', String(range.start)).set('end', String(range.end));
     }
     return this.http.get<any>(
       `${this.base}/region/${enc(species)}/${enc(locus)}/${enc(variant)}`, { params });

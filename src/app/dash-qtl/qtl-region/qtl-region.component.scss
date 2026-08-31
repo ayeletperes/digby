@@ -9,6 +9,16 @@
   margin: 0; font-size: 0.85rem; color: var(--vdj-body);
   font-family: 'Roboto Mono', Menlo, Consolas, monospace;
 }
+.view-controls { display: flex; align-items: center; gap: 0.6rem; }
+.view-controls button {
+  font-size: 0.75rem; padding: 0.1rem 0.45rem; border-radius: 4px;
+  border: 1px solid var(--vdj-teal-border); background: #fff; color: var(--vdj-ink);
+  cursor: pointer;
+}
+.view-controls button:hover { background: var(--vdj-teal-wash); }
+.view-controls button.reset { border-color: #d62839; color: #d62839; }
+.span-size { color: var(--vdj-muted); }
+
 .window-pick { font-size: 0.8rem; color: var(--vdj-muted); }
 .window-pick select {
   margin-left: 0.35rem; font-size: 0.8rem; padding: 0.1rem 0.3rem;
@@ -28,7 +38,7 @@
 }
 
 .tick { fill: var(--vdj-muted); font-size: 9px; text-anchor: middle; }
-.tick.y { text-anchor: end; }
+.tick.y { text-anchor: start; }
 
 .mark {
   fill: var(--vdj-muted); opacity: 0.55; cursor: pointer;
@@ -62,8 +72,34 @@
 .swatch.gene-swatch { background: #c8d5d4; }
 .swatch.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--vdj-muted); }
 .swatch.dot.sig { background: #d62839; }
+.swatch.line {
+  width: 14px; height: 0; border: 0; border-top: 1px dashed #d62839;
+  border-radius: 0; background: none;
+}
 
 .note {
   margin: 0.4rem 0 0; font-size: 0.78rem; color: var(--vdj-muted); max-width: 80ch;
 }
 .note.warn { color: #b06000; }
+
+/* dragging a range to zoom, as a genome browser does */
+.track { cursor: crosshair; touch-action: none; }
+.brush {
+  fill: var(--vdj-teal); opacity: 0.16;
+  stroke: var(--vdj-teal); stroke-width: 0.8; pointer-events: none;
+}
+/* a refetch dims the track rather than replacing it, so the control that
+   started the refetch stays under the cursor */
+.track.busy, .detail.busy { opacity: 0.45; transition: opacity 120ms; }
+
+.detail-head {
+  display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+  margin: 0.7rem 0 0.1rem; padding-top: 0.5rem;
+  border-top: 1px dashed var(--vdj-rule);
+}
+.detail-title {
+  font-size: 0.82rem; font-weight: 600; color: var(--vdj-ink);
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+}
+.detail-sub { font-size: 0.74rem; color: var(--vdj-muted); }
+.detail { width: 100%; height: auto; display: block; overflow: visible; }

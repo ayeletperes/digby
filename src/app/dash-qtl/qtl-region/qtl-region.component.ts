@@ -23,6 +23,13 @@ import { QtlSelection, QtlThreshold, usageThreshold } from '../../shared/models/
  * more code than the linear scale below, and a canvas that cannot take the
  * `--vdj-*` tokens the rest of the dashboard is drawn in. SVG `<title>` gives the
  * hover for free.
+ *
+ * Two rows, because one scale cannot do both jobs. The overview is the window at
+ * whatever width was asked for, and dragging across it zooms into that range. The
+ * detail below is one gene drawn to its own scale, which is the only way its
+ * leader, coding and RSS parts are ever legible: in a 100 kb window a seven-base
+ * heptamer is a hundredth of a pixel, so no amount of widening the overview will
+ * ever show it.
  */
 
 const VIEW = 1000;          // viewBox width; the SVG scales to its container
@@ -36,6 +43,28 @@ const ELEMENT_Y = 160;
 const ELEMENT_H = 13;
 const AXIS_Y = 190;
 export const TRACK_HEIGHT = 214;
+
+/** The gene-model row, which has its own scale and so its own canvas. */
+const DETAIL_HEIGHT = 96;
+const DETAIL_GENE_Y = 18;
+const DETAIL_GENE_H = 10;
+const DETAIL_ELEMENT_Y = 40;
+const DETAIL_ELEMENT_H = 20;
+const DETAIL_AXIS_Y = 74;
+
+/**
+ * Mark radius by how many marks are being drawn.
+ *
+ * At 20 kb a window holds tens of variants and a 3-unit dot is right. At 500 kb
+ * it holds thousands, and thousands of 3-unit dots on a 1000-unit axis is one
+ * solid bar - the plot stops being a plot, which is what "it broke at 500 kb"
+ * was. Every variant is still drawn: the radius shrinks rather than the set,
+ * because thinning the crowd would quietly remove exactly the variants whose
+ * crowding is the thing worth seeing.
+ */
+function markRadius(count: number): number {
+  return count > 1200 ? 1.1 : count > 400 ? 1.8 : count > 150 ? 2.4 : 3;
+}
 
 /** Feature classes, coloured so the leader's three parts read as one thing. */
 const FEATURE_COLOUR: Record<string, string> = {
@@ -122,6 +151,15 @@ export class QtlRegionComponent implements OnChanges {
   readonly windows = [2000, 5000, 20000, 100000, 500000];
   window = 20000;
 
+  /**
+   * A dragged range, which is not the same thing as a window.
+   *
+   * A window is centred on the variant; a dragged range is wherever the drag
+   * landed, and the variant may be at its edge or outside it entirely. Held apart
+   * from `window` so picking a preset afterwards goes back to being centred.
+   */
+  private range: { start: number; end: number } | null = null;
+
   isFetching = false;
   error: string | null = null;
 
@@ -141,6 +179,24 @@ export class QtlRegionComponent implements OnChanges {
   thresholdY: number | null = null;
   yTicks: { y: number; label: string }[] = [];
 
+  // ------------------------------------------------------------ gene detail
+  detailGene: string | null = null;
+  detailStart = 0;
+  detailEnd = 0;
+  detailBoxes: Box[] = [];
+  detailGeneBox: Box | null = null;
+  detailTicks: { x: number; label: string }[] = [];
+  /** Where the selected variant sits in the detail, or null if it is outside. */
+  detailVariantX: number | null = null;
+  detailNote: string | null = null;
+  detailDistance = 0;
+
+  // ------------------------------------------------------------------ brush
+  brushFrom: number | null = null;
+  brushTo: number | null = null;
+  /** Set by a drag, so the click that ends it does not also select a mark. */
+  private dragged = false;
+
   readonly view = VIEW;
   readonly height = TRACK_HEIGHT;
   readonly geneY = GENE_Y;
@@ -152,9 +208,16 @@ export class QtlRegionComponent implements OnChanges {
   readonly axisY = AXIS_Y;
   readonly pad = PAD;
 
+  readonly detailHeight = DETAIL_HEIGHT;
+  readonly detailGeneY = DETAIL_GENE_Y;
+  readonly detailGeneH = DETAIL_GENE_H;
+  readonly detailElementY = DETAIL_ELEMENT_Y;
+  readonly detailElementH = DETAIL_ELEMENT_H;
+  readonly detailAxisY = DETAIL_AXIS_Y;
+
   /** The legend, only for the classes actually on screen. */
   get legend(): { feature: string; colour: string }[] {
-    const seen = new Set(this.elementBoxes.map(b => b.fill));
+    const seen = new Set([...this.elementBoxes, ...this.detailBoxes].map(b => b.fill));
     return Object.entries(FEATURE_COLOUR)
       .filter(([feature, colour]) => feature !== 'gene' && seen.has(colour))
       .map(([feature, colour]) => ({ feature, colour }));
@@ -164,16 +227,46 @@ export class QtlRegionComponent implements OnChanges {
     return this.selection?.asc ?? this.fallbackAsc;
   }
 
+  /** The drawn span, in the units a reader thinks in. */
+  get spanLabel(): string {
+    const size = this.end - this.start;
+    return size >= 1000 ? `${(size / 1000).toFixed(size >= 10000 ? 0 : 1)} kb`
+                        : `${size} bp`;
+  }
+
+  /** True once the view has been dragged away from a plain centred window. */
+  get isRanged(): boolean {
+    return this.range !== null;
+  }
+
   constructor(private qtl: QtlService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['selection'] || changes['fallbackAsc']) {
+      // a different variant is a different neighbourhood, so a range dragged
+      // around the previous one means nothing here
+      this.range = null;
       this.fetch();
     }
   }
 
   setWindow(value: string): void {
     this.window = Number(value);
+    this.range = null;
+    this.fetch();
+  }
+
+  /** Back to the preset window, centred on the variant again. */
+  resetView(): void {
+    this.range = null;
+    this.fetch();
+  }
+
+  /** Widen the drawn span about its own middle, the way a zoom-out control does. */
+  zoomOut(): void {
+    const mid = Math.round((this.start + this.end) / 2);
+    const half = Math.max(200, Math.round((this.end - this.start) * 1.25));
+    this.range = { start: Math.max(1, mid - half), end: mid + half };
     this.fetch();
   }
 
@@ -187,7 +280,7 @@ export class QtlRegionComponent implements OnChanges {
     this.isFetching = true;
     this.error = null;
 
-    this.qtl.region(species, locus, variant, this.window, this.plottedAsc)
+    this.qtl.region(species, locus, variant, this.window, this.plottedAsc, this.range)
       .pipe(catchError(err => {
         this.error = err?.error?.message ?? err?.message ?? 'Could not load this region';
         this.isFetching = false;
@@ -207,11 +300,22 @@ export class QtlRegionComponent implements OnChanges {
     this.ticks = [];
     this.genesInWindow = [];
     this.variantCount = 0;
+    this.detailGene = null;
+    this.detailBoxes = [];
+    this.detailGeneBox = null;
+    this.detailTicks = [];
+    this.detailVariantX = null;
+    this.detailNote = null;
+  }
+
+  /** viewBox x for a position, on a given scale. */
+  private scale(pos: number, start: number, end: number): number {
+    const span = Math.max(1, end - start);
+    return PAD + ((pos - start) / span) * (VIEW - 2 * PAD);
   }
 
   private x(pos: number): number {
-    const span = Math.max(1, this.end - this.start);
-    return PAD + ((pos - this.start) / span) * (VIEW - 2 * PAD);
+    return this.scale(pos, this.start, this.end);
   }
 
   private build(result: any): void {
@@ -253,10 +357,11 @@ export class QtlRegionComponent implements OnChanges {
     this.thresholdY = line === null ? null : y(line);
     this.yTicks = [0, top / 2, top].map(value => ({ y: y(value), label: value.toFixed(0) }));
 
+    const r = markRadius(variants.length);
     this.marks = variants.map(v => ({
       cx: this.x(v.pos),
       cy: y(v.neglog10_p),
-      r: v.selected ? 5.5 : 3,
+      r: v.selected ? Math.max(5.5, r * 1.8) : v.significant ? Math.max(2.4, r) : r,
       variant: v.variant,
       significant: v.significant,
       selected: v.selected,
@@ -264,12 +369,94 @@ export class QtlRegionComponent implements OnChanges {
              `-log10 p ${v.neglog10_p.toFixed(2)}${v.asc ? `  (${v.asc})` : ''}` +
              `${v.maf === null ? '' : `\nMAF ${(v.maf * 100).toFixed(1)}%`}`,
     }));
+    // significant last, selected last of all: in a crowd the marks worth seeing
+    // must not be the ones that happen to be painted over
+    this.marks.sort((a, b) => Number(a.selected) - Number(b.selected)
+                           || Number(a.significant) - Number(b.significant));
 
     const step = (this.end - this.start) / 4;
     this.ticks = [0, 1, 2, 3, 4].map(i => {
       const pos = Math.round(this.start + i * step);
       return { x: this.x(pos), label: kb(pos) };
     });
+
+    this.buildDetail(genes, features);
+  }
+
+  /**
+   * One gene drawn to its own scale, which is the only scale its parts survive.
+   *
+   * The gene the variant sits in, or failing that the nearest one in the window:
+   * an intergenic variant is still asking "near what?", and the answer is the
+   * gene it is nearest to - the same gene the association panel names it against.
+   */
+  private buildDetail(genes: RegionFeature[], features: RegionFeature[]): void {
+    this.detailBoxes = [];
+    this.detailGeneBox = null;
+    this.detailTicks = [];
+    this.detailVariantX = null;
+    this.detailNote = null;
+    this.detailDistance = 0;
+
+    const gap = (g: RegionFeature) => this.centre < g.start ? g.start - this.centre
+                                    : this.centre > g.end ? this.centre - g.end : 0;
+    const nearest = genes.reduce<RegionFeature | null>(
+      (best, g) => best === null || gap(g) < gap(best) ? g : best, null);
+
+    this.detailGene = nearest?.name ?? null;
+    if (!nearest) {
+      return;
+    }
+    this.detailDistance = gap(nearest);
+
+    const own = features.filter(f => f.name === nearest.name);
+    // the gene together with its parts: an RSS sits outside the gene body, so the
+    // span has to be the union or the heptamer falls off its own detail view
+    const lo = Math.min(nearest.start, ...own.map(f => f.start));
+    const hi = Math.max(nearest.end, ...own.map(f => f.end));
+    const margin = Math.max(20, Math.round((hi - lo) * 0.08));
+    this.detailStart = lo - margin;
+    this.detailEnd = hi + margin;
+
+    const at = (pos: number) => this.scale(pos, this.detailStart, this.detailEnd);
+    const detailBox = (f: RegionFeature, y: number, h: number,
+                       fill: string, label: string, title: string): Box => {
+      const left = at(f.start);
+      const right = at(f.end + 1);
+      const width = Math.max(0.8, right - left);
+      return { x: left, width, y, height: h, fill, label, title,
+               showLabel: width > label.length * 4.2, labelX: left + width / 2 };
+    };
+
+    this.detailGeneBox = detailBox(nearest, DETAIL_GENE_Y, DETAIL_GENE_H,
+      FEATURE_COLOUR['gene'], nearest.name,
+      `${nearest.name}\n${fmt(nearest.start)}–${fmt(nearest.end)}  ` +
+      `(${fmt(nearest.end - nearest.start + 1)} bp)`);
+
+    this.detailBoxes = own.map(f => detailBox(f, DETAIL_ELEMENT_Y, DETAIL_ELEMENT_H,
+      FEATURE_COLOUR[f.feature] ?? FEATURE_COLOUR['utr'],
+      FEATURE_LABEL[f.kind] ?? f.kind,
+      `${f.name} · ${FEATURE_LABEL[f.kind] ?? f.kind}\n` +
+      `${fmt(f.start)}–${fmt(f.end)}  (${fmt(f.end - f.start + 1)} bp)`));
+
+    if (this.centre >= this.detailStart && this.centre <= this.detailEnd) {
+      this.detailVariantX = at(this.centre);
+    }
+
+    const step = (this.detailEnd - this.detailStart) / 4;
+    this.detailTicks = [0, 1, 2, 3, 4].map(i => {
+      const pos = Math.round(this.detailStart + i * step);
+      return { x: at(pos), label: fmt(pos) };
+    });
+
+    if (!own.length && this.annotated) {
+      // the endpoint only returns features overlapping the window, so a gene at
+      // the very edge can arrive without its parts. Said out loud, because an
+      // empty detail row otherwise reads as "this gene has no annotated
+      // structure", which is a different claim entirely.
+      this.detailNote = `No annotated parts of ${nearest.name} fall inside the `
+        + 'drawn window; widen it to see its structure.';
+    }
   }
 
   private box(f: RegionFeature, y: number, height: number,
@@ -294,9 +481,75 @@ export class QtlRegionComponent implements OnChanges {
   }
 
   pick(variant: string): void {
-    if (variant !== this.selection?.variant) {
-      this.variantPicked.emit(variant);
+    // a drag that happens to finish over a mark is a zoom, not a selection
+    if (this.dragged || variant === this.selection?.variant) {
+      return;
     }
+    this.variantPicked.emit(variant);
+  }
+
+  // ------------------------------------------------------------------ brush
+
+  /** Drag across the track to zoom into that range, as a genome browser does. */
+  onBrushStart(event: PointerEvent): void {
+    if (event.button !== 0) {
+      return;
+    }
+    this.dragged = false;
+    this.brushFrom = this.toView(event);
+    this.brushTo = this.brushFrom;
+    (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
+  }
+
+  onBrushMove(event: PointerEvent): void {
+    if (this.brushFrom === null) {
+      return;
+    }
+    this.brushTo = this.toView(event);
+    if (Math.abs(this.brushTo - this.brushFrom) > 3) {
+      this.dragged = true;
+    }
+  }
+
+  onBrushEnd(): void {
+    const from = this.brushFrom;
+    const to = this.brushTo;
+    this.brushFrom = this.brushTo = null;
+
+    if (from === null || to === null || !this.dragged) {
+      this.dragged = false;      // a plain click is not a zoom; let it through
+      return;
+    }
+
+    const lo = this.toPos(Math.min(from, to));
+    const hi = this.toPos(Math.max(from, to));
+    // the click this drag ends with arrives after it, so `dragged` is dropped a
+    // tick later rather than here, or that click would select whatever it landed on
+    setTimeout(() => (this.dragged = false));
+
+    if (hi - lo >= 50) {         // anything smaller is a flick, not a range
+      this.range = { start: lo, end: hi };
+      this.fetch();
+    }
+  }
+
+  /** Client pixels to viewBox units, which is what everything here is drawn in. */
+  private toView(event: PointerEvent): number {
+    const box = (event.currentTarget as SVGGraphicsElement).getBoundingClientRect();
+    return box.width ? ((event.clientX - box.left) / box.width) * VIEW : 0;
+  }
+
+  private toPos(viewX: number): number {
+    const frac = (viewX - PAD) / (VIEW - 2 * PAD);
+    return Math.round(this.start + Math.min(1, Math.max(0, frac)) * (this.end - this.start));
+  }
+
+  get brushX(): number {
+    return Math.min(this.brushFrom ?? 0, this.brushTo ?? 0);
+  }
+
+  get brushWidth(): number {
+    return Math.abs((this.brushTo ?? 0) - (this.brushFrom ?? 0));
   }
 }
 
@@ -312,7 +565,9 @@ export class QtlRegionComponent implements OnChanges {
 function labelWithoutColliding(boxes: Box[]): void {
   let rightmost = -Infinity;
   for (const box of [...boxes].sort((a, b) => a.labelX - b.labelX)) {
-    const half = box.label.length * 2.2;
+    // 9px type in a 1000-unit viewBox runs about 5.2 units per character. The
+    // earlier 4.4 under-measured it, which is why long names touched at 500 kb.
+    const half = box.label.length * 2.6;
     box.showLabel = box.labelX - half > rightmost + 2;
     if (box.showLabel) {
       rightmost = box.labelX + half;
@@ -335,4 +590,3 @@ function fmt(value: number): string {
 function kb(pos: number): string {
   return `${(pos / 1000).toFixed(pos > 1e6 ? 0 : 1)} kb`;
 }
-
