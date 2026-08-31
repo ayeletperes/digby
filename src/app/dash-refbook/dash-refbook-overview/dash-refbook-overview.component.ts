@@ -148,7 +148,7 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
     barmode: 'group', height: 260,
     margin: { l: 60, r: 20, t: 10, b: 60 },
     xaxis: { title: { text: 'Project' }, type: 'category', automargin: true, ticks: 'outside' },
-    yaxis: { title: { text: 'Samples' }, rangemode: 'tozero', automargin: true, ticks: 'outside',
+    yaxis: { title: { text: 'Samples carrying the allele' }, rangemode: 'tozero', automargin: true, ticks: 'outside',
              gridcolor: 'rgba(0,0,0,0.06)' },
     legend: { orientation: 'h', y: -0.25, x: 0.5, xanchor: 'center' },
   };

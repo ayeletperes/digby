@@ -386,7 +386,7 @@ export class DashRefbookAlleleComponent
     this.usageLayout = {
       ...base, height: 210,
       xaxis: { title: { text: 'Project' }, automargin: true },
-      yaxis: { title: { text: 'Share of repertoire' }, tickformat: '.1%', rangemode: 'tozero',
+      yaxis: { title: { text: 'Relative usage (%)' }, tickformat: '.1%', rangemode: 'tozero',
                automargin: true },
     };
   }

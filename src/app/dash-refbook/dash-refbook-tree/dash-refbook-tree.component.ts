@@ -198,7 +198,7 @@ export class DashRefbookTreeComponent implements OnInit, OnChanges {
       autosize: true,
       margin: { l: Math.min(240, Math.max(80, longest * 7 + 20)), r: 20, t: 20, b: 50 },
       xaxis: {
-        title: { text: 'Nucleotide differences' },
+        title: { text: 'Distance (nt)' },
         automargin: true,
         range: [-maxHeight * 0.02, maxHeight * 1.05],
         zeroline: false,
