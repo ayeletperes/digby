@@ -9,8 +9,15 @@ import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { PlotlyModule } from 'angular-plotly.js';
-import { UsageData } from './dash-refbook-usage.model';
 import { exportButtons } from '../plot-export/plot-export';
+
+export class UsageData {
+  alleles: {
+    name: string;
+    usage: number[];
+    samples: string[];
+  }[];
+}
 
 @Component({
   selector: 'app-dash-refbook-usage',

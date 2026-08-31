@@ -14,7 +14,6 @@ import { SpeciesGeneSelection, projectsParam, samplesParam, allelesParam, source
   from '../../shared/models/species-gene-selection.model';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
-import { ZygosityData } from './dash-refbook-zygosity.model';
 import { PlotExportComponent } from '../plot-export/plot-export.component';
 import { ExportTable } from '../plot-export/plot-export';
 
@@ -27,10 +26,23 @@ const SET_CHART_SHARE = 0.18;
 /** Row height per allele. Below about 20 the 10px labels start to touch. */
 const ROW_PX = 24;
 
+export class ZygosityData {
+  samples: {
+    name: string;
+    sets: string[];
+  }[];
+}
+
 @Component({
   selector: 'app-dash-refbook-zygosity',
   templateUrl: './dash-refbook-zygosity.component.html',
-  styleUrls: ['./dash-refbook-zygosity.component.css'],
+  styles: [`
+    /* Width comes from the column; height is set per render from the number of sets. */
+    .upset-chart { width: 100%; min-width: 0; overflow-x: auto; }
+
+    .upset-status { margin: 0.5rem 0; font-size: 0.85rem; color: #5f6368; }
+    .upset-status.error { color: #d62839; }
+  `],
   standalone: true,
   imports: [CommonModule, ScopeNoteComponent, PlotExportComponent],
 })
