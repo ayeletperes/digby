@@ -7,7 +7,7 @@
 } @else {
   <h3 class="scan-title">
     @if (selection.asc) {
-      Manhattan — {{ selection.locus }}{{ selection.asc }}
+      Manhattan — {{ ascName(selection.locus, selection.asc) }}
     } @else {
       Locus overview — strongest result per variant
     }
@@ -33,7 +33,7 @@
   @if (selection.asc) {
     <p class="qtl-hint">
       One scan: every variant tested against the usage of
-      <strong>{{ selection.locus }}{{ selection.asc }}</strong>, one test per point.
+      <strong>{{ ascName(selection.locus, selection.asc) }}</strong>, one test per point.
       Click a point to plot the usage behind it.
     </p>
   } @else {

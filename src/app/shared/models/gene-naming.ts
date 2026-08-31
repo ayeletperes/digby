@@ -133,3 +133,22 @@ export function shortenAlleleNames(names: string[], limit = NAME_LIMIT): Map<str
   }
   return display;
 }
+
+/**
+ * An ASC written as a gene name, for display only.
+ *
+ * ASC names usually drop the locus - IGL's `V9-49` is the gene IGLV9-49 - so the
+ * dashboard puts it back when it shows one. IGH's D clusters do not: they are
+ * stored as `IGHD5-12`, prefix and all, so prepending the locus again produced
+ * `IGHIGHD5-12`. Checked rather than assumed, because the stored string is the
+ * identity that every join uses and must not be rewritten to tidy a label.
+ */
+export function ascDisplayName(locus: string | undefined, asc: string | undefined): string {
+  if (!asc) {
+    return '';
+  }
+  if (!locus) {
+    return asc;
+  }
+  return asc.toUpperCase().startsWith(locus.toUpperCase()) ? asc : `${locus}${asc}`;
+}

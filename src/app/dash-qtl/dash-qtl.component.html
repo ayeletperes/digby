@@ -71,7 +71,7 @@
               <option [ngValue]="undefined">All genes — best per variant</option>
               @for (a of rankedAscs; track a.asc) {
                 <option [ngValue]="a.asc">
-                  {{ selection.locus }}{{ a.asc }} — {{ a.n_significant }} significant
+                  {{ ascName(selection.locus, a.asc) }} — {{ a.n_significant }} significant
                 </option>
               }
             </select>

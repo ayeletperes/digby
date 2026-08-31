@@ -82,7 +82,7 @@
           </tr>
           @for (a of rows; track a.asc) {
             <tr>
-              <td class="gene">{{ result.locus }}{{ a.asc }}</td>
+              <td class="gene">{{ ascName(result?.locus, a.asc) }}</td>
               <td class="muted">{{ a.segment }}</td>
               <td class="n">{{ a.p_value.toExponential(2) }}</td>
               <td class="n muted">{{ a.neglog10_p | number:'1.1-1' }}</td>

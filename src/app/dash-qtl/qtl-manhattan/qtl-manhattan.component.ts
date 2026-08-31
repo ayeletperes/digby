@@ -8,6 +8,7 @@ import { QtlService } from '../qtl.service';
 import {
   QtlLead, QtlPoint, QtlSelection, QtlThreshold, usageThreshold,
 } from '../../shared/models/qtl-selection.model';
+import { ascDisplayName } from '../../shared/models/gene-naming';
 
 /**
  * Association strength along the locus.
@@ -37,6 +38,9 @@ import {
   imports: [CommonModule, PlotlyModule],
 })
 export class QtlManhattanComponent implements OnChanges {
+  /** An ASC written as a gene name; IGH's D clusters already carry the locus. */
+  readonly ascName = ascDisplayName;
+
   @Input() selection: QtlSelection;
 
   /**

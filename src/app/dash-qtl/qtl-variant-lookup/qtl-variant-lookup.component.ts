@@ -8,6 +8,7 @@ import { QtlService } from '../qtl.service';
 import {
   QtlAssociation, QtlVariantLookup, usageThreshold,
 } from '../../shared/models/qtl-selection.model';
+import { ascDisplayName } from '../../shared/models/gene-naming';
 
 type SortKey = 'asc' | 'neglog10_p' | 'beta' | 'n' | 'min_genotype_group';
 
@@ -35,6 +36,9 @@ const GENOTYPE_LABEL: Record<string, string> = { 0: '0/0', 1: '0/1', 2: '1/1' };
   imports: [CommonModule, FormsModule],
 })
 export class QtlVariantLookupComponent implements OnChanges {
+  /** An ASC written as a gene name; IGH's D clusters already carry the locus. */
+  readonly ascName = ascDisplayName;
+
   @Input() species?: string;
   @Input() variant?: string;
 

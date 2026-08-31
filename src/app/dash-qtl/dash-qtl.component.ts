@@ -12,6 +12,7 @@ import { QtlSearchComponent } from './qtl-search/qtl-search.component';
 import { QtlVariantLookupComponent } from './qtl-variant-lookup/qtl-variant-lookup.component';
 import { QtlRegionComponent } from './qtl-region/qtl-region.component';
 import { QtlAsc, QtlSelection } from '../shared/models/qtl-selection.model';
+import { ascDisplayName } from '../shared/models/gene-naming';
 
 /**
  * The guQTL dashboard.
@@ -30,6 +31,9 @@ import { QtlAsc, QtlSelection } from '../shared/models/qtl-selection.model';
             QtlSearchComponent, QtlVariantLookupComponent, QtlRegionComponent],
 })
 export class DashQtlComponent implements OnInit, OnDestroy {
+  /** An ASC written as a gene name; IGH's D clusters already carry the locus. */
+  readonly ascName = ascDisplayName;
+
   selection: QtlSelection = {};
 
   /**
@@ -226,7 +230,7 @@ export class DashQtlComponent implements OnInit, OnDestroy {
     }
     if (this.view === 'gene') {
       return asc
-        ? `One scan: every variant tested against ${locus}${asc}.`
+        ? `One scan: every variant tested against ${ascDisplayName(locus, asc)}.`
         : `No single scan — each variant's best result across every gene in `
           + `${locus ?? 'the locus'}.`;
     }
@@ -282,7 +286,8 @@ export class DashQtlComponent implements OnInit, OnDestroy {
     if (!this.plot) {
       return null;
     }
-    return this.view === 'gene' ? this.plot : `${this.selection.locus}${this.plot}`;
+    return this.view === 'gene' ? this.plot
+                               : ascDisplayName(this.selection.locus, this.plot);
   }
 
   /** Back out of the plotted pair, to whatever this tab was showing before. */
