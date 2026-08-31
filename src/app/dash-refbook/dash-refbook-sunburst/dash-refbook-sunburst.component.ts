@@ -8,6 +8,7 @@ import { PlotlyModule } from 'angular-plotly.js';
 import { environment } from '../../../environments/environment';
 import { retryWithBackoff } from '../../shared/retry_with_backoff';
 import { SpeciesGeneSelection, sourcesParam } from '../../shared/models/species-gene-selection.model';
+import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { fills, layout, SunburstLayout, SunburstPayload } from './sunburst-layout';
 
@@ -56,6 +57,10 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
   private centre: number = 0;
 
   private ids: string[] = [];
+  /** What each arc is labelled with: short, and stripped of the locus prefix. */
+  private display: string[] = [];
+  /** The hover text for each node, rendered once per payload. */
+  private detail: string[] = [];
 
   constructor(private http: HttpClient, private drill: DashDrillService) {}
 
@@ -119,6 +124,8 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
     this.plan = null;
     this.plotData = [];
     this.ids = [];
+    this.display = [];
+    this.detail = [];
     this.drilled = null;
     this.centre = 0;
   }
@@ -131,17 +138,84 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
     this.data = payload;
     this.plan = layout(payload);
     this.ids = payload.label.map((_, i) => String(i));
+    this.labelArcs();
+    this.describe();
     this.draw();
   }
 
-  private draw(): void {
-    const { label, parent, novel, nG, nA } = this.data;
+  /**
+   * Arc labels: short enough to fit, with the full name kept for the hover.
+   *
+   * Two things are dropped. The locus and segment prefix, because every arc
+   * inside V of IGH repeats `IGHV` and the rings above already say it. And the
+   * mutation suffix of a novel allele, which reaches 250 characters here - the
+   * same rule the rest of the dashboard labels alleles by, so a label means the
+   * same thing in the locus map as it does on an axis.
+   */
+  private labelArcs(): void {
+    const { label, levels } = this.data;
+    const alleleDepth = levels.length - 1;
 
+    // shortened over the whole locus at once, so a label still names exactly one
+    // allele - two alleles of a gene can share a stem and a mutation count
+    const short = shortenAlleleNames(label.filter((_, i) => this.plan.depth[i] === alleleDepth));
+
+    this.display = label.map((name, i) => {
+      const depth = this.plan.depth[i];
+      if (depth < 2) {
+        return name;                    // the locus and the segment letter
+      }
+      const prefix = label[0] + label[this.plan.topOf[i]];         // IGH + V
+      const base = depth === alleleDepth ? (short.get(name) ?? name) : name;
+      const trimmed = base.startsWith(prefix) ? base.slice(prefix.length) : base;
+      // a collapsed gene group (IGHV1-69/IGHV1-69D) is too wide for its arc, so
+      // it shows its first member starred. Nothing in the current data has one:
+      // this is written for HUSA and has not been exercised on real names, and
+      // alleles of such a group are left alone rather than guessed at.
+      const slash = depth < alleleDepth ? trimmed.indexOf('/') : -1;
+      return slash < 0 ? trimmed : trimmed.slice(0, slash) + '*';
+    });
+  }
+
+  /**
+   * Hover text, written out rather than templated.
+   *
+   * A leaf and a branch mean different things by the same numbers: on an allele
+   * `genomic 1` means it is recorded there, on a gene it is a count of alleles.
+   * One template cannot say both, so each node carries its own sentence.
+   */
+  private describe(): void {
+    const { label, parent, levels, novel, nG, nA } = this.data;
+    const alleleDepth = levels.length - 1;
+    const count = (n: number, one: string) => `${n.toLocaleString()} ${one}${n === 1 ? '' : 's'}`;
+
+    this.detail = label.map((name, i) => {
+      const lines = [`<b>${name}</b>`];
+
+      if (this.plan.depth[i] === alleleDepth) {
+        lines.push(`allele of ${label[parent[i]]}`, '');
+        lines.push(nG[i] && nA[i] ? 'Recorded in both databases'
+                  : nG[i] ? 'Recorded in genomic data only'
+                  : 'Recorded in AIRR-seq data only');
+        lines.push(novel[i] ? 'Not in the baseline reference set'
+                            : 'In the baseline reference set');
+      } else {
+        lines.push(this.levelOf(i), '');
+        lines.push(`${count(this.plan.value[i], 'allele')}, `
+                   + `${novel[i].toLocaleString()} not in the baseline reference`);
+        lines.push(`Recorded in genomic data: ${nG[i].toLocaleString()}`);
+        lines.push(`Recorded in AIRR-seq data: ${nA[i].toLocaleString()}`);
+      }
+      return lines.join('<br>');
+    });
+  }
+
+  private draw(): void {
     this.plotData = [{
       type: 'sunburst',
       ids: this.ids,
-      labels: label,
-      parents: this.ids.map((_, i) => (i === 0 ? '' : String(parent[i]))),
+      labels: this.display,
+      parents: this.ids.map((_, i) => (i === 0 ? '' : String(this.data.parent[i]))),
       values: this.plan.value,
       branchvalues: 'total',
       // the payload is already in segment then natural-name order; Plotly's
@@ -150,18 +224,13 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
       level: this.ids[this.centre],
       maxdepth: DashRefbookSunburstComponent.RINGS,
       insidetextorientation: 'radial',
+      insidetextfont: { size: 11 },
       marker: {
         colors: fills(this.data, this.plan, this.drilled),
         line: { color: '#ffffff', width: 0.5 },
       },
-      customdata: label.map((_, i) => [
-        this.levelOf(i), this.plan.value[i], novel[i], nG[i], nA[i],
-      ]),
-      hovertemplate:
-        '<b>%{label}</b><br>%{customdata[0]}<br><br>'
-        + '%{customdata[1]} alleles, %{customdata[2]} novel<br>'
-        + 'genomic %{customdata[3]} · AIRR-seq %{customdata[4]}'
-        + '<extra></extra>',
+      customdata: this.detail,
+      hovertemplate: '%{customdata}<extra></extra>',
     }];
 
     this.plotLayout = {
@@ -169,6 +238,11 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
       height: 620,
       paper_bgcolor: 'rgba(0,0,0,0)',
       font: { size: 12 },
+      // left to itself Plotly shrinks each label to fit its own arc, so with arcs
+      // this uneven the labels come out at a dozen different sizes. One size for
+      // all of them, and an arc too narrow for it shows nothing rather than a
+      // label too small to read - the hover still names it.
+      uniformtext: { mode: 'hide', minsize: 9 },
     };
   }
 
