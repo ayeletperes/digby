@@ -15,11 +15,14 @@ import { QtlService } from '../qtl.service';
  * round. The two are not restatements of each other - a variant can leave every
  * marginal usage untouched and still move the pairing.
  *
- * The printed version of this is one page of 144 panels, because paper cannot be
- * clicked. Here the anchor is chosen instead: one gene at a time, every partner
- * across it, which is the same data at a size a reader can actually read. The
- * anchor list carries each anchor's omnibus result, so which gene is worth
- * opening is visible before opening it.
+ * LAID OUT AS THE FIGURE IS, because the figure's layout is an argument. The
+ * conditional grid in the middle only means something against three things
+ * beside it: the subject counts, so a class of five is not read as a
+ * distribution; the anchor's own marginal down the left, so a moved pairing can
+ * be told apart from moved usage; and the partner marginal along the bottom, so
+ * a column that is low everywhere is not mistaken for an effect. Printed, all
+ * six anchors are stacked at once. Here one to three are chosen, which is the
+ * same figure at a size that can be read.
  *
  * BOTH DIRECTIONS. `P(J|D)` anchors on a J and spreads the D genes across the
  * axis; `P(D|J)` does the reverse. They are separate scans over the same
@@ -29,6 +32,13 @@ import { QtlService } from '../qtl.service';
 
 const GENOTYPE_LABEL: Record<number, string> = { 0: '0/0', 1: '0/1', 2: '1/1' };
 const GENOTYPE_COLOUR: Record<number, string> = { 0: '#2a78d6', 1: '#e34948', 2: '#eda100' };
+
+/** More than three rows and each is too short to read a box off. */
+const MAX_ANCHORS = 3;
+
+/** Shared by every right-hand plot so their columns line up down the page. */
+const GRID_MARGIN = { l: 58, r: 10, t: 8, b: 4 };
+const ROW_HEIGHT = 190;
 
 interface Box {
   n: number; min: number; q1: number; median: number; q3: number; max: number; mean: number;
@@ -44,6 +54,18 @@ interface Omnibus {
   min_genotype_group: number | null; significant: boolean;
 }
 
+/** One anchor's row of the figure: its marginal, and its partner grid. */
+interface AnchorRow {
+  anchor: string;
+  label: string;
+  omnibus: Omnibus | null;
+  marks: Mark[];
+  gridData: unknown[];
+  gridLayout: Record<string, unknown>;
+  marginalData: unknown[];
+  marginalLayout: Record<string, unknown>;
+}
+
 @Component({
   selector: 'app-qtl-pairing',
   templateUrl: './qtl-pairing.component.html',
@@ -57,6 +79,7 @@ export class QtlPairingComponent implements OnChanges {
 
   readonly conditionals = ['P(J|D)', 'P(D|J)'];
   conditional = 'P(J|D)';
+  readonly maxAnchors = MAX_ANCHORS;
 
   /** Only strict marks by default: the looser rule stars a third of the grid. */
   strictOnly = true;
@@ -68,24 +91,26 @@ export class QtlPairingComponent implements OnChanges {
 
   variants: any[] = [];
   scanned = 0;
-  /** False when this locus has no pairing scan at all, as against no hits. */
   hasScan = true;
   filter = '';
   variant: string | null = null;
 
   data: any = null;
   anchors: string[] = [];
-  anchor: string | null = null;
+  /** One to three, drawn as stacked rows the way the figure stacks all of them. */
+  chosen: string[] = [];
   partners: string[] = [];
   omnibus: Record<string, Omnibus> = {};
   marks: Mark[] = [];
   genotypes: { genotype: number; n: number }[] = [];
 
-  plotData: unknown[] = [];
-  plotLayout: Record<string, unknown> = {};
-  marginalData: unknown[] = [];
-  marginalLayout: Record<string, unknown> = {};
+  rows: AnchorRow[] = [];
+  countsData: unknown[] = [];
+  countsLayout: Record<string, unknown> = {};
+  partnerData: unknown[] = [];
+  partnerLayout: Record<string, unknown> = {};
   readonly plotConfig = { responsive: true, displaylogo: false };
+  readonly rowHeight = ROW_HEIGHT;
 
   constructor(private qtl: QtlService) {}
 
@@ -93,6 +118,7 @@ export class QtlPairingComponent implements OnChanges {
     if (changes['species'] || changes['locus']) {
       this.variant = null;
       this.data = null;
+      this.rows = [];
       this.loadVariants();
     }
   }
@@ -105,7 +131,6 @@ export class QtlPairingComponent implements OnChanges {
     return this.conditional === 'P(J|D)' ? 'D' : 'J';
   }
 
-  /** The list, narrowed by whatever was typed. */
   get shownVariants(): any[] {
     const q = this.filter.trim().toUpperCase();
     if (!q) {
@@ -119,8 +144,9 @@ export class QtlPairingComponent implements OnChanges {
   onConditionalChange(): void {
     // a different conditional is a different scan, and its anchors are the other
     // side's genes, so nothing from the previous one carries over
-    this.anchor = null;
+    this.chosen = [];
     this.data = null;
+    this.rows = [];
     this.loadVariants();
     if (this.variant) {
       this.load();
@@ -129,13 +155,27 @@ export class QtlPairingComponent implements OnChanges {
 
   pickVariant(variant: string): void {
     this.variant = variant;
-    this.anchor = null;
+    this.chosen = [];
     this.load();
   }
 
-  pickAnchor(anchor: string): void {
-    this.anchor = anchor;
+  /** Anchors are a small multi-select: click to add, click again to drop. */
+  toggleAnchor(anchor: string): void {
+    if (this.chosen.includes(anchor)) {
+      this.chosen = this.chosen.filter(a => a !== anchor);
+    } else if (this.chosen.length < MAX_ANCHORS) {
+      // kept in the scan's own order, so adding a row does not reshuffle the rest
+      this.chosen = this.anchors.filter(a => a === anchor || this.chosen.includes(a));
+    }
     this.draw();
+  }
+
+  isChosen(anchor: string): boolean {
+    return this.chosen.includes(anchor);
+  }
+
+  get atAnchorLimit(): boolean {
+    return this.chosen.length >= MAX_ANCHORS;
   }
 
   toggleStrict(): void {
@@ -170,10 +210,12 @@ export class QtlPairingComponent implements OnChanges {
     return this.anchors.filter(a => this.omnibus[a]?.significant).length;
   }
 
-  /** Marks for the open anchor, honouring the strict toggle. */
-  get anchorMarks(): Mark[] {
-    return this.marks.filter(m => m.anchor === this.anchor
-                                  && (this.strictOnly ? m.marked_strict : m.marked));
+  /** Every anchor's omnibus, strongest first - the test that ranked this variant. */
+  get omnibusRows(): { anchor: string; label: string; o: Omnibus }[] {
+    return this.anchors
+      .map(a => ({ anchor: a, label: this.short(a), o: this.omnibus[a] }))
+      .filter(r => !!r.o)
+      .sort((x, y) => y.o.neglog10_p - x.o.neglog10_p);
   }
 
   private loadVariants(): void {
@@ -222,109 +264,176 @@ export class QtlPairingComponent implements OnChanges {
         this.omnibus = result.omnibus ?? {};
         this.marks = result.marks ?? [];
         this.genotypes = result.genotypes ?? [];
-        // open the anchor with the strongest omnibus, which is the one the scan
-        // is actually about
-        this.anchor = [...this.anchors].sort(
-          (a, b) => (this.omnibus[b]?.neglog10_p ?? 0) - (this.omnibus[a]?.neglog10_p ?? 0)
-        )[0] ?? null;
+        // open the strongest anchor, which is the one the scan is about
+        const best = [...this.anchors].sort(
+          (a, b) => (this.omnibus[b]?.neglog10_p ?? 0) - (this.omnibus[a]?.neglog10_p ?? 0));
+        this.chosen = best.slice(0, 1);
         this.draw();
       });
   }
 
+  private marksFor(anchor: string): Mark[] {
+    return this.marks.filter(m => m.anchor === anchor
+                                  && (this.strictOnly ? m.marked_strict : m.marked));
+  }
+
   /**
-   * One anchor, every partner, three genotype classes.
+   * Every panel of the figure, sharing one category order.
    *
-   * Boxes come from the server already summarised. `lowerfence`/`upperfence` are
-   * the data's own extremes rather than 1.5 IQR: these are proportions on a
-   * bounded scale, and a subject outside the whiskers is a real subject, not
-   * something to hide.
+   * The right-hand plots all take the same partner categories and the same left
+   * margin, so their columns line up down the page - which is the only reason
+   * stacking rows says anything: a cell is read against the cell above it and
+   * against the partner marginal at the bottom.
    */
   private draw(): void {
-    if (!this.data || !this.anchor) {
-      this.plotData = [];
-      this.marginalData = [];
+    if (!this.data) {
+      this.rows = [];
+      this.countsData = [];
+      this.partnerData = [];
       return;
     }
 
-    const cells: Cell[] = (this.data.cells ?? [])
-      .filter((c: Cell) => c.anchor === this.anchor && c.box);
-    const partners = this.partners;
+    const partnerLabels = this.partners.map(p => this.short(p));
+    const allCells: Cell[] = this.data.cells ?? [];
 
-    this.plotData = [0, 1, 2].map(gt => {
-      const rows = partners.map(p =>
-        cells.find(c => c.partner === p && c.genotype === gt)?.box ?? null);
+    // ---- subject counts. The figure puts these beside the grid for a reason:
+    // a genotype class of five subjects is not a distribution, whatever the box
+    // looks like.
+    this.countsData = [{
+      type: 'bar',
+      x: this.genotypes.map(g => GENOTYPE_LABEL[g.genotype]),
+      y: this.genotypes.map(g => g.n),
+      text: this.genotypes.map(g => String(g.n)),
+      textposition: 'outside',
+      cliponaxis: false,
+      marker: { color: this.genotypes.map(g => GENOTYPE_COLOUR[g.genotype]) },
+      hovertemplate: '%{x}: %{y} subjects<extra></extra>',
+    }];
+    this.countsLayout = {
+      height: ROW_HEIGHT,
+      margin: { l: 46, r: 10, t: 8, b: 34 },
+      showlegend: false,
+      // Plotly 3 drops a plain string title silently and draws nothing
+      xaxis: { title: { text: 'Genotype' } },
+      yaxis: { title: { text: '# subjects' }, rangemode: 'tozero' },
+    };
+
+    // ---- one row per chosen anchor
+    this.rows = this.chosen.map(anchor => {
+      const cells = allCells.filter(c => c.anchor === anchor && c.box);
+      const label = this.short(anchor);
+
+      const gridData: unknown[] = [0, 1, 2].map(gt => {
+        const boxes = this.partners.map(p =>
+          cells.find(c => c.partner === p && c.genotype === gt)?.box ?? null);
+        return {
+          type: 'box',
+          name: GENOTYPE_LABEL[gt],
+          x: partnerLabels,
+          q1: boxes.map(b => b?.q1 ?? null),
+          median: boxes.map(b => b?.median ?? null),
+          q3: boxes.map(b => b?.q3 ?? null),
+          lowerfence: boxes.map(b => b?.min ?? null),
+          upperfence: boxes.map(b => b?.max ?? null),
+          marker: { color: GENOTYPE_COLOUR[gt] },
+          line: { width: 1.1 },
+          fillcolor: 'rgba(0,0,0,0)',
+          showlegend: false,
+          hovertemplate: `%{x}  ${GENOTYPE_LABEL[gt]}<br>`
+            + 'median %{median:.4f}<br>q1 %{q1:.4f} · q3 %{q3:.4f}<extra></extra>',
+        };
+      });
+
+      // a star sits above the pair it belongs to, once, not once per genotype
+      const starred = this.marksFor(anchor);
+      const top = Math.max(0.0001, ...cells.map(c => c.box?.max ?? 0));
+      if (starred.length) {
+        gridData.push({
+          type: 'scatter', mode: 'text', showlegend: false,
+          x: starred.map(m => this.short(m.partner)),
+          y: starred.map(() => top * 1.03),
+          text: starred.map(() => '✳'),
+          textfont: { size: 12, color: '#188080' },
+          hovertext: starred.map(m =>
+            `${this.short(m.partner)} · p ${m.p_value?.toExponential(2) ?? '–'}`
+            + `<br>n ${m.n_low ?? '?'} vs ${m.n_high ?? '?'}`),
+          hovertemplate: '%{hovertext}<extra></extra>',
+        });
+      }
+
+      const isLast = anchor === this.chosen[this.chosen.length - 1];
+      const gridLayout: Record<string, unknown> = {
+        height: ROW_HEIGHT,
+        margin: { ...GRID_MARGIN, b: 4 },
+        boxmode: 'group',
+        showlegend: false,
+        // ticks only on the bottom-most grid: the partner marginal below carries
+        // the shared axis, and repeating it on every row is noise
+        xaxis: { type: 'category', categoryorder: 'array', categoryarray: partnerLabels,
+                 showticklabels: false, ticks: '' },
+        yaxis: { title: { text: `${this.conditional} · ${label}` },
+                 rangemode: 'tozero', automargin: false },
+      };
+
+      const marg = (this.data.anchor_marginal ?? [])
+        .filter((m: any) => m.gene === anchor && m.box);
+      const marginalData: unknown[] = [{
+        type: 'box',
+        x: marg.map((m: any) => GENOTYPE_LABEL[m.genotype]),
+        q1: marg.map((m: any) => m.box.q1),
+        median: marg.map((m: any) => m.box.median),
+        q3: marg.map((m: any) => m.box.q3),
+        lowerfence: marg.map((m: any) => m.box.min),
+        upperfence: marg.map((m: any) => m.box.max),
+        marker: { color: marg.map((m: any) => GENOTYPE_COLOUR[m.genotype]) },
+        line: { width: 1.1 },
+        fillcolor: 'rgba(0,0,0,0)',
+        showlegend: false,
+        hovertemplate: '%{x}<br>median %{median:.4f}<extra></extra>',
+      }];
+      const marginalLayout: Record<string, unknown> = {
+        height: ROW_HEIGHT,
+        margin: { l: 46, r: 10, t: 8, b: 4 },
+        xaxis: { type: 'category', showticklabels: false, ticks: '' },
+        yaxis: { title: { text: `P(${label})` }, rangemode: 'tozero' },
+      };
+
+      return { anchor, label, omnibus: this.omnibus[anchor] ?? null,
+               marks: starred, gridData, gridLayout, marginalData, marginalLayout };
+    });
+
+    // ---- the partner marginal along the bottom, on the same categories. A
+    // column that is low under every genotype is low because that partner is
+    // rare, not because the variant did anything to it.
+    const pm = this.data.partner_marginal ?? [];
+    this.partnerData = [0, 1, 2].map(gt => {
+      const boxes = this.partners.map(p =>
+        pm.find((m: any) => m.gene === p && m.genotype === gt)?.box ?? null);
       return {
         type: 'box',
         name: GENOTYPE_LABEL[gt],
-        x: partners.map(p => this.short(p)),
-        q1: rows.map(b => b?.q1 ?? null),
-        median: rows.map(b => b?.median ?? null),
-        q3: rows.map(b => b?.q3 ?? null),
-        lowerfence: rows.map(b => b?.min ?? null),
-        upperfence: rows.map(b => b?.max ?? null),
+        x: partnerLabels,
+        q1: boxes.map((b: any) => b?.q1 ?? null),
+        median: boxes.map((b: any) => b?.median ?? null),
+        q3: boxes.map((b: any) => b?.q3 ?? null),
+        lowerfence: boxes.map((b: any) => b?.min ?? null),
+        upperfence: boxes.map((b: any) => b?.max ?? null),
         marker: { color: GENOTYPE_COLOUR[gt] },
-        line: { width: 1.2 },
+        line: { width: 1.1 },
         fillcolor: 'rgba(0,0,0,0)',
         hovertemplate: `%{x}  ${GENOTYPE_LABEL[gt]}<br>`
-          + 'median %{median:.4f}<br>q1 %{q1:.4f} · q3 %{q3:.4f}<extra></extra>',
+          + 'median %{median:.4f}<extra></extra>',
       };
     });
-
-    // a star sits above the pair it belongs to, once, not once per genotype
-    const starred = this.anchorMarks;
-    if (starred.length) {
-      const top = Math.max(...cells.map(c => c.box?.max ?? 0));
-      this.plotData = [...this.plotData, {
-        type: 'scatter', mode: 'text', showlegend: false,
-        x: starred.map(m => this.short(m.partner)),
-        y: starred.map(() => top * 1.04),
-        text: starred.map(() => '✳'),
-        textfont: { size: 13, color: '#188080' },
-        hovertext: starred.map(m =>
-          `${this.short(m.partner)} · p ${m.p_value?.toExponential(2) ?? '–'}`
-          + `<br>n ${m.n_low ?? '?'} vs ${m.n_high ?? '?'}`),
-        hovertemplate: '%{hovertext}<extra></extra>',
-      }];
-    }
-
-    const anchorLabel = this.short(this.anchor);
-    this.plotLayout = {
-      height: 340,
-      margin: { l: 60, r: 12, t: 28, b: 90 },
+    this.partnerLayout = {
+      height: ROW_HEIGHT + 70,
+      margin: { ...GRID_MARGIN, b: 78 },
       boxmode: 'group',
-      // Plotly 3 drops a plain string title silently and draws nothing
-      xaxis: { title: { text: `${this.partnerSide} gene` }, tickangle: -60,
-               automargin: true },
-      yaxis: { title: { text: `${this.conditional} for ${anchorLabel}` },
-               rangemode: 'tozero' },
-      legend: { orientation: 'h', y: 1.12, x: 0 },
+      xaxis: { type: 'category', categoryorder: 'array', categoryarray: partnerLabels,
+               title: { text: `${this.partnerSide} gene` }, tickangle: -60 },
+      yaxis: { title: { text: `P(${this.partnerSide}) overall` }, rangemode: 'tozero' },
+      legend: { orientation: 'h', y: -0.55, x: 0 },
       showlegend: true,
-    };
-
-    // the anchor's own marginal, which is what the printed figure puts in its
-    // left-hand column: does the variant move how much this gene is used at all,
-    // as against who it pairs with
-    const marg = (this.data.anchor_marginal ?? [])
-      .filter((m: any) => m.gene === this.anchor && m.box);
-    this.marginalData = [{
-      type: 'box',
-      x: marg.map((m: any) => GENOTYPE_LABEL[m.genotype]),
-      q1: marg.map((m: any) => m.box.q1),
-      median: marg.map((m: any) => m.box.median),
-      q3: marg.map((m: any) => m.box.q3),
-      lowerfence: marg.map((m: any) => m.box.min),
-      upperfence: marg.map((m: any) => m.box.max),
-      marker: { color: marg.map((m: any) => GENOTYPE_COLOUR[m.genotype]) },
-      line: { width: 1.2 },
-      fillcolor: 'rgba(0,0,0,0)',
-      showlegend: false,
-      hovertemplate: '%{x}<br>median %{median:.4f}<extra></extra>',
-    }];
-    this.marginalLayout = {
-      height: 240,
-      margin: { l: 62, r: 10, t: 24, b: 40 },
-      xaxis: { title: { text: 'Genotype' } },
-      yaxis: { title: { text: `P(${anchorLabel}) overall` }, rangemode: 'tozero' },
     };
   }
 }
