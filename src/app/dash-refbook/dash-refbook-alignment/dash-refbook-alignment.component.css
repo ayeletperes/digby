@@ -35,7 +35,7 @@
 .alignment-legend { font-size: 0.8rem; }
 .legend-toggle {
   background: none; border: none; padding: 0; cursor: pointer;
-  color: #1a73e8; font-size: 0.8rem;
+  color: var(--vdj-teal); font-size: 0.8rem;
 }
 .alignment-legend table { margin-top: 0.4rem; border-collapse: collapse; }
 .alignment-legend td { padding: 0.15rem 0.75rem 0.15rem 0; vertical-align: top; }

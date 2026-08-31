@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-transparent">
+<nav class="navbar navbar-expand-lg navbar-light vdj-masthead">
   <button class="navbar-toggler" type="button" (click)="isMenuCollapsed = !isMenuCollapsed" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -43,6 +43,7 @@
               <a ngbDropdownItem class="dropdown-item" routerLink="/reports" (click)="isMenuCollapsed = true">Reports</a>
               <a ngbDropdownItem class="dropdown-item" routerLink="/dash_refbook" (click)="isMenuCollapsed = true">Allele Reference Dashboard</a>
               <a ngbDropdownItem class="dropdown-item" routerLink="/gene_refbook" (click)="isMenuCollapsed = true">Gene Reference Dashboard</a>
+              <a ngbDropdownItem class="dropdown-item" routerLink="/dash_qtl" (click)="isMenuCollapsed = true">Gene Usage QTL</a>
               <a ngbDropdownItem class="dropdown-item" [routerLink]="['./reference_book', 'null']" (click)="isMenuCollapsed = true">Macaque Reference Book</a>
             </div>
           </li>

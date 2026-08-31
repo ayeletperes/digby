@@ -34,17 +34,17 @@
   font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em;
   text-transform: uppercase; color: #5f6368; cursor: pointer;
 }
-.group-head:hover { color: #1a73e8; }
+.group-head:hover { color: var(--vdj-teal); }
 .group-head .box {
   width: 12px; height: 12px; flex: none;
   border: 1px solid #9aa0a6; border-radius: 3px;
 }
-.group-head .box.all { background: #1a73e8; border-color: #1a73e8; }
-.group-head .box.some { background: linear-gradient(135deg, #1a73e8 50%, #fff 50%); border-color: #1a73e8; }
+.group-head .box.all { background: var(--vdj-teal); border-color: var(--vdj-teal); }
+.group-head .box.some { background: linear-gradient(135deg, var(--vdj-teal) 50%, #fff 50%); border-color: var(--vdj-teal); }
 .group-head .detail { margin-left: auto; font-weight: 400; text-transform: none; }
 .check-row .name { flex: 1 1 auto; white-space: nowrap; }
 .check-row .detail { color: #80868b; font-size: 0.78rem; }
 
 .panel-actions { display: inline-flex; gap: 0.7rem; }
-.link-button { background: none; border: 0; padding: 0; color: #1a73e8; font-size: 0.75rem; cursor: pointer; }
+.link-button { background: none; border: 0; padding: 0; color: var(--vdj-teal); font-size: 0.75rem; cursor: pointer; }
 .link-button:disabled { color: #9aa0a6; cursor: default; }
