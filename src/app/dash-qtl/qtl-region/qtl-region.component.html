@@ -15,6 +15,8 @@
       @else { · strongest signal per variant }
     </p>
     <div class="view-controls">
+      <button type="button" class="info-button" [attr.aria-expanded]="infoOpen"
+              title="About this track" (click)="toggleInfo()">ⓘ</button>
       <button type="button" (click)="zoomOut()" title="Widen the drawn range">− zoom out</button>
       @if (isRanged) {
         <button type="button" class="reset" (click)="resetView()"
@@ -35,6 +37,18 @@
       </label>
     </div>
   </div>
+
+  @if (infoOpen) {
+    <p class="caption-body">
+      Drag across the upper track to zoom into a range; click a variant to select
+      it, or a gene for its structure at its own scale. Hover any block for its
+      name and coordinates. Blocks narrower than a pixel are drawn at minimum
+      width, so a seven-base heptamer is visible but not to scale, and the dots
+      shrink as the window widens so a crowded region reads as crowded rather
+      than solid — every tested variant is drawn at every width, none are thinned
+      away.
+    </p>
+  }
 
   @if (!annotated) {
     <p class="note warn">
@@ -204,14 +218,9 @@
     <span class="key"><i class="swatch dot"></i>tested, not significant</span>
   </div>
 
-  <p class="note">
-    Drag across the upper track to zoom into a range; click a variant to select
-    it. Hover any block for its name and coordinates. Blocks narrower than a
-    pixel are drawn at minimum width, and the dots shrink as the window widens so
-    a crowded region reads as crowded rather than solid — every tested variant is
-    drawn at every width, none are thinned away.
-    @if (annotationSource) { Annotated against {{ annotationSource }}. }
-  </p>
+  @if (annotationSource) {
+    <p class="note">Annotated against {{ annotationSource }}.</p>
+  }
 
   @if (annotated && !annotationSource) {
     <p class="note warn">

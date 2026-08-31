@@ -180,6 +180,14 @@ export class QtlRegionComponent implements OnChanges {
   isFetching = false;
   error: string | null = null;
 
+  /**
+   * How to read and drive the track, behind the same info control the reference
+   * dashboard uses. It is four lines of instructions and caveats that are true
+   * once and then only in the way; the annotation release stays on the face of
+   * the panel, because which release the calls came from is not a footnote.
+   */
+  infoOpen = false;
+
   contig: string | null = null;
   start = 0;
   end = 0;
@@ -273,6 +281,10 @@ export class QtlRegionComponent implements OnChanges {
       this.range = null;
       this.fetch();
     }
+  }
+
+  toggleInfo(): void {
+    this.infoOpen = !this.infoOpen;
   }
 
   setWindow(value: string): void {

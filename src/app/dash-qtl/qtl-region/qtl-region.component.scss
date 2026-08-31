@@ -120,3 +120,15 @@
 }
 .detail-close:hover { color: #d62839; }
 .detail-hint { font-style: italic; }
+
+/* the same info control and caption the reference dashboard uses */
+.info-button {
+  border: 0; background: none; padding: 0;
+  color: var(--vdj-teal); font-size: 1rem; line-height: 1; cursor: pointer;
+}
+.info-button:hover { color: var(--vdj-teal-dark); }
+.caption-body {
+  margin: 0.5rem 0 0.2rem; padding: 0.6rem 0.8rem;
+  background: #f8f9fa; border-left: 3px solid var(--vdj-teal); border-radius: 0 4px 4px 0;
+  font-size: 0.85rem; color: #3c4043; max-width: 80ch;
+}
