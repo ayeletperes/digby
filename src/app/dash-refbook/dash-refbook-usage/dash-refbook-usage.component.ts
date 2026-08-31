@@ -48,6 +48,14 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
     xaxis: { title: 'Fraction of the sample\'s rearrangements', rangemode: 'tozero',
              zeroline: true, automargin: true },
     yaxis: { title: 'Allele', automargin: true },
+    // A copy of the value axis along the top, for when the list is long enough
+    // to scroll and the bottom one is off screen. `matches` keeps the two ranges
+    // locked without any bookkeeping.
+    xaxis2: {
+      matches: 'x', overlaying: 'x', side: 'top',
+      title: 'Fraction of the sample\'s rearrangements',
+      showgrid: false, automargin: true, visible: false,
+    },
     boxmode: 'group',
     height: 420,
     margin: { l: 60, r: 20, t: 40, b: 60 },
@@ -132,6 +140,8 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
 
     // Axis ticks cannot carry a name like IGHV1-2*02_t211c_t213c_g225a, so the
     // tick is shortened and the full name is kept for the hover box.
+    // beyond this the plot is taller than its box, so the bottom axis scrolls away
+    const mirrored = nonEmpty.length > 12;
     const display = shortenAlleleNames(nonEmpty.map(a => a.name));
     const traces = nonEmpty.map(a => ({
       type: 'box',
@@ -150,16 +160,29 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
       hovertemplate: 'Sample: %{customdata}<br>Fraction: %{x:.3f}<extra>' + a.name + '</extra>'
     }));
 
-    this.plotData = traces;
+    // Plotly does not draw an overlaying axis that no trace is assigned to, so
+    // the mirrored axis needs an anchor. One invisible point, excluded from
+    // hover and the legend, is enough to bring it into existence.
+    this.plotData = mirrored
+      ? [...traces, {
+          type: 'scatter', mode: 'markers', xaxis: 'x2',
+          x: [null], y: [null],
+          marker: { opacity: 0 }, showlegend: false, hoverinfo: 'skip',
+        }]
+      : traces;
     this.alleleByCurve = nonEmpty.map(a => a.name);
     this.legend = nonEmpty
       .map(a => ({ short: display.get(a.name) ?? a.name, full: a.name }))
       .filter(entry => entry.short !== entry.full);
 
     // one row per allele, so the plot grows with the list instead of squeezing
-    this.plotLayout = { ...this.plotLayout,
-                        // enough per row that the box has depth, not just a line
-                        height: Math.max(320, 48 * nonEmpty.length + 120) };
+    this.plotLayout = {
+      ...this.plotLayout,
+      // enough per row that the box has depth, not just a line
+      height: Math.max(320, 48 * nonEmpty.length + 120),
+      xaxis2: { ...this.plotLayout.xaxis2, visible: mirrored },
+      margin: { ...this.plotLayout.margin, t: mirrored ? 80 : 40 },
+    };
 
     // the bottom margin has to hold the rotated tick labels, so it follows the
     // longest one rather than being fixed

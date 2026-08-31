@@ -76,15 +76,12 @@
         <div class="projects-drill">
           @if (projectsLoading) {
             <p class="drill-note">Loading projects…</p>
-          } @else if (!projectData.labels?.length) {
+          } @else if (!projectData.length) {
             <p class="drill-note">No projects under the current filters.</p>
           } @else {
             <div class="drill-chart">
-              <canvas baseChart
-                      [data]="projectData"
-                      [options]="projectOptions"
-                      [type]="chartType">
-              </canvas>
+              <plotly-plot [data]="projectData" [layout]="projectLayout"
+                           [config]="plotConfig"></plotly-plot>
             </div>
             <p class="drill-note">
               Samples per project, split by the database they came from. A project
@@ -120,14 +117,8 @@
       }
       <div class="chart-scroll">
         <div class="chart-container" [style.height.px]="chartHeight">
-          <canvas
-            baseChart
-            [data]="chartData"
-            [options]="chartOptions"
-            [type]="chartType"
-            (chartClick)="onChartClick($event)"
-          >
-          </canvas>
+          <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"
+                       (plotlyClick)="onPlotClick($event)"></plotly-plot>
         </div>
       </div>
     </div>

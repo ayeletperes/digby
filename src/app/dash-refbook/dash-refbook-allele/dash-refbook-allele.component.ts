@@ -306,9 +306,14 @@ export class DashRefbookAlleleComponent
       .sort((a, b) => b.samples - a.samples)
       .slice(0, 12);
 
+    // The focal allele stays in the set. Stripping it dropped every carrier whose
+    // only allele of this gene is this one - they were left with an empty set and
+    // no column - and made each column read as a genotype while actually being a
+    // genotype minus one. Kept in, a column is the combination actually observed,
+    // and the carried-alone case is a column of its own.
     this.coOccurrence = carrying.map(([name, sets]) => ({
       name,
-      sets: [...sets].filter(other => other !== this.allele).sort(),
+      sets: [...sets].sort(),
     }));
 
     // projects on the bar, busiest first, counting both databases
@@ -420,7 +425,13 @@ export class DashRefbookAlleleComponent
     }
 
     try {
-      const { sets, combinations } = UpSetJS.extractCombinations(withPartners);
+      // distinct, not plain, intersections: with the focal allele back in the
+      // sets a column is a genotype, so each carrier must fall in exactly one
+      // column and the bars must sum to the carrier count. Plain intersections
+      // count a sample in every column it is a superset of, and would not.
+      const { sets, combinations } = UpSetJS.extractCombinations(withPartners, {
+        type: 'distinctIntersection',
+      } as never);
 
       // Height is split between the combination chart on top and the matrix
       // below, so a single figure starved both: with two sets the whole plot got
