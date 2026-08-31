@@ -138,8 +138,8 @@ export class QtlVariantComponent implements OnChanges {
       height: 440,
       margin: { l: 64, r: 20, t: 16, b: 44 },
       showlegend: false,
-      xaxis: { title: 'Genotype', automargin: true },
-      yaxis: { title: `Gene usage of ${this.plottedAsc ?? ''}`, tickformat: '.1%',
+      xaxis: { title: { text: 'Genotype' }, automargin: true },
+      yaxis: { title: { text: `Gene usage of ${this.plottedAsc ?? ''}` }, tickformat: '.1%',
                rangemode: 'tozero', automargin: true },
     };
 
@@ -158,8 +158,8 @@ export class QtlVariantComponent implements OnChanges {
       height: 440,
       margin: { l: 50, r: 20, t: 24, b: 44 },
       showlegend: false,
-      xaxis: { title: 'Genotype', automargin: true },
-      yaxis: { title: 'Subjects', rangemode: 'tozero', automargin: true },
+      xaxis: { title: { text: 'Genotype' }, automargin: true },
+      yaxis: { title: { text: 'Subjects' }, rangemode: 'tozero', automargin: true },
     };
   }
 }

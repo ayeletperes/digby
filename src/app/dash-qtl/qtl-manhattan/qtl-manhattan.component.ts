@@ -149,10 +149,11 @@ export class QtlManhattanComponent implements OnChanges {
         // name the contig, not the locus: these are that contig's coordinates,
         // and IGH's `igh` is locus-relative while the light chains are on chr2 /
         // chr22, so the two are not the same statement
-        title: `${this.contig ?? this.selection?.locus} position (Mb)`,
+        title: { text: `${this.contig ?? this.selection?.locus} position (Mb)` },
         zeroline: false, automargin: true, tickformat: '.2f',
       },
-      yaxis: { title: this.selection?.asc ? '-log10 p' : `-log10 p (best of ${this.ascCount ?? 'all'} scans)`,
+      yaxis: { title: { text: this.selection?.asc ? '-log10 p'
+                          : `-log10 p (best of ${this.ascCount ?? 'all'} scans)` },
                rangemode: 'tozero' },
       hovermode: 'closest',
       legend: { orientation: 'h', y: 1.12, x: 0 },

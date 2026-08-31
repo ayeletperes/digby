@@ -147,8 +147,8 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
   projectLayout: Record<string, unknown> = {
     barmode: 'group', height: 260,
     margin: { l: 60, r: 20, t: 10, b: 60 },
-    xaxis: { title: 'Project', type: 'category', automargin: true, ticks: 'outside' },
-    yaxis: { title: 'Samples', rangemode: 'tozero', automargin: true, ticks: 'outside',
+    xaxis: { title: { text: 'Project' }, type: 'category', automargin: true, ticks: 'outside' },
+    yaxis: { title: { text: 'Samples' }, rangemode: 'tozero', automargin: true, ticks: 'outside',
              gridcolor: 'rgba(0,0,0,0.06)' },
     legend: { orientation: 'h', y: -0.25, x: 0.5, xanchor: 'center' },
   };
@@ -285,7 +285,7 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
         height: Math.max(320, 26 * rows + (mirrored ? 130 : 90)),
         margin: { l: 200, r: 20, t: mirrored ? 70 : 30, b: 50 },
         xaxis: {
-          title: 'Samples carrying the allele', rangemode: 'tozero',
+          title: { text: 'Samples carrying the allele' }, rangemode: 'tozero',
           // vertical rules run across horizontal bars, not along them, and are
           // what lets a value be read halfway down a long scroll
           showgrid: true, gridcolor: 'rgba(0,0,0,0.06)', zeroline: false,
@@ -293,9 +293,9 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
         },
         xaxis2: {
           matches: 'x', overlaying: 'x', side: 'top', visible: mirrored,
-          title: 'Samples carrying the allele', showgrid: false, ticks: 'outside',
+          title: { text: 'Samples carrying the allele' }, showgrid: false, ticks: 'outside',
         },
-        yaxis: { title: 'Allele', type: 'category', automargin: true,
+        yaxis: { title: { text: 'Allele' }, type: 'category', automargin: true,
                  ticks: 'outside', showgrid: false },
         legend: { orientation: 'h', y: 1.02, x: 0.5, xanchor: 'center',
                   yanchor: 'bottom' },

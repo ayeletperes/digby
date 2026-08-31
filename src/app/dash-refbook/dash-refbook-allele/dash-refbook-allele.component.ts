@@ -366,8 +366,8 @@ export class DashRefbookAlleleComponent
       margin: { ...base.margin, t: 24 },
       showlegend: true,
       legend: { orientation: 'h', x: 0, y: 1.18, font: { size: 10 } },
-      xaxis: { title: 'Project', type: 'category', automargin: true },
-      yaxis: { title: 'Samples carrying the allele', rangemode: 'tozero', automargin: true },
+      xaxis: { title: { text: 'Project' }, type: 'category', automargin: true },
+      yaxis: { title: { text: 'Samples carrying the allele' }, rangemode: 'tozero', automargin: true },
     };
 
     // one box per project: a project whose usage sits apart is the thing worth
@@ -385,8 +385,8 @@ export class DashRefbookAlleleComponent
     }));
     this.usageLayout = {
       ...base, height: 210,
-      xaxis: { title: 'Project', automargin: true },
-      yaxis: { title: 'Share of repertoire', tickformat: '.1%', rangemode: 'tozero',
+      xaxis: { title: { text: 'Project' }, automargin: true },
+      yaxis: { title: { text: 'Share of repertoire' }, tickformat: '.1%', rangemode: 'tozero',
                automargin: true },
     };
   }

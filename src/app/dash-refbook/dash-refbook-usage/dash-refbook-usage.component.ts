@@ -45,15 +45,15 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
     // horizontal, as the overview is: the allele names sit on the category axis
     // and read without rotation, and the list grows downwards rather than
     // running out of width
-    xaxis: { title: 'Fraction of the sample\'s rearrangements', rangemode: 'tozero',
+    xaxis: { title: { text: 'Fraction of the sample\'s rearrangements' }, rangemode: 'tozero',
              zeroline: true, automargin: true },
-    yaxis: { title: 'Allele', automargin: true },
+    yaxis: { title: { text: 'Allele' }, automargin: true },
     // A copy of the value axis along the top, for when the list is long enough
     // to scroll and the bottom one is off screen. `matches` keeps the two ranges
     // locked without any bookkeeping.
     xaxis2: {
       matches: 'x', overlaying: 'x', side: 'top',
-      title: 'Fraction of the sample\'s rearrangements',
+      title: { text: 'Fraction of the sample\'s rearrangements' },
       showgrid: false, automargin: true, visible: false,
     },
     boxmode: 'group',
