@@ -10,13 +10,11 @@
  */
 
 import {
-  DRILLED_FILL, PALETTE, ROOT_FILL, SunburstPayload, colour, fills, layout, lighten, sector,
+  DRILLED_FILL, PALETTE, ROOT_FILL, SunburstPayload, colour, fills, layout, lighten,
 } from './sunburst-layout';
 
 declare const process: { argv: string[] };
 declare const require: (name: string) => any;
-
-const TAU = Math.PI * 2;
 
 function ok(condition: boolean, what: string): void {
   if (!condition) {
@@ -45,26 +43,21 @@ function check(payload: SunburstPayload, name: string): void {
     ok(payload.parent[i] < i, name + ': depth ordering, parent[' + i + '] < ' + i);
   }
 
-  ok(plan.arcs.length === n, name + ': one arc per node');
   ok(plan.depth[0] === 0, name + ': root at depth 0');
 
-  // arc sweep is the allele count, and children exactly fill their parent
+  // the trace is branchvalues:'total', so a parent's value must be exactly its
+  // children's - Plotly drops the whole trace if a child overflows its parent
   const leaves = plan.childCount.filter((c, i) => i > 0 && !c).length;
-  ok(plan.value[0] === leaves, name + ': root sweep is every leaf (' + plan.value[0] + ' vs ' + leaves + ')');
-  ok(Math.abs(plan.stop[0] - plan.start[0] - TAU) < 1e-9, name + ': root spans a full turn');
+  ok(plan.value[0] === leaves, name + ': root value is every leaf (' + plan.value[0] + ' vs ' + leaves + ')');
 
   const covered = new Array<number>(n).fill(0);
   for (let i = 1; i < n; i++) {
-    ok(plan.stop[i] >= plan.start[i], name + ': arc ' + i + ' does not run backwards');
-    ok(plan.start[i] >= plan.start[payload.parent[i]] - 1e-9
-       && plan.stop[i] <= plan.stop[payload.parent[i]] + 1e-9,
-       name + ': arc ' + i + ' stays inside its parent');
-    covered[payload.parent[i]] += plan.stop[i] - plan.start[i];
+    covered[payload.parent[i]] += plan.value[i];
   }
   for (let i = 0; i < n; i++) {
     if (plan.childCount[i]) {
-      ok(Math.abs(covered[i] - (plan.stop[i] - plan.start[i])) < 1e-9,
-         name + ': children of ' + payload.label[i] + ' partition it exactly');
+      ok(covered[i] === plan.value[i],
+         name + ': children of ' + payload.label[i] + ' sum to it exactly');
     }
   }
 
@@ -114,11 +107,6 @@ function check(payload: SunburstPayload, name: string): void {
 
   console.log(name + ': ok, ' + n + ' nodes, ' + plan.value[0] + ' alleles');
 }
-
-// a full turn cannot be one arc command; the sliver guard must still draw
-const full = sector(10, 20, 0, TAU);
-ok(full.indexOf('NaN') === -1, 'a full circle produces a drawable path');
-ok(full.split('A').length === 3, 'a sector is two arc commands');
 
 check(SAMPLE, 'sample');
 

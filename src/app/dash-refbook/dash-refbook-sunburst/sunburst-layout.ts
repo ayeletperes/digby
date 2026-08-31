@@ -1,13 +1,17 @@
 /**
- * Turning /refbook/sunburst's parallel arrays into arcs and colours.
+ * Turning /refbook/sunburst's parallel arrays into the arrays a Plotly sunburst
+ * wants, and into colours.
  *
  * Kept apart from the component so it is plain functions over plain arrays: no
  * Angular, no DOM, and checkable on its own (see sunburst-layout.check.ts).
  *
  * Everything leans on one property of the payload: nodes are emitted in level
  * order, so `parent[i] < i`. A subtree total is therefore one backward pass, and
- * angles, depths and drill membership are one forward pass each - no walking a
- * parent chain per node, which is what made the prototype quadratic.
+ * depths and drill membership are one forward pass each - no walking a parent
+ * chain per node.
+ *
+ * Plotly draws the arcs. Doing it by hand cost the labels, the hover readout and
+ * the click-the-middle-to-go-back that come with the trace for nothing.
  */
 
 /** The locus as depth-ordered parallel arrays, exactly as the API returns it. */
@@ -31,11 +35,6 @@ export interface SunburstLayout {
   /** The depth-1 ancestor, which colours everything outside a drill. */
   topOf: number[];
   childCount: number[];
-  /** Arc start and end angle, in radians clockwise from twelve o'clock. */
-  start: number[];
-  stop: number[];
-  /** One `d` string per node, in payload order. */
-  arcs: string[];
 }
 
 /** Level colours, carried over from the prototype dashboard. */
@@ -50,10 +49,6 @@ export const WASH = 0.5;
 export const DRILLED_FILL = '#9aa5a4';
 export const ROOT_FILL = '#ffffff';
 
-const R = 100;          // viewBox units, not pixels: the svg is sized by CSS
-const HOLE = 12;
-const TAU = Math.PI * 2;
-
 export function lighten(hex: string, f: number): string {
   if (f <= 0) {
     return hex;   // a no-op that still rewrites the string would change its case
@@ -67,17 +62,6 @@ export function lighten(hex: string, f: number): string {
 
 export function colour(index: number): string {
   return index >= 0 ? PALETTE[index % PALETTE.length] : ROOT_FILL;
-}
-
-/** An annular sector, as a path. */
-export function sector(r0: number, r1: number, a0: number, a1: number): string {
-  // a full turn cannot be drawn as one arc command, so shave an invisible sliver
-  const end = a1 - a0 >= TAU - 1e-6 ? a0 + TAU - 1e-6 : a1;
-  const large = end - a0 > Math.PI ? 1 : 0;
-  const p = (r: number, a: number) =>
-    `${(r * Math.cos(a - Math.PI / 2)).toFixed(2)} ${(r * Math.sin(a - Math.PI / 2)).toFixed(2)}`;
-  return `M${p(r1, a0)}A${r1} ${r1} 0 ${large} 1 ${p(r1, end)}`
-    + `L${p(r0, end)}A${r0} ${r0} 0 ${large} 0 ${p(r0, a0)}Z`;
 }
 
 export function layout(payload: SunburstPayload): SunburstLayout {
@@ -115,28 +99,7 @@ export function layout(payload: SunburstPayload): SunburstLayout {
     value[0] = 1;
   }
 
-  // forward: angles. A child's span comes out of its parent's, and the parent's
-  // start angle is settled by the time any of its children are reached.
-  const start = new Array<number>(n).fill(0);
-  const stop = new Array<number>(n).fill(0);
-  const cursor = new Array<number>(n).fill(0);
-  stop[0] = TAU;
-  for (let i = 1; i < n; i++) {
-    const p = parent[i];
-    const span = (stop[p] - start[p]) * (value[p] ? value[i] / value[p] : 0);
-    start[i] = cursor[p];
-    stop[i] = start[i] + span;
-    cursor[p] = stop[i];
-    cursor[i] = start[i];
-  }
-
-  const band = (R - HOLE) / levelCount;
-  const arcs = new Array<string>(n);
-  for (let i = 0; i < n; i++) {
-    arcs[i] = sector(HOLE + depth[i] * band, HOLE + (depth[i] + 1) * band, start[i], stop[i]);
-  }
-
-  return { depth, value, ordinal, topOf, childCount, start, stop, arcs };
+  return { depth, value, ordinal, topOf, childCount };
 }
 
 /**

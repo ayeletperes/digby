@@ -97,6 +97,7 @@
 /* Every filter in force, in one place, each one removable. */
 .filter-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; margin-top: 0.5rem; }
 .chips-label { font-size: 0.8rem; color: #5f6368; margin-right: 0.2rem; }
+.chips-note { font-size: 0.8rem; color: #5f6368; font-style: italic; }
 .chip {
   display: inline-flex; align-items: baseline; gap: 0.25rem;
   border: 1px solid #dadce0; background: #fff; border-radius: 999px;

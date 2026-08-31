@@ -31,7 +31,7 @@ export interface DashPanel {
 }
 
 /** Panel groups, in the order the rail lists them. */
-export const PANEL_GROUPS = ['Reference', 'Detail'];
+export const PANEL_GROUPS = ['Locus', 'Reference', 'Detail'];
 
 export const DASH_PANELS: DashPanel[] = [
   {
@@ -67,7 +67,7 @@ export const DASH_PANELS: DashPanel[] = [
   },
   {
     id: 'sunburst',
-    group: 'Reference',
+    group: 'Locus',
     label: 'Locus map',
     description: 'The whole locus at once: gene type, subgroup, gene and allele as nested rings.',
     caption: 'Every allele in the locus, one ring per level: chain, gene type, subgroup, ' +

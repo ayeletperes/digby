@@ -1,10 +1,9 @@
-import {
-  ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges,
-} from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
+import { PlotlyModule } from 'angular-plotly.js';
 
 import { environment } from '../../../environments/environment';
 import { retryWithBackoff } from '../../shared/retry_with_backoff';
@@ -15,20 +14,20 @@ import { fills, layout, SunburstLayout, SunburstPayload } from './sunburst-layou
 /**
  * The locus as a sunburst: chain, gene type, subgroup, ASC, allele.
  *
- * One request per species and locus, and nothing after that - drilling is a
- * recolour of arcs that are already in the DOM. The arcs are plain SVG paths
- * with no text: a chart library that labels every arc spends seconds measuring
- * text for a few thousand alleles, which is the whole reason this is hand-rolled.
+ * One request per species and locus, and nothing after that - drilling recolours
+ * arcs that are already drawn.
+ *
+ * Plotly's sunburst trace draws it. The arcs were hand-rolled at first, to skip
+ * the cost of a chart library measuring label text for a few thousand alleles,
+ * and that bought a figure with no labels, no hover and no way back to the top.
+ * The trace gives all three, and the ring cap below is what keeps it quick.
  */
 @Component({
   selector: 'app-dash-refbook-sunburst',
   templateUrl: './dash-refbook-sunburst.component.html',
   styleUrls: ['./dash-refbook-sunburst.component.scss'],
   standalone: true,
-  imports: [CommonModule],
-  // the arc and fill arrays are rebuilt wholesale rather than mutated, so there
-  // is nothing for Angular to find by walking them on every tick
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, PlotlyModule],
 })
 export class DashRefbookSunburstComponent implements OnInit, OnChanges {
   @Input() selection: SpeciesGeneSelection;
@@ -37,21 +36,28 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
   error: string = null;
 
   data: SunburstPayload = null;
-  /** One `d` string per node. Built once per payload; a drill never touches it. */
-  arcs: string[] = [];
-  /** Fill per node. The only thing a drill recomputes. */
-  fill: string[] = [];
-
   private plan: SunburstLayout = null;
+
+  /**
+   * Rings drawn at once. All five means a thousand-odd allele arcs a pixel wide,
+   * which is where the labels go: Plotly only writes a label that fits its arc.
+   * Four stops at the ASC, and drilling in reveals its alleles.
+   */
+  static readonly RINGS = 4;
+
+  plotData: unknown[] = [];
+  plotLayout: Record<string, unknown> = {};
+  plotConfig = { displaylogo: false, responsive: true,
+                 modeBarButtonsToRemove: ['select2d', 'lasso2d'] };
 
   /** Node the colours are keyed to, or null for the whole locus. */
   drilled: number = null;
-  /** Node under the pointer, shown in the readout. */
-  hover: number = null;
+  /** Node at the centre, which is Plotly's own zoom and moves with a click. */
+  private centre: number = 0;
 
-  constructor(private http: HttpClient,
-              private drill: DashDrillService,
-              private cdr: ChangeDetectorRef) {}
+  private ids: string[] = [];
+
+  constructor(private http: HttpClient, private drill: DashDrillService) {}
 
   ngOnInit(): void {
     this.fetch();
@@ -77,7 +83,6 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
 
     if (!species || !locus) {
       this.reset();
-      this.cdr.markForCheck();
       return;
     }
 
@@ -89,7 +94,6 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
 
     this.isFetching = true;
     this.error = null;
-    this.cdr.markForCheck();
 
     const url = `${environment.apiBasePath}/refbook/sunburst/`
       + `${encodeURIComponent(species)}/${encodeURIComponent(locus)}`;
@@ -98,27 +102,25 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
       .pipe(
         retryWithBackoff(),
         catchError(err => {
-          this.error = err?.message ?? String(err);
+          this.error = err?.error?.message ?? err?.message ?? 'Could not load the locus map';
           this.isFetching = false;
           this.reset();
-          this.cdr.markForCheck();
           return EMPTY;
         }),
       )
       .subscribe(payload => {
         this.isFetching = false;
         this.load(payload);
-        this.cdr.markForCheck();
       });
   }
 
   private reset(): void {
     this.data = null;
     this.plan = null;
-    this.arcs = [];
-    this.fill = [];
+    this.plotData = [];
+    this.ids = [];
     this.drilled = null;
-    this.hover = null;
+    this.centre = 0;
   }
 
   private load(payload: SunburstPayload): void {
@@ -128,63 +130,79 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
     }
     this.data = payload;
     this.plan = layout(payload);
-    this.arcs = this.plan.arcs;
-    this.fill = fills(payload, this.plan, null);
+    this.ids = payload.label.map((_, i) => String(i));
+    this.draw();
   }
 
-  // --- interaction -------------------------------------------------------
-  // One delegated listener on the group rather than one per arc: at a few
-  // thousand alleles, per-path event bindings are the cost that matters.
+  private draw(): void {
+    const { label, parent, novel, nG, nA } = this.data;
 
-  private indexFrom(event: Event): number {
-    const raw = (event.target as HTMLElement)?.getAttribute?.('data-i');
-    if (raw === null || raw === undefined) {
-      return null;
+    this.plotData = [{
+      type: 'sunburst',
+      ids: this.ids,
+      labels: label,
+      parents: this.ids.map((_, i) => (i === 0 ? '' : String(parent[i]))),
+      values: this.plan.value,
+      branchvalues: 'total',
+      // the payload is already in segment then natural-name order; Plotly's
+      // default would re-sort it by size and scatter the subgroups
+      sort: false,
+      level: this.ids[this.centre],
+      maxdepth: DashRefbookSunburstComponent.RINGS,
+      insidetextorientation: 'radial',
+      marker: {
+        colors: fills(this.data, this.plan, this.drilled),
+        line: { color: '#ffffff', width: 0.5 },
+      },
+      customdata: label.map((_, i) => [
+        this.levelOf(i), this.plan.value[i], novel[i], nG[i], nA[i],
+      ]),
+      hovertemplate:
+        '<b>%{label}</b><br>%{customdata[0]}<br><br>'
+        + '%{customdata[1]} alleles, %{customdata[2]} novel<br>'
+        + 'genomic %{customdata[3]} · AIRR-seq %{customdata[4]}'
+        + '<extra></extra>',
+    }];
+
+    this.plotLayout = {
+      margin: { l: 0, r: 0, t: 0, b: 0 },
+      height: 620,
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      font: { size: 12 },
+    };
+  }
+
+  onPlotClick(event: { points?: { pointNumber?: number }[] }): void {
+    const point = event?.points?.[0];
+    if (!point || point.pointNumber === undefined) {
+      return;
     }
-    const i = +raw;
-    return Number.isInteger(i) && i >= 0 && i < this.arcs.length ? i : null;
-  }
+    const i = point.pointNumber;
 
-  onMove(event: Event): void {
-    const i = this.indexFrom(event);
-    if (i !== this.hover) {
-      this.hover = i;
-      this.cdr.markForCheck();
-    }
-  }
-
-  onLeave(): void {
-    this.hover = null;
-    this.cdr.markForCheck();
-  }
-
-  onClick(event: Event): void {
-    const i = this.indexFrom(event);
-    if (i === null) {
+    if (!this.plan.childCount[i]) {
+      // a leaf is an allele, and the dashboard has a panel for those
+      this.drill.drill('allele', this.data.label[i]);
       return;
     }
 
-    if (i === this.drilled) {
-      // clicking the drilled ring again steps back out
-      this.drillTo(this.data.parent[i] > 0 ? this.data.parent[i] : null);
-    } else if (this.plan.childCount[i]) {
-      this.drillTo(i);
-    } else {
-      // a leaf is an allele, and the dashboard has a panel for those
-      this.drill.drill('allele', this.data.label[i]);
-    }
+    // clicking the drilled node again steps back out, which is also what Plotly
+    // does to the zoom, so the two stay in step
+    this.drilled = i === this.drilled ? (this.data.parent[i] || null) : i;
+    this.centre = this.drilled ?? 0;
+    this.draw();
   }
 
-  drillTo(i: number): void {
-    this.drilled = i;
-    this.fill = fills(this.data, this.plan, i);
-    this.cdr.markForCheck();
+  resetView(): void {
+    this.drilled = null;
+    this.centre = 0;
+    this.draw();
   }
 
-  /**
-   * The drilled node's ancestors, outermost last. Node 0 is left out: the button
-   * before the trail already stands for the whole locus.
-   */
+  get isDrilled(): boolean {
+    return this.drilled !== null && this.drilled !== 0;
+  }
+
+  /** The drilled node's ancestors, outermost last, node 0 excluded. */
   get trail(): number[] {
     const path: number[] = [];
     for (let i = this.drilled; i !== null && i > 0; i = this.data.parent[i]) {
@@ -193,42 +211,13 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
     return path;
   }
 
-  /** The node the readout describes: hovered, else drilled, else the whole locus. */
-  get focus(): number {
-    return this.hover ?? this.drilled ?? 0;
-  }
-
-  /** chain → gene type → subgroup → asc → allele */
-  get levelPath(): string {
-    return (this.data?.levels ?? []).map(name => name.replace(/_/g, ' ')).join(' → ');
-  }
-
-  get summary(): string {
-    return `Sunburst of ${this.data.label[0]}: ${this.alleleCount(0)} alleles across `
-      + `${this.data.levels.length} levels (${this.levelPath}). `
-      + 'Use the buttons above the chart to move between levels.';
+  drillTo(i: number): void {
+    this.drilled = i;
+    this.centre = i ?? 0;
+    this.draw();
   }
 
   levelOf(i: number): string {
     return this.data?.levels[this.plan.depth[i]]?.replace(/_/g, ' ') ?? '';
-  }
-
-  alleleCount(i: number): number {
-    return this.plan?.value[i] ?? 0;
-  }
-
-  /** Ring legend: one chip per level, with how many nodes it holds. */
-  get ringLegend(): { name: string; count: number; radius: number }[] {
-    const payload = this.data;
-    if (!payload) {
-      return [];
-    }
-    const n = payload.label.length;
-    return payload.levels.map((name, level) => ({
-      name: name.replace(/_/g, ' '),
-      count: (level + 1 < payload.levels.length ? payload.levelStart[level + 1] : n)
-        - payload.levelStart[level],
-      radius: level,
-    }));
   }
 }

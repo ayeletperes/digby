@@ -149,11 +149,17 @@
 
       <div class="filter-chips">
         <span class="chips-label">{{ selection.species }} · {{ selection.chain }}</span>
-        @for (chip of activeChips; track chip.key) {
-          <button type="button" class="chip" (click)="removeChip(chip.key)"
-                  [title]="'Remove ' + chip.label + ' ' + chip.value">
-            <span class="chip-key">{{ chip.label }}</span>{{ chip.value }}<span class="x">×</span>
-          </button>
+        <!-- a locus-wide panel is drawn from the whole locus, so the gene and
+             sample chips would sit above a figure none of them narrows -->
+        @if (activePanel.multi) {
+          <span class="chips-note">whole locus &mdash; the filters below do not narrow this</span>
+        } @else {
+          @for (chip of activeChips; track chip.key) {
+            <button type="button" class="chip" (click)="removeChip(chip.key)"
+                    [title]="'Remove ' + chip.label + ' ' + chip.value">
+              <span class="chip-key">{{ chip.label }}</span>{{ chip.value }}<span class="x">×</span>
+            </button>
+          }
         }
       </div>
 
