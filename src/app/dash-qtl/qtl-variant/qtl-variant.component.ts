@@ -48,6 +48,24 @@ export class QtlVariantComponent implements OnChanges {
 
   readonly ascName = ascDisplayName;
 
+  /**
+   * The table used to stop at the strongest 12 of however many genes there are.
+   *
+   * A silent cap, and a misleading one: the heading says every gene, and with 70
+   * genes in IGH it showed a sixth of them with no indication there was a rest.
+   * Every row is drawn now, inside a scroll box, with the counts said out loud.
+   */
+  significantOnly = false;
+
+  get significantCount(): number {
+    return this.associations.filter(a => a.significant).length;
+  }
+
+  get shownAssociations(): QtlAssociation[] {
+    return this.significantOnly
+      ? this.associations.filter(a => a.significant) : this.associations;
+  }
+
   isFetching = false;
   error: string | null = null;
 

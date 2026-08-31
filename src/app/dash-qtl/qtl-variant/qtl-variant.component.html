@@ -79,14 +79,24 @@
       <h4>Every gene this variant was tested against</h4>
       <p class="note">
         Each gene is its own scan, so a variant has one result per gene. Click one
-        to plot that gene's usage instead.
+        to plot that gene's usage instead. Strongest first —
+        <strong>{{ associations.length }}</strong> genes,
+        <strong>{{ significantCount }}</strong> reaching significance.
+        @if (significantCount) {
+          <label class="sig-toggle">
+            <input type="checkbox" [checked]="significantOnly"
+                   (change)="significantOnly = !significantOnly" />
+            significant only
+          </label>
+        }
       </p>
+      <div class="assoc-scroll">
       <table class="assoc">
         <tr>
           <th>gene</th><th>seg</th><th class="n">-log10 p</th><th class="n">effect</th>
           <th class="n">n</th><th class="n">smallest class</th><th></th>
         </tr>
-        @for (a of associations.slice(0, 12); track a.asc) {
+        @for (a of shownAssociations; track a.asc) {
           <tr [class.on]="a.asc === plottedAsc">
             <td><button type="button" class="link-button"
                         (click)="ascPicked.emit(a.asc)">{{ a.asc }}</button></td>
@@ -104,6 +114,14 @@
           </tr>
         }
       </table>
+      </div>
+      @if (significantOnly && significantCount < associations.length) {
+        <p class="note">
+          Showing {{ significantCount }} of {{ associations.length }} genes. The
+          rest were tested and did not reach the threshold — they are results,
+          not absences.
+        </p>
+      }
     </section>
   </div>
 } @else {

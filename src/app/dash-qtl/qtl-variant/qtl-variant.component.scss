@@ -69,3 +69,11 @@
 }
 .back-to-gene:hover { background: var(--vdj-teal-dark); border-color: var(--vdj-teal-dark); }
 .back-to-gene:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 2px; }
+
+/* every gene is drawn; the box scrolls rather than the list being cut short */
+.assoc-scroll { max-height: 22rem; overflow-y: auto; }
+.assoc-scroll .assoc th {
+  position: sticky; top: 0; background: #fff; z-index: 1;
+  box-shadow: inset 0 -1px 0 #e8eaed;
+}
+.sig-toggle { margin-left: 0.6rem; white-space: nowrap; }
