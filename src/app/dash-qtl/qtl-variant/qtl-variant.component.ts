@@ -5,6 +5,8 @@ import { EMPTY, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { QtlService } from '../qtl.service';
+import { QtlRegionComponent } from '../qtl-region/qtl-region.component';
+import { ascDisplayName } from '../../shared/models/gene-naming';
 import {
   QtlAssociation, QtlFit, QtlSelection, QtlVariant,
 } from '../../shared/models/qtl-selection.model';
@@ -31,7 +33,7 @@ const GENOTYPE_COLOUR: Record<number, string> = { 0: '#2a78d6', 1: '#e34948', 2:
   templateUrl: './qtl-variant.component.html',
   styleUrls: ['./qtl-variant.component.scss'],
   standalone: true,
-  imports: [CommonModule, PlotlyModule],
+  imports: [CommonModule, PlotlyModule, QtlRegionComponent],
 })
 export class QtlVariantComponent implements OnChanges {
   @Input() selection: QtlSelection;
@@ -39,6 +41,12 @@ export class QtlVariantComponent implements OnChanges {
   @Input() fallbackAsc?: string;
 
   @Output() ascPicked = new EventEmitter<string>();
+  /** A neighbour in the region track, handed up so the shell can re-select it. */
+  @Output() regionVariantPicked = new EventEmitter<string>();
+  /** The way back to the scan this variant was opened from. */
+  @Output() backToGene = new EventEmitter<void>();
+
+  readonly ascName = ascDisplayName;
 
   isFetching = false;
   error: string | null = null;

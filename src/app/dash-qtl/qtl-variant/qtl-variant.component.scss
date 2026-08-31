@@ -1,7 +1,10 @@
 .qtl-status { margin: 1rem 0; font-size: 0.9rem; color: #5f6368; }
 .qtl-status.error { color: #d62839; }
 
-.variant-head { margin-bottom: 0.9rem; }
+.variant-head {
+  margin-bottom: 0.9rem; display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
 .variant-name {
   margin: 0; font-family: 'Roboto Mono', Menlo, Consolas, monospace;
   font-size: 1.05rem; color: #202124;
@@ -57,3 +60,12 @@
   font-size: 0.82rem; cursor: pointer;
 }
 .link-button:hover { text-decoration: underline; }
+
+/* the way back, in the same shape the refbook sunburst uses to go the other way */
+.back-to-gene {
+  margin-left: auto; border: 1px solid var(--vdj-teal); background: var(--vdj-teal);
+  color: #fff; border-radius: 999px; padding: 0.1rem 0.8rem;
+  font-size: 0.8125rem; line-height: 1.6; cursor: pointer; white-space: nowrap;
+}
+.back-to-gene:hover { background: var(--vdj-teal-dark); border-color: var(--vdj-teal-dark); }
+.back-to-gene:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 2px; }

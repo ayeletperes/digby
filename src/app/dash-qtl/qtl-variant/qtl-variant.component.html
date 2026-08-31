@@ -18,6 +18,12 @@
         }
       </p>
     </div>
+    @if (plottedAsc) {
+      <button type="button" class="back-to-gene" (click)="backToGene.emit()"
+              [title]="'Back to the scan for ' + ascName(selection?.locus, plottedAsc)">
+        ← {{ ascName(selection?.locus, plottedAsc) }} scan
+      </button>
+    }
   </div>
 
   <div class="variant-grid">
@@ -57,6 +63,16 @@
           p-value is.
         </p>
       }
+    </section>
+
+    <!-- Above the table, not below it. This page was reached from one gene's
+         scan and the question in hand is what this variant is; the table is the
+         wider follow-up, so it comes after. -->
+    <section class="card wide">
+      <h4>Around {{ variant.variant }}</h4>
+      <app-qtl-region [selection]="selection" [fallbackAsc]="fallbackAsc"
+                      (variantPicked)="regionVariantPicked.emit($event)">
+      </app-qtl-region>
     </section>
 
     <section class="card wide">
