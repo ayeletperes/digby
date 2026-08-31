@@ -119,10 +119,13 @@ export const DASH_PANELS: DashPanel[] = [
     group: 'Reference',
     label: 'Group clustering',
     description: 'Which alleles of the gene group together by sequence.',
-    caption: 'Groups the alleles of the gene by how much their sequences differ, counted ' +
-             'over the IMGT-gapped positions that vary between them. Two groups join at the ' +
-             'distance of their furthest pair, so where a join sits is that distance, not ' +
-             'each allele\'s distance to the rest. Alleles identical over the compared ' +
+    caption: 'Groups the alleles of the gene by how much their sequences differ. V alleles ' +
+             'are stored IMGT-gapped, so the columns correspond and the distance counts the ' +
+             'positions that differ. D and J have no gapped form and differ in length, so ' +
+             'each pair is aligned end to end and the distance counts inserted and deleted ' +
+             'bases too; the note under the figure says which was used. Two groups join at ' +
+             'the distance of their furthest pair, so where a join sits is that distance, ' +
+             'not each allele\'s distance to the rest. Alleles identical over the compared ' +
              'positions are listed together rather than drawn twice. This groups by ' +
              'similarity and says nothing about ancestry: sequences that differ by one ' +
              'position group closely whether or not they are related that way.',
