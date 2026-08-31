@@ -69,3 +69,31 @@
   height: 400px;
   margin-top: 2rem;
 }
+
+/* The cohort the bars are drawn from: a count means little without its total. */
+.samples-box .sep { color: #9aa0a6; margin: 0 0.1rem; font-weight: 400; }
+/* one line: the box sits in a row of equal-height cards and a wrapping caption
+   was pushing the whole row taller than the numbers it labels */
+.samples-box .sub {
+  display: flex; align-items: baseline; gap: 0.4rem;
+  margin-top: 0.15rem; font-size: 0.72rem; color: #5f6368;
+  white-space: nowrap; line-height: 1.25;
+}
+.samples-box .sub.muted { color: #80868b; font-style: italic; }
+.samples-box .drill { color: var(--vdj-teal); font-style: normal; font-weight: 600; }
+
+/* the whole card is the control */
+button.samples-box {
+  border: 1px solid #e8eaed; background: #fff; text-align: left; cursor: pointer;
+  font: inherit; transition: border-color 0.15s ease, background 0.15s ease;
+}
+button.samples-box:hover { border-color: var(--vdj-teal); background: #f8f9fa; }
+button.samples-box:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 2px; }
+button.samples-box.open { border-color: var(--vdj-teal); background: #f8f9fa; }
+
+.projects-drill {
+  margin-top: 0.75rem; padding: 0.8rem 0.9rem;
+  border: 1px solid #e8eaed; border-radius: 8px; background: #fff;
+}
+.drill-chart { height: 260px; }
+.drill-note { margin: 0.5rem 0 0; font-size: 0.78rem; color: #5f6368; max-width: 80ch; }

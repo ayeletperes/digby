@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective  } from 'ng2-charts';
 import { RefbookService } from '../../../../projects/digby-swagger-client/api/refbook.service';
@@ -21,7 +22,7 @@ Chart.register(...registerables);
   templateUrl: './dash-refbook-overview.component.html',
   styleUrls: ['./dash-refbook-overview.component.css'],
   standalone: true,
-  imports: [FormsModule, BaseChartDirective, ScopeNoteComponent]
+  imports: [CommonModule, FormsModule, BaseChartDirective, ScopeNoteComponent]
 })
 
 export class DashRefbookOverviewComponent implements OnInit, OnChanges {
@@ -68,22 +69,46 @@ export class DashRefbookOverviewComponent implements OnInit, OnChanges {
   };
 
   // Chart configuration
+  /** Samples available per series, so a bar can be read as a share. */
+  private denominators: Record<string, number> = {};
+
   public chartOptions: ChartOptions<'bar'> = {
     responsive: true,
     maintainAspectRatio: false,
+    plugins: {
+      tooltip: {
+        callbacks: {
+          // a raw count means little without the cohort it came out of
+          label: (item) => {
+            const series = item.dataset.label ?? '';
+            const n = Number(item.parsed.y ?? 0);
+            const total = this.denominators[series] ?? 0;
+            if (!total) {
+              return `${series}: ${n} samples`;
+            }
+            const pct = (100 * n / total).toFixed(1);
+            return `${series}: ${n} of ${total} samples (${pct}%)`;
+          },
+        },
+      },
+    },
     scales: {
       // Not stacked: the two series are counts of the same samples from different
       // databases, so an allele in both would be counted twice by a stacked bar.
       // Side by side, the comparison between databases is the point.
       x: {
         stacked: false,
+        title: {
+          display: true,
+          text: 'Allele',
+        },
       },
       y: {
         stacked: false,
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Sample Count' // Y-axis label
+          text: 'Samples carrying the allele',
         }
       }
     }
@@ -172,11 +197,72 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
     });
   }
 
+  /** Samples behind the figures, and how many are the same sample in both. */
+  cohort: { genomic: number; airrseq: number; shared: number } | null = null;
+
+  /** Where those samples come from, opened from the cohort box. */
+  showProjects = false;
+  projectsLoading = false;
+  projectData: ChartData<'bar'> = { labels: [], datasets: [] };
+  public projectOptions: ChartOptions<'bar'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } },
+    scales: {
+      x: { stacked: false, title: { display: true, text: 'Project' } },
+      y: { stacked: false, beginAtZero: true, title: { display: true, text: 'Samples' } },
+    },
+  };
+
+  toggleProjects(): void {
+    this.showProjects = !this.showProjects;
+    if (this.showProjects && !this.projectData.labels?.length) {
+      this.loadProjects();
+    }
+  }
+
+  private loadProjects(): void {
+    const { species, chain } = this.selection ?? {};
+    if (!species || !chain) { return; }
+
+    this.projectsLoading = true;
+    this.refbookService.getProjects(species, chain, sourcesParam(this.selection))
+      .subscribe({
+        next: (rec: { projects?: { name: string; by_source?: Record<string, number> }[] }) => {
+          const projects = rec?.projects ?? [];
+          // one bar per database, matching the colours the panel above uses
+          this.projectData = {
+            labels: projects.map(p => p.name),
+            datasets: [
+              { label: 'Genomic', data: projects.map(p => p.by_source?.['genomic'] ?? 0),
+                backgroundColor: '#a9e1d4', borderColor: '#8DD3C7', borderWidth: 1 },
+              { label: 'AIRR-seq', data: projects.map(p => p.by_source?.['airrseq'] ?? 0),
+                backgroundColor: '#FFA07A', borderColor: '#fa946b', borderWidth: 1 },
+            ].filter(d => d.data.some(v => v > 0)),
+          };
+          this.projectsLoading = false;
+        },
+        error: () => { this.projectData = { labels: [], datasets: [] }; this.projectsLoading = false; },
+      });
+  }
+
   private updateChartData(data: OverviewData & { genomic_counts?: number[]; vdjbase_counts?: number[] }): void {
     try {
       const sources = this.selection?.sources ?? [];
       const hasGenomic = !sources.length || sources.includes('genomic');
       const hasAirrseq = !sources.length || sources.includes('airrseq');
+
+      this.cohort = data.cohort ?? null;
+      // the source toggle changes which projects exist, so drop the cache
+      this.projectData = { labels: [], datasets: [] };
+      if (this.showProjects) { this.loadProjects(); }
+      // Both is only drawable when a sample can be in both databases at once.
+      const bothPossible = hasGenomic && hasAirrseq && (data.cohort?.shared ?? 0) > 0;
+      this.denominators = {
+        Genomic: data.cohort?.genomic ?? 0,
+        'AIRR-seq': data.cohort?.airrseq ?? 0,
+        Both: data.cohort?.shared ?? 0,
+      };
 
       // The previous three series were exclusive buckets with `Both` set to
       // min(genomic, airrseq), so they summed to nothing meaningful and an allele
@@ -193,6 +279,14 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
           label: 'AIRR-seq', show: hasAirrseq,
           data: data.vdjbase_counts,
           backgroundColor: '#FFA07A', borderColor: '#fa946b', borderWidth: 1,
+        },
+        {
+          // A true intersection now, not min(genomic, airrseq): these are the
+          // samples that carry the allele in both databases, which only exists
+          // where the same sample was sequenced both ways.
+          label: 'Both', show: bothPossible,
+          data: data.both_counts,
+          backgroundColor: '#ce93d8', borderColor: '#ba68c8', borderWidth: 1,
         },
       ];
 

@@ -264,10 +264,10 @@ export class RefbookService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
-    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
-    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
-    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, sources?: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, sources?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, sources?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, sources?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
         if (species === null || species === undefined) {
             throw new Error('Required parameter species was null or undefined when calling getAscZygosity.');
@@ -291,6 +291,12 @@ export class RefbookService {
 
                 if (alleles !== undefined && alleles !== null) {
             queryParameters = queryParameters.set('alleles', <any>alleles);
+        }
+
+        // zygosity is reported by both databases, so which of them to read has
+        // to travel with the request; without it the panel silently read both
+        if (sources !== undefined && sources !== null) {
+            queryParameters = queryParameters.set('sources', <any>sources);
         }
 
         let headers = this.defaultHeaders;

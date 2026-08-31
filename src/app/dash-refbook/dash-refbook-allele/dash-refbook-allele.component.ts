@@ -121,7 +121,8 @@ export class DashRefbookAlleleComponent implements OnInit, OnChanges {
         .pipe(soften({ alleles: [] })),
       // deliberately unfiltered by allele: the point is what this allele's carriers
       // also carry, which an allele-filtered response would hide
-      zygosity: this.refbookService.getAscZygosity(species, chain, asc, projects, samples)
+      zygosity: this.refbookService.getAscZygosity(species, chain, asc, projects, samples,
+                                                   undefined, sources)
         .pipe(soften({ samples: [] })),
       alignment: this.refbookService.getAscAlignment(species, chain, asc, 20, sources, alleles)
         .pipe(soften<{ alignment: string }>({ alignment: '' })),
@@ -223,10 +224,14 @@ export class DashRefbookAlleleComponent implements OnInit, OnChanges {
       type: 'bar',
       x: this.carriersByProject.map(row => row.project),
       y: this.carriersByProject.map(row => row.samples),
-      marker: { color: '#1a73e8' },
+      marker: { color: '#188080' },  // brand teal, matching every other chart
       hovertemplate: '%{x}: %{y} subjects<extra></extra>',
     }];
-    this.carrierLayout = { ...base, yaxis: { title: 'subjects', rangemode: 'tozero' } };
+    this.carrierLayout = {
+      ...base,
+      xaxis: { title: 'Project', automargin: true },
+      yaxis: { title: 'Subjects carrying the allele', rangemode: 'tozero', automargin: true },
+    };
 
     // one box per project: a project whose usage sits apart is the thing worth
     // seeing, and a single pooled distribution hides it
@@ -241,7 +246,12 @@ export class DashRefbookAlleleComponent implements OnInit, OnChanges {
       marker: { size: 5, opacity: 0.55 },
       hovertemplate: '%{y:.3%}<extra>' + project + '</extra>',
     }));
-    this.usageLayout = { ...base, height: 210, yaxis: { title: 'share', tickformat: '.1%', rangemode: 'tozero' } };
+    this.usageLayout = {
+      ...base, height: 210,
+      xaxis: { title: 'Project', automargin: true },
+      yaxis: { title: 'Share of repertoire', tickformat: '.1%', rangemode: 'tozero',
+               automargin: true },
+    };
   }
 
   openPartner(name: string) {

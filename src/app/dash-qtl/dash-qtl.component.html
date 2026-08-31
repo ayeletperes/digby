@@ -1,0 +1,138 @@
+<div class="qtl-shell" [class.rail-closed]="!railOpen">
+
+  <!-- Everything that is a choice lives here, as it does on the reference
+       dashboard: the dataset, which question is being asked, and that question's
+       own subject. The canvas is output only. -->
+  <aside class="qtl-rail">
+    <button type="button" class="rail-handle" (click)="railOpen = !railOpen"
+            [title]="railOpen ? 'Collapse filters' : 'Show filters'">
+      {{ railOpen ? '‹' : '›' }}
+    </button>
+
+    @if (railOpen) {
+      <div class="rail-body">
+        <section class="rail-section">
+          <h3 class="rail-heading">Dataset</h3>
+          <div class="rail-pair">
+            <div>
+              <label class="rail-label" for="qtlSpecies">Species</label>
+              <select class="form-select form-select-sm" id="qtlSpecies"
+                      [(ngModel)]="selection.species" (ngModelChange)="onSpeciesChange()">
+                @for (s of species; track s) { <option [ngValue]="s">{{ s }}</option> }
+              </select>
+            </div>
+            <div>
+              <label class="rail-label" for="qtlLocus">Locus</label>
+              <select class="form-select form-select-sm" id="qtlLocus"
+                      [(ngModel)]="selection.locus" (ngModelChange)="onLocusChange()">
+                @for (l of lociFor(selection.species); track l) {
+                  <option [ngValue]="l">{{ l }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          @if (ascs.length) {
+            <p class="rail-note">
+              {{ ascs.length }} genes scanned · {{ ascsWithSignal }} with a
+              significant variant.
+            </p>
+          }
+        </section>
+
+        <section class="rail-section">
+          <h3 class="rail-heading">Analysis</h3>
+          <ul class="panel-list">
+            <li>
+              <button type="button" class="panel-link" [class.on]="view === 'gene'"
+                      title="Which variants explain a gene's usage"
+                      (click)="showView('gene')">
+                <span class="panel-name">Start from a gene</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="panel-link" [class.on]="view === 'variant'"
+                      title="Which genes a variant explains"
+                      (click)="showView('variant')">
+                <span class="panel-name">Start from a variant</span>
+              </button>
+            </li>
+          </ul>
+          <p class="rail-note">{{ viewNote }}</p>
+        </section>
+
+        <!-- The open analysis's own subject, in the shape its question needs:
+             ~35 genes are worth browsing, thousands of variants must be typed. -->
+        <section class="rail-section">
+          @if (view === 'gene') {
+            <h3 class="rail-heading">Gene</h3>
+            <select class="form-select form-select-sm" id="qtlAsc"
+                    [(ngModel)]="selection.asc" (ngModelChange)="onAscChange()"
+                    [disabled]="!ascs.length">
+              <option [ngValue]="undefined">All genes — best per variant</option>
+              @for (a of rankedAscs; track a.asc) {
+                <option [ngValue]="a.asc">
+                  {{ selection.locus }}{{ a.asc }} — {{ a.n_significant }} significant
+                </option>
+              }
+            </select>
+          } @else {
+            <h3 class="rail-heading">Variant</h3>
+            <app-qtl-search [species]="selection.species" kind="variant"
+                            placeholder="A variant id — chr22_22756855"
+                            (variantPicked)="onSearchVariant($event)">
+            </app-qtl-search>
+            @if (selection.variant) {
+              <p class="chosen-subject">{{ selection.variant }}</p>
+            }
+          }
+
+          @if (chosen) {
+            <label class="rail-label">Plotting against</label>
+            <div class="chosen">
+              <span class="chosen-name">{{ chosen }}</span>
+              <button type="button" class="chosen-drop" (click)="clearDrill()"
+                      title="Back">×</button>
+            </div>
+          }
+        </section>
+      </div>
+    }
+  </aside>
+
+  <main class="qtl-canvas">
+    <header class="canvas-head">
+      <h2>Gene usage QTL</h2>
+      <p class="canvas-sub">
+        Where variation in the locus explains how much each gene is used.
+        @if (selection.species && selection.locus) {
+          {{ selection.species }} · {{ selection.locus }}
+        }
+      </p>
+    </header>
+
+    @if (error) {
+      <p class="qtl-status error">{{ error }}</p>
+    } @else if (isPlotting) {
+      <app-qtl-variant [selection]="plotSelection" [fallbackAsc]="pointAsc"
+                       (ascPicked)="onAscPicked($event)">
+      </app-qtl-variant>
+    } @else if (view === 'variant') {
+      @if (selection.variant) {
+        <app-qtl-variant-lookup [species]="selection.species"
+                                [variant]="selection.variant"
+                                (resolved)="onLookupResolved($event)"
+                                (drill)="onLookupDrill($event)">
+        </app-qtl-variant-lookup>
+      } @else {
+        <p class="qtl-status">
+          Enter a variant id in the sidebar to see which genes' usage it explains.
+          Only variants the scan actually tested are held.
+        </p>
+      }
+    } @else {
+      <app-qtl-manhattan [selection]="selection"
+                         (variantPicked)="onVariantPicked($event)">
+      </app-qtl-manhattan>
+    }
+  </main>
+</div>

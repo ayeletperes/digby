@@ -122,7 +122,7 @@
     } @else if (loaded[activePanel.id]) {
       @if (activePanel.multi) {
         <ng-container *ngComponentOutlet="$any(loaded[activePanel.id]);
-                                          inputs: { selection: selection }">
+                                          inputs: { selection: selectionForPanel(activePanel) }">
         </ng-container>
       } @else {
         <div class="facets" [class.single]="facetsFor(activePanel).length < 2">

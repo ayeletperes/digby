@@ -1,0 +1,95 @@
+@if (error) {
+  <p class="qtl-status error">{{ error }}</p>
+} @else if (isFetching) {
+  <p class="qtl-status">Loading the variant…</p>
+} @else if (variant) {
+
+  <div class="variant-head">
+    <div>
+      <h3 class="variant-name">{{ variant.variant }}</h3>
+      <p class="variant-sub">
+        {{ variant.contig }}:{{ variant.pos | number }}
+        · MAF {{ variant.maf | percent:'1.1-1' }}
+        @if (variant.gene) {
+          · {{ variant.feature }} of <strong>{{ variant.gene }}</strong>
+          @if (variant.distance_to_gene) {
+            ({{ variant.distance_to_gene | number:'1.0-0' }} bp away)
+          }
+        }
+      </p>
+    </div>
+  </div>
+
+  <div class="variant-grid">
+
+    <section class="card">
+      <h4>Usage by genotype</h4>
+      @if (!plottedAsc) {
+        <p class="note">Choose an ASC to see the usage this variant explains.</p>
+      } @else if (!subjects.length) {
+        <p class="note">No genotypes are held for this variant.</p>
+      } @else {
+        <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"></plotly-plot>
+        @if (association) {
+          <p class="stat">
+            effect {{ association.beta | number:'1.3-3' }}
+            · p {{ association.p_value.toExponential(2) }}
+            · n {{ association.n }}
+            @if (association.min_genotype_group !== null) {
+              <span [class.weak]="association.well_powered === false">
+                · smallest genotype class {{ association.min_genotype_group }}
+              </span>
+            }
+          </p>
+        }
+      }
+    </section>
+
+    <section class="card">
+      <h4>Genotype distribution</h4>
+      @if (!counts.length) {
+        <p class="note">No genotypes are held for this variant.</p>
+      } @else {
+        <plotly-plot [data]="countsPlot" [layout]="countsLayout" [config]="plotConfig"></plotly-plot>
+        <p class="note">
+          How many subjects carry each genotype. A class with only a handful of
+          subjects cannot support a confident effect estimate, however small the
+          p-value is.
+        </p>
+      }
+    </section>
+
+    <section class="card wide">
+      <h4>Every gene this variant was tested against</h4>
+      <p class="note">
+        Each gene is its own scan, so a variant has one result per gene. Click one
+        to plot that gene's usage instead.
+      </p>
+      <table class="assoc">
+        <tr>
+          <th>gene</th><th>seg</th><th class="n">-log10 p</th><th class="n">effect</th>
+          <th class="n">n</th><th class="n">smallest class</th><th></th>
+        </tr>
+        @for (a of associations.slice(0, 12); track a.asc) {
+          <tr [class.on]="a.asc === plottedAsc">
+            <td><button type="button" class="link-button"
+                        (click)="ascPicked.emit(a.asc)">{{ a.asc }}</button></td>
+            <td class="muted">{{ a.segment }}</td>
+            <td class="n">{{ a.neglog10_p | number:'1.1-1' }}</td>
+            <td class="n">{{ a.beta | number:'1.2-2' }}</td>
+            <td class="n muted">{{ a.n }}</td>
+            <td class="n" [class.weak]="a.well_powered === false">
+              {{ a.min_genotype_group ?? '–' }}
+            </td>
+            <td>
+              @if (a.significant) { <span class="tag sig">significant</span> }
+              @if (a.is_lead) { <span class="tag lead">lead</span> }
+            </td>
+          </tr>
+        }
+      </table>
+    </section>
+  </div>
+} @else {
+  <p class="qtl-status">Click a point on the scan to open a variant.</p>
+}

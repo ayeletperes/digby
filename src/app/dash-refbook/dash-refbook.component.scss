@@ -57,7 +57,7 @@
   font-size: 0.78rem; color: #3c4043; cursor: pointer;
 }
 .source-button + .source-button { border-left: 1px solid #dadce0; }
-.source-button.on { background: #1a73e8; color: #fff; }
+.source-button.on { background: var(--vdj-teal); color: #fff; }
 .source-button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .group-name {
@@ -70,8 +70,8 @@
   padding: 0.3rem 0.5rem; border-radius: 4px;
   font-size: 0.85rem; color: #3c4043; cursor: pointer;
 }
-.panel-link:hover:not(:disabled) { background: #e8f0fe; }
-.panel-link.on { background: #1a73e8; color: #fff; font-weight: 500; }
+.panel-link:hover:not(:disabled) { background: var(--vdj-teal-wash); }
+.panel-link.on { background: var(--vdj-teal); color: #fff; font-weight: 500; }
 .panel-link:disabled { color: #9aa0a6; cursor: not-allowed; }
 .panel-lock { opacity: 0.6; }
 
@@ -84,13 +84,13 @@
 
 .info-button {
   border: 0; background: none; padding: 0;
-  color: #1a73e8; font-size: 1rem; line-height: 1; cursor: pointer;
+  color: var(--vdj-teal); font-size: 1rem; line-height: 1; cursor: pointer;
 }
-.info-button:hover { color: #174ea6; }
+.info-button:hover { color: var(--vdj-teal-dark); }
 
 .caption-body {
   margin: 0.6rem 0 0; padding: 0.6rem 0.8rem;
-  background: #f8f9fa; border-left: 3px solid #1a73e8; border-radius: 0 4px 4px 0;
+  background: #f8f9fa; border-left: 3px solid var(--vdj-teal); border-radius: 0 4px 4px 0;
   font-size: 0.85rem; color: #3c4043; max-width: 80ch;
 }
 
@@ -111,12 +111,12 @@
 .facet { min-width: 0; }
 .facet-title {
   margin: 0 0 0.5rem; font-size: 0.95rem; font-weight: 600; color: #202124;
-  padding-bottom: 0.3rem; border-bottom: 2px solid #e8f0fe;
+  padding-bottom: 0.3rem; border-bottom: 2px solid var(--vdj-teal-wash);
 }
 .facets.single .facet-title { display: none; }
 .focus-gene {
   margin-left: 0.6rem; border: 0; background: none; padding: 0;
-  color: #1a73e8; font-size: 0.78rem; font-weight: 400; cursor: pointer;
+  color: var(--vdj-teal); font-size: 0.78rem; font-weight: 400; cursor: pointer;
 }
 .focus-gene:hover { text-decoration: underline; }
 

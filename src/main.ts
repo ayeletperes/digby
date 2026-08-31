@@ -31,6 +31,7 @@ import { GenGeneTableComponent } from './app/gen-gene-table/gen-gene-table.compo
 import { GeneBrowserComponent } from './app/gene-browser/gene-browser.component';
 import { RefbookComponent } from './app/refbook/refbook.component';
 import { DashRefbookComponent } from './app/dash-refbook/dash-refbook.component';
+import { DashQtlComponent } from './app/dash-qtl/dash-qtl.component';
 import { GeneRefbookComponent } from './app/gene-refbook/gene-refbook.component';
 import { ReportsComponent } from './app/reports/reports.component';
 import { QuickRefComponent } from './app/home/quick-ref/quick-ref.component';
@@ -70,6 +71,7 @@ const appRoutes: Routes = [
   { path: 'reference_book/:species', component: RefbookComponent, canActivate: [AuthGuard] },
   { path: 'gene_refbook', component: GeneRefbookComponent, canActivate: [AuthGuard] },
   { path: 'dash_refbook', component: DashRefbookComponent, canActivate: [AuthGuard] },
+  { path: 'dash_qtl', component: DashQtlComponent, canActivate: [AuthGuard] },
   { path: 'reports', component: ReportsComponent, canActivate: [AuthGuard] },
   // Help menu
   { path: 'quick-ref', component: QuickRefComponent, canActivate: [AuthGuard] },

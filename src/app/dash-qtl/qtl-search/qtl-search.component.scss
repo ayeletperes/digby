@@ -1,0 +1,48 @@
+.qtl-search { position: relative; }
+
+.search-box {
+  width: 100%; padding: 0.45rem 0.7rem; font-size: 0.9rem;
+  border: 1px solid #dadce0; border-radius: 6px;
+}
+.search-box:focus { outline: none; border-color: var(--vdj-teal); }
+
+.search-note {
+  position: absolute; z-index: 20; top: calc(100% + 0.3rem); left: 0; right: 0;
+  margin: 0; padding: 0.5rem 0.7rem; background: #fff; font-size: 0.8rem; color: #5f6368;
+  border: 1px solid #dadce0; border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(60, 64, 67, 0.18);
+}
+
+/* Overlaid rather than in flow: the box now sits beside the title, so a list
+   growing in place would push the whole canvas down as you type. */
+.hits {
+  position: absolute; z-index: 20; top: calc(100% + 0.3rem); left: 0; right: 0;
+  list-style: none; margin: 0; padding: 0; background: #fff;
+  border: 1px solid #dadce0; border-radius: 6px; overflow: hidden;
+  box-shadow: 0 4px 14px rgba(60, 64, 67, 0.18);
+  max-height: 22rem; overflow-y: auto;
+}
+.hits li + li { border-top: 1px solid #f1f3f4; }
+
+/* Two lines rather than one row: this sits in a 280px rail, where a four-column
+   flex row would wrap into rubble. */
+.hit {
+  display: grid; width: 100%; gap: 0 0.4rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  border: 0; background: #fff; text-align: left; cursor: pointer;
+  padding: 0.35rem 0.55rem; font-size: 0.82rem;
+}
+.hit .detail { grid-column: 1 / -1; }
+.hit:hover { background: var(--vdj-teal-wash); }
+
+.kind {
+  flex: none; width: 4rem; font-size: 0.68rem; text-transform: uppercase;
+  letter-spacing: 0.04em; color: #b06000;
+}
+.kind.gene { color: #137333; }
+.label {
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+  color: #202124; white-space: nowrap;
+}
+.locus { flex: none; color: #80868b; font-size: 0.75rem; }
+.detail { flex: 1 1 auto; color: #5f6368; font-size: 0.8rem; text-align: right; }

@@ -99,12 +99,14 @@ export const DASH_PANELS: DashPanel[] = [
     id: 'zygosity',
     group: 'Reference',
     label: 'Zygosity',
-    description: 'Which alleles occur together in a subject. Needs AIRR-seq data.',
+    description: 'Which alleles occur together in a subject, from either database.',
     caption: 'Which combinations of alleles occur together in the same subject. Each column is ' +
              'a combination, its bar the number of samples carrying exactly that set, and the ' +
              'dots below show which alleles are in it. The bars on the left are how often each ' +
              'allele appears overall, regardless of what it appears with.',
-    requires: ['airrseq'],
+    // Zygosity is which alleles a subject carries, which genomic reports too.
+    // Only *usage* needs AIRR-seq.
+    requires: [],
     multi: false,
     load: () => import('./dash-refbook-zygosity/dash-refbook-zygosity.component')
       .then(m => m.DashRefbookZygosityComponent),

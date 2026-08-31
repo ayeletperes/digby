@@ -20,8 +20,12 @@ import { GeneTableSelection } from '../gene-table-selector/gene-table-selector.m
 import { RefbookService } from '../../../projects/digby-swagger-client/api/refbook.service';
 import { DashDrillService, DrillEvent } from './dash-drill.service';
 
-/** Genes pre-selected when a locus is opened, so every panel has something to show. */
-const DEFAULT_GENE_COUNT = 3;
+/**
+ * Genes pre-selected when a locus is opened, so the first panel has something to
+ * show. One, not a full set: the landing view should be a single gene read at
+ * full size, and comparing two or three is a thing you go on to ask for.
+ */
+const DEFAULT_GENE_COUNT = 1;
 
 /**
  * Most panels draw one chart per gene, so the selection is capped: beyond a few
@@ -72,7 +76,15 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
 
   ascLoading = false;
   ascError: string | null = null;
-  activePanelId = DASH_PANELS[0].id;
+  /**
+   * The panel to land on.
+   *
+   * The first panel that stands on its own, rather than `DASH_PANELS[0]` - that
+   * is the Allele detail, which needs an allele to have been clicked, so a cold
+   * load opened on "Click an allele in any plot to open it here" and had nothing
+   * to offer until you left it.
+   */
+  activePanelId = (DASH_PANELS.find(panel => !panel.needsAllele) ?? DASH_PANELS[0]).id;
 
   /** Loaded panel components, keyed by panel id. */
   loaded: Record<string, unknown> = {};
@@ -315,9 +327,16 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     }
   }
 
-  /** Sample filters only mean anything when AIRR-seq data is being read. */
+  /**
+   * Sample filters mean something for whichever database is being read.
+   *
+   * This used to require AIRR-seq, from when only AIRR-seq carried projects and
+   * samples. Genomic carries both now - IGH holds 2 genomic projects and 328
+   * genomic samples, and the backend filters on them - so a genomic-only view
+   * had the two dropdowns greyed out over data that was there all along.
+   */
   get sampleFiltersEnabled(): boolean {
-    return this.available.airrseq && this.isSourceOn('airrseq');
+    return (this.selection.sources ?? []).some(source => this.isSourceAvailable(source));
   }
 
   /**
@@ -484,14 +503,47 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     return panel.multi ? [] : (this.selection.ascs ?? []);
   }
 
-  /** A single-gene view of the current selection, stable across change detection. */
-  selectionFor(gene: string): SpeciesGeneSelection {
-    let facet = this.facetCache.get(gene);
-    if (!facet) {
-      facet = { ...this.selection, asc: gene, ascs: [gene] };
-      this.facetCache.set(gene, facet);
+  /**
+   * The selection a panel reads, stable across change detection.
+   *
+   * A drilled allele belongs to the panel that asked for it. Every gene-level
+   * panel passes `alleles` to the backend, so opening one while an allele was
+   * drilled narrowed it to that allele - the Overview of IGHV1-18 came back with
+   * 1 allele instead of 18, which is not an overview of anything. The Allele
+   * panel's own description already promises the opposite: "the gene-level
+   * panels stay as they were, so stepping back up is one click".
+   *
+   * The allele stays selected, so returning to the Allele panel still has it,
+   * and the chip in the filter bar is still the way to drop it entirely.
+   *
+   * Cached, and keyed on whether the allele is included: handing a child a new
+   * object on every change-detection pass makes it refetch forever.
+   */
+  private selectionSeenBy(panel: DashPanel, gene?: string): SpeciesGeneSelection {
+    const key = `${gene ?? '*'}|${panel.needsAllele ? 'allele' : 'gene'}`;
+    let cached = this.facetCache.get(key);
+    if (!cached) {
+      cached = { ...this.selection };
+      if (!panel.needsAllele) {
+        cached.alleles = [];
+      }
+      if (gene) {
+        cached.asc = gene;
+        cached.ascs = [gene];
+      }
+      this.facetCache.set(key, cached);
     }
-    return facet;
+    return cached;
+  }
+
+  /** The whole selection, as a panel that draws every gene at once reads it. */
+  selectionForPanel(panel: DashPanel): SpeciesGeneSelection {
+    return this.selectionSeenBy(panel);
+  }
+
+  /** A single-gene view of the current selection. */
+  selectionFor(gene: string): SpeciesGeneSelection {
+    return this.selectionSeenBy(this.activePanel, gene);
   }
 
   // --------------------------------------------------------------- datasets
@@ -599,11 +651,6 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
   private restoreFromUrl(): void {
     const params = this.route.snapshot.queryParamMap;
 
-    const panel = params.get('panel');
-    if (panel && this.panels.some(p => p.id === panel)) {
-      this.activePanelId = panel;
-    }
-
     this.segment = params.get('segment');
     this.selectedProjects = (params.get('projects') ?? '').split(',').filter(Boolean);
     this.selectedSamples = (params.get('samples') ?? '').split(',').filter(Boolean);
@@ -625,6 +672,16 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     if (genes.length) {
       this.pendingAscs = genes;
       this.selection = { ...this.selection, ascs: genes, asc: genes[0] };
+    }
+
+    // Last, because it depends on what the rest of the URL restored. A link may
+    // name the Allele detail without naming an allele - restoring that literally
+    // lands on "click an allele in any plot", the dead end the cold-start
+    // default already avoids. Reading `selectedAlleles` before it is filled in
+    // would bounce every legitimate allele link too.
+    const wanted = this.panels.find(panel => panel.id === params.get('panel'));
+    if (wanted && !(wanted.needsAllele && !this.selectedAlleles.length)) {
+      this.activePanelId = wanted.id;
     }
   }
 

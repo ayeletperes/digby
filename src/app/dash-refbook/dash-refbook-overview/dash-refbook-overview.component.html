@@ -45,7 +45,54 @@
             <span class="title">Novel Alleles</span>
           </div>
         </div>
+
+        <!-- What the bars are a share of. Without it a count of 54 says nothing
+             about whether that is most of the cohort or a handful of it. -->
+        @if (cohort) {
+          <button type="button" class="info-box samples-box"
+                  [class.open]="showProjects"
+                  [attr.aria-expanded]="showProjects"
+                  title="Show samples per project"
+                  (click)="toggleProjects()">
+            <div class="box-content">
+              <span class="big">
+                {{ cohort.genomic | number }}<span class="sep">/</span>{{ cohort.airrseq | number }}
+              </span>
+              <span class="title">Samples — genomic / AIRR-seq</span>
+              <span class="sub" [class.muted]="!cohort.shared">
+                @if (cohort.shared) {
+                  {{ cohort.shared | number }} sequenced both ways
+                } @else {
+                  Separate cohorts, no overlap
+                }
+                <span class="drill">{{ showProjects ? '▴' : '▾' }} by project</span>
+              </span>
+            </div>
+          </button>
+        }
       </div>
+
+      @if (showProjects) {
+        <div class="projects-drill">
+          @if (projectsLoading) {
+            <p class="drill-note">Loading projects…</p>
+          } @else if (!projectData.labels?.length) {
+            <p class="drill-note">No projects under the current filters.</p>
+          } @else {
+            <div class="drill-chart">
+              <canvas baseChart
+                      [data]="projectData"
+                      [options]="projectOptions"
+                      [type]="chartType">
+              </canvas>
+            </div>
+            <p class="drill-note">
+              Samples per project, split by the database they came from. A project
+              present in both is two bars.
+            </p>
+          }
+        </div>
+      }
     </div>
   </div>
   <div class="row">

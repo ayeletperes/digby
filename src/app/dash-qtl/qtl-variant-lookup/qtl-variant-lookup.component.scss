@@ -1,0 +1,74 @@
+.qtl-status { margin: 1rem 0; font-size: 0.9rem; color: #5f6368; }
+.qtl-status.error { color: #d62839; }
+
+/* -------------------------------------------------------------- the answer */
+
+.found { margin-bottom: 0.8rem; }
+.variant-name {
+  margin: 0; font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+  font-size: 1.05rem; color: #202124;
+}
+.variant-sub { margin: 0.2rem 0 0; font-size: 0.85rem; color: #5f6368; }
+
+/* the headline answer to "is it a QTL here", stated rather than left to be read
+   off the table */
+.verdict {
+  margin: 0.55rem 0 0; padding: 0.45rem 0.7rem;
+  border-left: 3px solid #137333; border-radius: 0 6px 6px 0;
+  background: #e6f4ea; font-size: 0.85rem; color: #202124;
+}
+.verdict.none { border-left-color: #9aa0a6; background: #f1f3f4; color: #3c4043; }
+.verdict-note { display: block; margin-top: 0.15rem; font-size: 0.76rem; color: #5f6368; }
+
+.card {
+  border: 1px solid #e8eaed; border-radius: 8px; padding: 0.8rem 0.9rem;
+  background: #fff; min-width: 0; overflow-x: auto;
+}
+.card-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 1rem; margin-bottom: 0.5rem;
+}
+.card h4 {
+  margin: 0; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: #5f6368;
+}
+.toggle {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.78rem; color: #5f6368; cursor: pointer; white-space: nowrap;
+}
+
+.note { margin: 0.6rem 0 0; font-size: 0.78rem; color: #5f6368; max-width: 80ch; }
+
+/* a p-value resting on a handful of subjects is flagged, never hidden */
+.weak { color: #d62839; font-weight: 600; }
+
+.assoc { border-collapse: collapse; font-size: 0.82rem; width: 100%; }
+.assoc th {
+  text-align: left; font-weight: 600; color: #5f6368;
+  border-bottom: 1px solid #e8eaed; padding: 0.2rem 0.7rem 0.2rem 0;
+  white-space: nowrap;
+}
+.assoc td { padding: 0.22rem 0.7rem 0.22rem 0; border-bottom: 1px solid #f1f3f4; }
+.assoc tr:hover td { background: #f8f9fa; }
+.assoc .n { text-align: right; }
+.assoc .muted { color: #80868b; }
+.assoc .gene { font-weight: 600; color: #202124; white-space: nowrap; }
+
+.sort {
+  border: 0; background: none; padding: 0; font: inherit; color: inherit;
+  cursor: pointer;
+}
+.sort:hover { color: var(--vdj-teal); text-decoration: underline; }
+
+.tag {
+  display: inline-block; margin-right: 0.25rem; padding: 0.02rem 0.4rem;
+  border-radius: 999px; font-size: 0.7rem; white-space: nowrap;
+}
+.tag.sig { background: #fce8e6; color: #c5221f; }
+.tag.lead { background: #e6f4ea; color: #137333; }
+
+.link-button {
+  background: none; border: 0; padding: 0; color: var(--vdj-teal);
+  font-size: 0.8rem; cursor: pointer; white-space: nowrap;
+}
+.link-button:hover { text-decoration: underline; }

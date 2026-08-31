@@ -9,7 +9,7 @@ import * as UpSetJS from '@upsetjs/bundle';
 
 import { RefbookService } from '../../../../projects/digby-swagger-client/api/refbook.service';
 import { retryWithBackoff } from '../../shared/retry_with_backoff';
-import { SpeciesGeneSelection, projectsParam, samplesParam, allelesParam }
+import { SpeciesGeneSelection, projectsParam, samplesParam, allelesParam, sourcesParam }
   from '../../shared/models/species-gene-selection.model';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
@@ -95,7 +95,7 @@ export class DashRefbookZygosityComponent
     this.refbookService
       .getAscZygosity(this.selection.species, this.selection.chain, this.selection.asc,
                      projectsParam(this.selection), samplesParam(this.selection),
-                     allelesParam(this.selection))
+                     allelesParam(this.selection), sourcesParam(this.selection))
       .pipe(
         retryWithBackoff(),
         catchError(() => {
