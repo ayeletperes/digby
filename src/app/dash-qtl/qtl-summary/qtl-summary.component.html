@@ -6,7 +6,10 @@
 
   <section class="card">
     <div class="card-head">
-      <h4>Significant gene-usage variants, by segment and location</h4>
+      <h4>Significant gene-usage variants, by segment and location
+        <button type="button" class="info-button" [attr.aria-expanded]="infoOpen"
+                title="How these are counted" (click)="toggleInfo()">ⓘ</button>
+      </h4>
       <span class="head-controls">
         <button type="button" class="scale-toggle" (click)="toggleScope()">
           {{ allLoci ? 'all loci' : locus }}
@@ -17,31 +20,40 @@
       </span>
     </div>
 
+    @if (infoOpen) {
+      <p class="caption-body">
+        Each bar counts <em>variants</em>, not test results. The scan tests every
+        variant against every gene separately, so one variant can come out
+        significant for several genes at once; it is still one position in the
+        genome and is counted once here. A variant significant for a V gene and
+        also for a J gene is counted under both, so the bars within a locus need
+        not add up to its total.
+        <br><br>
+        <strong>UTR is its own class here.</strong> The manuscript figure folds
+        it into intergenic; the database keeps them apart, and that is the whole
+        difference between these counts and the printed ones.
+      </p>
+    }
+
     <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"></plotly-plot>
 
-    <p class="note">
-      Each bar counts <em>variants</em>, not test results. The scan tests every
-      variant against every gene separately, so one variant can come out
-      significant for several genes at once; it is still one position in the
-      genome and is counted once here. A variant significant for a V gene and
-      also for a J gene is counted under both, so the bars within a locus need
-      not add up to its total.
+    <!-- the denominators stay on the face of the panel. A count without what it
+         was drawn from is the thing the note above is warning about. -->
+    <p class="totals">
       @for (l of shownLoci; track l) {
         <span class="tot">{{ l }}: {{ summary.totals[l].n_significant | number }}
-          of {{ summary.totals[l].n_variants | number }} tested</span>
+          significant of {{ summary.totals[l].n_variants | number }} tested</span>
       }
-    </p>
-    <p class="note">
-      <strong>UTR is its own class here.</strong> The manuscript figure folds it
-      into intergenic; the database keeps them apart, and that is the whole
-      difference between these counts and the printed ones.
     </p>
   </section>
 
   @if (genes) {
     <section class="card">
       <div class="card-head">
-        <h4>Per gene, {{ locus }}</h4>
+        <h4>Per gene, {{ locus }}
+          <button type="button" class="info-button" [attr.aria-expanded]="geneInfoOpen"
+                  title="How these are counted" (click)="toggleGeneInfo()">ⓘ</button>
+        </h4>
         <span class="head-note">
           {{ genes.n_genes_with_signal }} of {{ genes.n_genes_scanned }} genes
           scanned have a significant variant
@@ -53,6 +65,39 @@
         </span>
       </div>
 
+      <div class="gene-filters">
+        @if (geneSegments.length > 1) {
+          @for (seg of geneSegments; track seg) {
+            <button type="button" class="segment-chip" [class.on]="geneSegment === seg"
+                    (click)="toggleGeneSegment(seg)"
+                    [title]="'Only ' + seg + ' genes'">{{ seg }}</button>
+          }
+        }
+        <input class="gene-filter" type="text" [(ngModel)]="geneFilter"
+               placeholder="filter by gene name" />
+        <label class="signal-only">
+          <input type="checkbox" [(ngModel)]="withSignalOnly" />
+          with a significant variant
+        </label>
+        @if (geneFiltersOn) {
+          <button type="button" class="clear-filters" (click)="clearGeneFilters()">
+            clear
+          </button>
+          <span class="shown-count">
+            {{ shownGenes.length }} of {{ rankedGenes.length }} genes
+          </span>
+        }
+      </div>
+
+      @if (geneInfoOpen) {
+        <p class="caption-body">
+          These counts are per gene, so unlike the chart above they do sum: a
+          variant significant for two genes is counted under each. Genes with
+          nothing are listed too, a table of only the genes that hit would read
+          as though the rest were never looked at.
+        </p>
+      }
+
       <table class="gene-table">
         <tr>
           <th>gene</th><th>seg</th><th class="n">significant</th>
@@ -61,7 +106,7 @@
           }
           <th>strongest variant</th>
         </tr>
-        @for (g of rankedGenes; track g.asc) {
+        @for (g of shownGenes; track g.asc) {
           <tr [class.quiet]="!g.n_significant">
             <td>
               <button type="button" class="link-button"
@@ -91,12 +136,12 @@
           </tr>
         }
       </table>
-      <p class="note">
-        These counts are per gene, so unlike the chart above they do sum: a
-        variant significant for two genes is counted under each. Genes with
-        nothing are listed too, a table of only the genes that hit would read as
-        though the rest were never looked at.
-      </p>
+      @if (!shownGenes.length) {
+        <p class="note">
+          No gene matches those filters. The genes are still there, the filters
+          are hiding them.
+        </p>
+      }
     </section>
   }
 }

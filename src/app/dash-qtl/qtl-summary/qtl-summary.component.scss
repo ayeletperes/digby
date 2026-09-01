@@ -50,3 +50,41 @@
   width: 8px; height: 8px; border-radius: 2px; display: inline-block;
   margin-right: 0.25rem; vertical-align: middle;
 }
+
+/* the same info control and caption the rest of the site uses */
+.info-button {
+  border: 0; background: none; padding: 0 0 0 0.3rem;
+  color: var(--vdj-teal); font-size: 0.9rem; line-height: 1; cursor: pointer;
+}
+.info-button:hover { color: var(--vdj-teal-dark); }
+.caption-body {
+  margin: 0.5rem 0 0.4rem; padding: 0.6rem 0.8rem;
+  background: #f8f9fa; border-left: 3px solid var(--vdj-teal); border-radius: 0 4px 4px 0;
+  font-size: 0.85rem; color: #3c4043; max-width: 80ch; text-transform: none;
+  font-weight: 400; letter-spacing: 0;
+}
+.totals {
+  margin: 0.45rem 0 0; font-size: 0.77rem; color: var(--vdj-muted);
+  display: flex; gap: 1rem; flex-wrap: wrap;
+}
+
+.gene-filters {
+  display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;
+  margin: 0.1rem 0 0.5rem;
+}
+.segment-chip {
+  font-size: 0.72rem; padding: 0.05rem 0.5rem; border-radius: 10px;
+  border: 1px solid #dadce0; background: #fff; color: #5f6368; cursor: pointer;
+}
+.segment-chip:hover { border-color: var(--vdj-teal); }
+.segment-chip.on { background: var(--vdj-teal); border-color: var(--vdj-teal); color: #fff; }
+.gene-filter {
+  font-size: 0.78rem; padding: 0.1rem 0.4rem; min-width: 11rem;
+  border: 1px solid var(--vdj-teal-border); border-radius: 4px;
+}
+.signal-only { font-size: 0.76rem; color: var(--vdj-body); white-space: nowrap; }
+.clear-filters {
+  font-size: 0.72rem; padding: 0.05rem 0.5rem; border-radius: 10px;
+  border: 1px solid #d62839; background: #fff; color: #d62839; cursor: pointer;
+}
+.shown-count { font-size: 0.74rem; color: var(--vdj-muted); }

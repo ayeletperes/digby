@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { PlotlyModule } from 'angular-plotly.js';
 import { EMPTY, forkJoin } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -42,7 +43,7 @@ const FEATURE_COLOUR: Record<string, string> = {
   templateUrl: './qtl-summary.component.html',
   styleUrls: ['./qtl-summary.component.scss'],
   standalone: true,
-  imports: [CommonModule, PlotlyModule],
+  imports: [CommonModule, FormsModule, PlotlyModule],
 })
 export class QtlSummaryComponent implements OnChanges {
   @Input() species?: string;
@@ -71,6 +72,15 @@ export class QtlSummaryComponent implements OnChanges {
    * comparison is the whole point of the printed version.
    */
   allLoci = false;
+
+  /**
+   * How the counting works, behind the same info control the rest of the site
+   * uses. It is a rule that is read once and then only in the way. The
+   * denominators do not go with it: a count without what it was drawn from is
+   * the thing the note is warning about.
+   */
+  infoOpen = false;
+  geneInfoOpen = false;
 
   plotData: unknown[] = [];
   plotLayout: Record<string, unknown> = {};
@@ -136,6 +146,14 @@ export class QtlSummaryComponent implements OnChanges {
     this.draw();
   }
 
+  toggleInfo(): void {
+    this.infoOpen = !this.infoOpen;
+  }
+
+  toggleGeneInfo(): void {
+    this.geneInfoOpen = !this.geneInfoOpen;
+  }
+
   toggleScope(): void {
     this.allLoci = !this.allLoci;
     this.draw();
@@ -150,6 +168,53 @@ export class QtlSummaryComponent implements OnChanges {
   /** Genes worth listing first: the ones that actually have a signal. */
   get rankedGenes(): any[] {
     return this.genes?.genes ?? [];
+  }
+
+  // ------------------------------------------------------------- table filter
+  geneSegment = '';
+  geneFilter = '';
+  /**
+   * Off by default. A table of only the genes that hit reads as though the rest
+   * were never looked at, which is the opposite of what this panel is for, so
+   * hiding them has to be asked for.
+   */
+  withSignalOnly = false;
+
+  /** Segments this locus actually scanned. IGH has three, the light chains two. */
+  get geneSegments(): string[] {
+    const order = ['V', 'D', 'J', 'C'];
+    const present = new Set<string>(this.rankedGenes.map(g => g.segment));
+    return order.filter(x => present.has(x))
+      .concat([...present].filter(x => !order.includes(x)).sort());
+  }
+
+  /**
+   * The table after its filters.
+   *
+   * Matched against the name as stored and as displayed, so someone typing
+   * "IGHV3" and someone typing "V3" find the same genes.
+   */
+  get shownGenes(): any[] {
+    const q = this.geneFilter.trim().toUpperCase();
+    return this.rankedGenes.filter(g =>
+      (!this.geneSegment || g.segment === this.geneSegment)
+      && (!this.withSignalOnly || g.n_significant > 0)
+      && (!q || String(g.asc).toUpperCase().includes(q)
+             || ascDisplayName(this.locus, g.asc).toUpperCase().includes(q)));
+  }
+
+  toggleGeneSegment(segment: string): void {
+    this.geneSegment = this.geneSegment === segment ? '' : segment;
+  }
+
+  get geneFiltersOn(): boolean {
+    return !!this.geneSegment || !!this.geneFilter.trim() || this.withSignalOnly;
+  }
+
+  clearGeneFilters(): void {
+    this.geneSegment = '';
+    this.geneFilter = '';
+    this.withSignalOnly = false;
   }
 
   countFor(gene: any, feature: string): number {
@@ -174,6 +239,7 @@ export class QtlSummaryComponent implements OnChanges {
     }
     this.loading = true;
     this.error = null;
+    this.clearGeneFilters();
 
     forkJoin({
       summary: this.qtl.usageSummary(this.species),
