@@ -34,9 +34,22 @@ const FEATURE_COLOUR: Record<string, string> = {
   coding: '#3b78c3',
   leader: '#e8a33d',
   rss: '#35a67c',
-  utr: '#9aa6a5',
   intergenic: '#8b6bb1',
 };
+
+/**
+ * Location classes folded together for display.
+ *
+ * The manuscript figure counts UTR variants as intergenic, and this panel is
+ * read against that figure, so it does the same. Folded here and not in the
+ * database or the endpoint, both of which keep the classes apart: this is a
+ * choice about presentation, and it is reversible by deleting a line rather
+ * than by rebuilding anything. The counts involved are small and named in the
+ * panel's own note, so the fold is stated rather than silent.
+ */
+const FOLD_INTO: Record<string, string> = { utr: 'intergenic' };
+
+const fold = (feature: string): string => FOLD_INTO[feature] ?? feature;
 
 @Component({
   selector: 'app-qtl-summary',
@@ -108,7 +121,7 @@ export class QtlSummaryComponent implements OnChanges {
   /** The chart's rows, each with the locus total it was drawn from. */
   get exportTable(): ExportTable {
     const shown = this.shownLoci;
-    const rows = (this.summary?.rows ?? [])
+    const rows = this.foldedRows
       .filter((r: any) => shown.includes(r.locus))
       .sort((a: any, b: any) => shown.indexOf(a.locus) - shown.indexOf(b.locus)
                              || a.segment.localeCompare(b.segment)
@@ -133,8 +146,38 @@ export class QtlSummaryComponent implements OnChanges {
     }
   }
 
+  /** The location classes as shown, after folding. */
   get features(): string[] {
-    return this.summary?.features ?? [];
+    const seen: string[] = [];
+    for (const f of (this.summary?.features ?? []) as string[]) {
+      const shown = fold(f);
+      if (!seen.includes(shown)) {
+        seen.push(shown);
+      }
+    }
+    return seen;
+  }
+
+  /** `summary.rows` with the folded classes summed, which is what is drawn. */
+  get foldedRows(): any[] {
+    const merged = new Map<string, any>();
+    for (const r of (this.summary?.rows ?? []) as any[]) {
+      const key = `${r.locus}\u0000${r.segment}\u0000${fold(r.feature)}`;
+      const at = merged.get(key);
+      if (at) {
+        at.n += r.n;
+      } else {
+        merged.set(key, { ...r, feature: fold(r.feature) });
+      }
+    }
+    return [...merged.values()];
+  }
+
+  /** A gene's counts with the folded classes summed. */
+  countFor(gene: any, feature: string): number {
+    return Object.entries(gene.by_feature ?? {})
+      .filter(([f]) => fold(f) === feature)
+      .reduce((sum, [, n]) => sum + (n as number), 0);
   }
 
   colourOf(feature: string): string {
@@ -217,16 +260,12 @@ export class QtlSummaryComponent implements OnChanges {
     this.withSignalOnly = false;
   }
 
-  countFor(gene: any, feature: string): number {
-    return gene.by_feature?.[feature] ?? 0;
-  }
-
   /** The share of a locus's significant variants that are not intergenic. */
   get inFeatureShare(): { n: number; total: number } | null {
     if (!this.summary) {
       return null;
     }
-    const rows = this.summary.rows.filter((r: any) => this.shownLoci.includes(r.locus));
+    const rows = this.foldedRows.filter((r: any) => this.shownLoci.includes(r.locus));
     const total = rows.reduce((s: number, r: any) => s + r.n, 0);
     const inFeature = rows.filter((r: any) => r.feature !== 'intergenic')
                           .reduce((s: number, r: any) => s + r.n, 0);
@@ -272,12 +311,13 @@ export class QtlSummaryComponent implements OnChanges {
 
     const loci: string[] = this.shownLoci;
     const segments: string[] = this.summary.segments;
+    const folded = this.foldedRows;
     // only the (locus, segment) pairs that were actually scanned; a column for
     // IGK D would say the D genes came up empty rather than that IGK has none
     const columns: [string, string][] = [];
     for (const locus of loci) {
       for (const segment of segments) {
-        if (this.summary.rows.some((r: any) => r.locus === locus && r.segment === segment)) {
+        if (folded.some((r: any) => r.locus === locus && r.segment === segment)) {
           columns.push([locus, segment]);
         }
       }
@@ -291,8 +331,8 @@ export class QtlSummaryComponent implements OnChanges {
 
     this.plotData = this.features.map(feature => {
       const values = columns.map(([locus, segment]) =>
-        this.summary.rows.find((r: any) => r.locus === locus && r.segment === segment
-                                        && r.feature === feature)?.n ?? null);
+        folded.find((r: any) => r.locus === locus && r.segment === segment
+                                && r.feature === feature)?.n ?? null);
       return {
         type: 'bar',
         name: feature,

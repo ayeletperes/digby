@@ -29,9 +29,10 @@
         also for a J gene is counted under both, so the bars within a locus need
         not add up to its total.
         <br><br>
-        <strong>UTR is its own class here.</strong> The manuscript figure folds
-        it into intergenic; the database keeps them apart, and that is the whole
-        difference between these counts and the printed ones.
+        <strong>UTR variants are counted as intergenic here</strong>, as the
+        manuscript figure counts them, so these numbers and the printed ones
+        agree. The database and the API keep the two classes apart, so the
+        distinction is still there to be had; it is this panel that folds them.
       </p>
     }
 
@@ -102,7 +103,7 @@
         <tr>
           <th>gene</th><th>seg</th><th class="n">significant</th>
           @for (f of features; track f) {
-            <th class="n"><i class="swatch" [style.background]="colourOf(f)"></i>{{ f }}</th>
+            <th class="n count"><i class="swatch" [style.background]="colourOf(f)"></i>{{ f }}</th>
           }
           <th>strongest variant</th>
         </tr>
@@ -118,7 +119,7 @@
             <td class="n"><strong>{{ g.n_significant | number }}</strong>
               <span class="muted"> / {{ g.n_tested | number }}</span></td>
             @for (f of features; track f) {
-              <td class="n" [class.zero]="!countFor(g, f)">
+              <td class="n count" [class.zero]="!countFor(g, f)">
                 {{ countFor(g, f) || '·' }}
               </td>
             }

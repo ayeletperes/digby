@@ -37,6 +37,10 @@
 }
 .gene-table td { padding: 0.2rem 0.4rem; border-bottom: 1px solid #f4f5f6; }
 .gene-table .n { text-align: right; }
+/* the count columns hold three digits at most, so they are sized for that and
+   the slack goes to the gene name and the variant instead of opening a gap
+   between two of them */
+.gene-table .n.count { width: 5.5rem; white-space: nowrap; }
 .gene-table tr.quiet td { color: #9aa0a6; }
 .gene-table td.zero { color: #c8ccd0; }
 .muted { color: #80868b; font-size: 0.74rem; }
