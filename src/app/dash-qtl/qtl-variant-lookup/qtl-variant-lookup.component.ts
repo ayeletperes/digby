@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { PlotlyModule } from 'angular-plotly.js';
 import { FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -33,7 +34,7 @@ const GENOTYPE_LABEL: Record<string, string> = { 0: '0/0', 1: '0/1', 2: '1/1' };
   templateUrl: './qtl-variant-lookup.component.html',
   styleUrls: ['./qtl-variant-lookup.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PlotlyModule],
 })
 export class QtlVariantLookupComponent implements OnChanges {
   /** An ASC written as a gene name; IGH's D clusters already carry the locus. */
@@ -50,6 +51,20 @@ export class QtlVariantLookupComponent implements OnChanges {
   notFound: string | null = null;
 
   result: QtlVariantLookup | null = null;
+
+  /** The counting note, behind the site's info control. */
+  infoOpen = false;
+
+  /**
+   * How the genotypes fall in the cohort this scan was run on.
+   *
+   * The cohort, not "the population": 123 subjects from HUSA, which is what
+   * every p-value on this page rests on. A population frequency is a different
+   * number and is one of the outside links, not this.
+   */
+  genotypePlot: unknown[] = [];
+  genotypeLayout: Record<string, unknown> = {};
+  readonly plotConfig = { responsive: true, displaylogo: false };
 
   /** Most genes clear nothing; the whole tested list is a wall of noise. */
   significantOnly = true;
@@ -115,6 +130,60 @@ export class QtlVariantLookupComponent implements OnChanges {
     }
   }
 
+  toggleInfo(): void {
+    this.infoOpen = !this.infoOpen;
+  }
+
+  /** Outside links for the identifiers this variant has. */
+  get outsideLinks(): { label: string; url: string; title: string }[] {
+    const d = (this.result as any)?.dbsnp;
+    if (!d?.mapped) {
+      return [];
+    }
+    const links: { label: string; url: string; title: string }[] = [];
+    for (const rs of d.rsids as string[]) {
+      links.push({ label: rs, url: `https://www.ncbi.nlm.nih.gov/snp/${rs}`,
+                   title: `${rs} at dbSNP` });
+      // GTEx keys on the rsID, but its variant set does not cover this locus
+      // evenly: of five IGH ids sampled, two were present. The link is offered
+      // and may land on "not found", which is an answer about GTEx's coverage
+      // rather than an error here.
+      links.push({ label: 'GTEx', url: `https://gtexportal.org/home/snp/${rs}`,
+                   title: `${rs} at GTEx, if GTEx holds it` });
+    }
+    if (d.grch38) {
+      const at = `${d.grch38.contig}:${d.grch38.pos}`;
+      links.push({
+        label: at,
+        url: 'https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position='
+             + `${d.grch38.contig}%3A${d.grch38.pos}-${d.grch38.pos}`,
+        title: `${at} on GRCh38, at the UCSC browser`,
+      });
+    }
+    return links;
+  }
+
+  private drawGenotypes(): void {
+    const counts: any = this.result?.genotype_counts ?? {};
+    const labels = ['0/0', '0/1', '1/1'];
+    const values = [0, 1, 2].map(g => counts[g] ?? counts[String(g)] ?? 0);
+    this.genotypePlot = [{
+      type: 'bar', x: labels, y: values,
+      text: values.map((v: number) => String(v)),
+      textposition: 'outside', cliponaxis: false,
+      marker: { color: ['#2a78d6', '#e34948', '#eda100'] },
+      hovertemplate: '%{x}: %{y} subjects<extra></extra>',
+    }];
+    this.genotypeLayout = {
+      height: 190,
+      margin: { l: 46, r: 10, t: 10, b: 34 },
+      showlegend: false,
+      // Plotly 3 drops a plain string title silently and draws nothing
+      xaxis: { title: { text: 'Genotype' } },
+      yaxis: { title: { text: '# subjects' }, rangemode: 'tozero' },
+    };
+  }
+
   private resolve(variant: string): void {
     const species = this.species;
     if (!species) {
@@ -143,6 +212,7 @@ export class QtlVariantLookupComponent implements OnChanges {
         }
         this.isFetching = false;
         this.result = result as QtlVariantLookup;
+        this.drawGenotypes();
         this.resolved.emit({ locus: this.result.locus,
                              variant: this.result.variant.variant });
       });

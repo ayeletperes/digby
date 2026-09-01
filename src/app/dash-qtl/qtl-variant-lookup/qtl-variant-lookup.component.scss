@@ -72,3 +72,29 @@
   font-size: 0.8rem; cursor: pointer; white-space: nowrap;
 }
 .link-button:hover { text-decoration: underline; }
+
+.outside { margin: 0.2rem 0 0.4rem; font-size: 0.78rem; color: var(--vdj-muted); }
+.outside a {
+  color: var(--vdj-teal); text-decoration: none; margin-left: 0.45rem;
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace; font-size: 0.76rem;
+}
+.outside a:hover { text-decoration: underline; }
+.outside a::after { content: ' \2197'; font-family: inherit; }
+
+.genotype-card { max-width: 22rem; margin-top: 0.6rem; }
+.genotype-card h4 {
+  margin: 0 0 0.2rem; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: var(--vdj-muted);
+}
+
+.info-button {
+  border: 0; background: none; padding: 0 0 0 0.3rem;
+  color: var(--vdj-teal); font-size: 0.9rem; line-height: 1; cursor: pointer;
+}
+.info-button:hover { color: var(--vdj-teal-dark); }
+.caption-body {
+  margin: 0.4rem 0; padding: 0.6rem 0.8rem;
+  background: #f8f9fa; border-left: 3px solid var(--vdj-teal); border-radius: 0 4px 4px 0;
+  font-size: 0.85rem; color: #3c4043; max-width: 80ch;
+  text-transform: none; font-weight: 400; letter-spacing: 0;
+}

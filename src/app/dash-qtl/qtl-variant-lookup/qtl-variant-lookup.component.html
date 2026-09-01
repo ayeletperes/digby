@@ -19,6 +19,16 @@
         }
       </p>
 
+      @if (outsideLinks.length) {
+        <p class="outside">
+          Also known as
+          @for (link of outsideLinks; track link.url + link.label) {
+            <a [href]="link.url" [title]="link.title"
+               target="_blank" rel="noopener">{{ link.label }}</a>
+          }
+        </p>
+      }
+
       <p class="verdict" [class.none]="!result.n_significant">
         @if (result.n_significant) {
           A gene usage QTL for
@@ -33,21 +43,34 @@
           @if (threshold) {
             Significance is p &lt; {{ threshold.toExponential(1) }}, the locus threshold.
           }
-          @if (genotypeSpread) {
-            Genotypes: {{ genotypeSpread }}
-            @if (result.min_genotype_group !== null && result.min_genotype_group < 5) {
-              <strong class="weak">The rarest class has only
-              {{ result.min_genotype_group }}
-              {{ result.min_genotype_group === 1 ? 'subject' : 'subjects' }}.</strong>
-            }
+          @if (result.min_genotype_group !== null && result.min_genotype_group < 5) {
+            <strong class="weak">The rarest genotype class has only
+            {{ result.min_genotype_group }}
+            {{ result.min_genotype_group === 1 ? 'subject' : 'subjects' }}.</strong>
           }
         </span>
       </p>
+
+      @if (genotypeSpread) {
+        <section class="card genotype-card">
+          <h4>Genotypes in the scanned cohort</h4>
+          <plotly-plot [data]="genotypePlot" [layout]="genotypeLayout"
+                       [config]="plotConfig"></plotly-plot>
+          <p class="note">
+            The HUSA subjects this scan was run on, not a population frequency.
+            Every p-value on this page rests on these counts; for a frequency in
+            a reference population, follow the dbSNP link above.
+          </p>
+        </section>
+      }
     </section>
 
     <section class="card">
       <div class="card-head">
-        <h4>{{ significantOnly ? 'Genes it drives' : 'Every gene it was tested against' }}</h4>
+        <h4>{{ significantOnly ? 'Genes it drives' : 'Every gene it was tested against' }}
+          <button type="button" class="info-button" [attr.aria-expanded]="infoOpen"
+                  title="How these are counted" (click)="toggleInfo()">ⓘ</button>
+        </h4>
         <label class="toggle">
           <input type="checkbox" [(ngModel)]="significantOnly">
           significant only
@@ -64,6 +87,18 @@
           }
         </p>
       } @else {
+        @if (infoOpen) {
+          <p class="caption-body">
+            Each gene is its own scan, so this variant carries one result per
+            gene. <strong>Smallest class</strong> is the number of subjects in
+            the rarest genotype group: the pipeline documents the extreme tail as
+            anti-conservative, so a small p-value resting on a handful of
+            subjects is flagged rather than trusted. The run publishes that number
+            only for lead variants, so it is counted from the genotypes for the
+            rest, which reproduces the run's own value wherever the run gives one.
+            Open a row to see the usage behind it.
+          </p>
+        }
         <table class="assoc">
           <tr>
             <th><button type="button" class="sort" (click)="sortBy('asc')">gene</button></th>
@@ -104,16 +139,7 @@
           }
         </table>
 
-        <p class="note">
-          Each gene is its own scan, so this variant carries one result per gene.
-          <strong>Smallest class</strong> is the number of subjects in the rarest
-          genotype group: the pipeline documents the extreme tail as
-          anti-conservative, so a small p-value resting on a handful of subjects
-          is flagged rather than trusted. The run publishes that number only for
-          lead variants, so it is counted from the genotypes for the rest, which
-          reproduces the run's own value wherever the run gives one. Open a row
-          to see the usage behind it.
-        </p>
+
       }
     </section>
 
