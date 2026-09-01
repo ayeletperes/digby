@@ -49,28 +49,28 @@
               </button>
             </li>
             <li>
-              <button type="button" class="panel-link" [class.on]="view === 'summary'"
+              <button type="button" class="panel-link" [class.on]="isOpen('summary')"
                       title="Every significant variant, by segment and location"
                       (click)="showView('summary')">
                 <span class="panel-name">Summary of hits</span>
               </button>
             </li>
             <li>
-              <button type="button" class="panel-link" [class.on]="view === 'gene'"
+              <button type="button" class="panel-link" [class.on]="isOpen('gene')"
                       title="Which variants explain a gene's usage"
                       (click)="showView('gene')">
                 <span class="panel-name">Start from a gene</span>
               </button>
             </li>
             <li>
-              <button type="button" class="panel-link" [class.on]="view === 'variant'"
+              <button type="button" class="panel-link" [class.on]="isOpen('variant')"
                       title="Which genes a variant explains"
                       (click)="showView('variant')">
                 <span class="panel-name">Start from a variant</span>
               </button>
             </li>
             <li>
-              <button type="button" class="panel-link" [class.on]="view === 'pairing'"
+              <button type="button" class="panel-link" [class.on]="isOpen('pairing')"
                       title="Which partner a gene recombines with"
                       (click)="showView('pairing')">
                 <span class="panel-name">Gene pairing</span>

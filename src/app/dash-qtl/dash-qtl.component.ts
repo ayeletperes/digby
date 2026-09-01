@@ -137,6 +137,18 @@ export class DashQtlComponent implements OnInit, OnDestroy {
     this.writeToUrl();
   }
 
+  /**
+   * Whether an analysis is the open one, for the rail's highlight.
+   *
+   * `view` keeps its value while the cards are up, so that leaving them lands
+   * somewhere sensible. That means it cannot answer this on its own: with the
+   * gallery open it still said 'summary', and Home and Summary of hits lit up
+   * together. Nothing is the open analysis while the cards are up.
+   */
+  isOpen(view: string): boolean {
+    return !this.atGallery && this.view === view;
+  }
+
   /** The open analysis, for the title beside the way back. */
   get openPanelLabel(): string {
     return this.galleryPanels.find(p => p.id === this.view)?.label ?? '';
