@@ -250,12 +250,15 @@ export class QtlSummaryComponent implements OnChanges {
       xaxis: grouped
         ? { type: 'multicategory', title: { text: 'Locus and segment' } }
         : { type: 'category', title: { text: `Segment — ${loci[0] ?? ''}` } },
-      yaxis: {
-        title: { text: this.logScale ? 'Significant variants (log scale)'
-                                     : 'Significant variants' },
-        type: this.logScale ? 'log' : 'linear',
-        rangemode: 'tozero',
-      },
+      // `rangemode: 'tozero'` only means something on a linear axis. On a log one
+      // zero is at minus infinity, so asking the range to include it is asking
+      // for a range with no bottom; Plotly currently ignores it and autoranges,
+      // but the combination is undefined and not something to leave sitting in a
+      // layout that is rebuilt on every toggle and resize.
+      yaxis: this.logScale
+        ? { title: { text: 'Significant variants (log scale)' }, type: 'log' }
+        : { title: { text: 'Significant variants' }, type: 'linear',
+            rangemode: 'tozero' },
       legend: { orientation: 'h', y: 1.14, x: 0, title: { text: '' } },
     };
   }
