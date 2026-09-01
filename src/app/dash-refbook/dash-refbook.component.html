@@ -190,7 +190,7 @@
         <!-- a locus-wide panel is drawn from the whole locus, so the gene and
              sample chips would sit above a figure none of them narrows -->
         @if (activePanel.multi) {
-          <span class="chips-note">whole locus &mdash; the gene and sample filters do not apply</span>
+          <span class="chips-note">whole locus: the gene and sample filters do not apply</span>
         } @else {
           @for (chip of activeChips; track chip.key) {
             <button type="button" class="chip" (click)="removeChip(chip.key)"

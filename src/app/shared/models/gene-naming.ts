@@ -82,12 +82,12 @@ export function shortenAlleleName(name: string, limit = NAME_LIMIT): string {
 
   // the split is the first _ AFTER the allele: gene names themselves contain
   // underscores (IGHV4-NL_1*01_a157g), and splitting on the first one dropped
-  // the allele and miscounted the mutations
+  // the allele and miscounted the substitutions
   const star = name.indexOf('*');
   const cut = name.indexOf('_', star >= 0 ? star + 1 : 0);
   if (cut >= 0) {
     const suffix = name.slice(cut + 1);
-    // the mutation count alone is not distinguishing enough: of the 793 names
+    // the count alone is not distinguishing enough: of the 793 names
     // over the limit in the full HUSA set, 231 - 29% - share a stem and a count
     // with another allele. The token is derived from the allele's own suffix, so
     // it never changes when more data is loaded, which a positional #N does.
@@ -99,7 +99,7 @@ export function shortenAlleleName(name: string, limit = NAME_LIMIT): string {
 /**
  * Display labels for a group of alleles, guaranteed unique within the group.
  *
- * Two alleles sharing a stem and a mutation count shorten to the same label -
+ * Two alleles sharing a stem and a difference count shorten to the same label -
  * IGHV1-18*01_a157g_a196g and IGHV1-18*01_g276c_c291g both give
  * IGHV1-18*01+2 - and in an UpSet plot the label is the set's identity, so a
  * merge would misstate the data rather than merely confuse.

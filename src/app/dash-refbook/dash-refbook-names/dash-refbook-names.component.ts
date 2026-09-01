@@ -16,7 +16,7 @@ interface NameRow {
   full: string;
   shown: string;
   shortened: boolean;
-  mutations: number;
+  differences: number;
 }
 
 /**
@@ -24,7 +24,7 @@ interface NameRow {
  *
  * The plots cannot show a name like
  * IGHV1-18*04_t81a_t90c_a106g_g112t_g113a_c117g_a118c_g119a on an axis, so they
- * collapse the mutation suffixes to a count. That makes `IGHV1-18*04+8`
+ * collapse the suffix to a count. That makes `IGHV1-18*04+8`
  * unreadable on its own, and this is where it is resolved.
  */
 @Component({
@@ -84,8 +84,9 @@ export class DashRefbookNamesComponent implements OnChanges {
           return {
             full, shown,
             shortened: shown !== full,
-            // the suffixes are the mutations off the stem allele
-            mutations: full.includes('_') ? full.split('_').length - 1 : 0,
+            // the suffix names each position where this allele differs from
+            // the stem allele: germline variation, not somatic mutation
+            differences: full.includes('_') ? full.split('_').length - 1 : 0,
           };
         });
         this.isFetching = false;

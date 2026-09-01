@@ -145,7 +145,7 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
    *
    * Two things are dropped. The locus and segment prefix, because every arc
    * inside V of IGH repeats `IGHV` and the rings above already say it. And the
-   * mutation suffix of a novel allele, which reaches 250 characters here - the
+   * substitution suffix of a novel allele, which reaches 250 characters here - the
    * same rule the rest of the dashboard labels alleles by, so a label means the
    * same thing in the locus map as it does on an axis.
    */
@@ -154,7 +154,7 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
     const alleleDepth = levels.length - 1;
 
     // shortened over the whole locus at once, so a label still names exactly one
-    // allele - two alleles of a gene can share a stem and a mutation count
+    // allele - two alleles of a gene can share a stem and a difference count
     const short = shortenAlleleNames(label.filter((_, i) => this.plan.depth[i] === alleleDepth));
 
     this.display = label.map((name, i) => {

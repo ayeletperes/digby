@@ -111,7 +111,7 @@ export class DashRefbookAlleleComponent
   private carrierCounts: Record<DataSource, Map<string, number>> =
     { genomic: new Map(), airrseq: new Map() };
 
-  /** Samples held per project, per database — the hover denominator. */
+  /** Samples held per project, per database: the hover denominator. */
   private projectTotals: Record<DataSource, Map<string, number>> =
     { genomic: new Map(), airrseq: new Map() };
 
@@ -251,7 +251,7 @@ export class DashRefbookAlleleComponent
     this.usageMedian = values.length ? values[Math.floor(values.length / 2)] : null;
   }
 
-  /** How many samples each database holds per project — the carrier denominator. */
+  /** How many samples each database holds per project: the carrier denominator. */
   private readProjects(response: { projects?: { name: string;
                                                 by_source?: Partial<Record<DataSource, number>> }[] }) {
     this.projectTotals = { genomic: new Map(), airrseq: new Map() };

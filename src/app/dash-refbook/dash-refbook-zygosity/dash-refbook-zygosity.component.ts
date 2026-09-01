@@ -219,7 +219,7 @@ plt.show()
 
     // Shorten the labels, but only after extraction: the set name is the set's
     // identity here, so shortening the input would merge two alleles that differ
-    // only in which mutations they carry. Collisions keep their full name.
+    // only in which substitutions they carry. Collisions keep their full name.
     const display = shortenAlleleNames(sets.map(set => set.name ?? ''));
     this.fullNameOf = new Map();
     for (const set of sets) {

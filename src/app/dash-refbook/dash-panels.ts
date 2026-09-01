@@ -87,9 +87,9 @@ export const DASH_PANELS: DashPanel[] = [
     group: 'Reference',
     label: 'Allele names',
     description: 'What the shortened labels in the plots stand for.',
-    caption: 'Allele names carrying many mutations are too long for a chart axis, so the ' +
-             'plots collapse the mutation suffixes to a count: IGHV1-18*04+8 is the allele ' +
-             'with eight mutations from IGHV1-18*04. This is the key. Where two alleles ' +
+    caption: 'Allele names carrying many substitutions are too long for a chart axis, so ' +
+             'the plots collapse the suffix to a count: IGHV1-18*04+8 is the allele that ' +
+             'differs from IGHV1-18*04 at eight positions. This is the key. Where two alleles ' +
              'would shorten to the same label, both keep their full name instead, so a ' +
              'shortened label always identifies exactly one allele.',
     requires: [],
@@ -195,7 +195,7 @@ export function panelBlockedReason(
       return `This locus has no ${name} data.`;
     }
     if (!selected.includes(source)) {
-      return `Needs ${name} data — enable it above.`;
+      return `Needs ${name} data. Enable it in the rail.`;
     }
   }
 

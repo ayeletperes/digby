@@ -155,14 +155,8 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
    * (96 of Human IGH's 106, 524 of rhesus IGH's 1,893), which are genotype
    * states rather than alleles, and they draw as empty bars.
    */
-  observedOnly = true;
-  hiddenUnobserved = 0;
+  unobserved = 0;
   private lastOverview: (OverviewData & { genomic_counts?: number[]; vdjbase_counts?: number[] }) | null = null;
-
-  toggleObservedOnly(): void {
-    this.observedOnly = !this.observedOnly;
-    if (this.lastOverview) { this.updateChartData(this.lastOverview); }
-  }
 
   /**
    * Row order. Count first, because at 384 alleles (IGHV1-69 in the full HUSA
@@ -281,14 +275,17 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
         (data.genomic_counts?.[i] ?? 0) + (data.vdjbase_counts?.[i] ?? 0) > 0;
       const total = (i: number) =>
         (data.genomic_counts?.[i] ?? 0) + (data.vdjbase_counts?.[i] ?? 0);
+      // Nothing is dropped here. The rail's "seen in" thresholds are the one
+      // control for this, and a panel-local toggle saying the same thing was a
+      // second answer to one question - with the toggle defaulting to "hide"
+      // and the sliders defaulting to "keep", they disagreed on arrival.
       const keep = names.map((_, i) => i)
-        .filter(i => !this.observedOnly || seen(i))
         .sort((a, b) => this.sortBy === 'name'
           ? names[a].localeCompare(names[b])
           // most-carried at the top: Chart.js draws the first category at the
           // top of a horizontal axis
           : total(b) - total(a) || names[a].localeCompare(names[b]));
-      this.hiddenUnobserved = names.length - names.filter((_, i) => seen(i)).length;
+      this.unobserved = names.length - names.filter((_, i) => seen(i)).length;
 
       this.alleleByIndex = keep.map(i => names[i]);
       const display = shortenAlleleNames(keep.map(i => names[i]));
