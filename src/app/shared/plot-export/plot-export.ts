@@ -237,6 +237,11 @@ export function exportButtons(spec: () => ExportSpec): unknown[] {
    * to nothing. Writing that out is a file the reader would trust and a wrong
    * answer either way. Such a panel supplies `table` and `script` itself; this
    * says so instead of saving a header with no rows.
+   *
+   * The throw lands in a Plotly modebar handler, so Angular catches it and the
+   * message goes to the console while the button appears to do nothing. That is
+   * the right trade for a reader, who must never get the misleading file, but a
+   * panel author testing by eye sees only a dead button: check the console.
    */
   const rows = (it: ExportSpec): ExportTable => {
     const data = it.table ?? table(it.data ?? [], it.layout ?? {});

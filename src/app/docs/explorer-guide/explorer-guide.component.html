@@ -534,19 +534,6 @@
       the Allele names panel is the key, and the clustering, usage and
       alignment panels each carry a legend for the names they shortened.
     </p>
-    <p class="todo">
-      <strong>TODO(ayelet):</strong> two strings in the interface disagree with
-      the code, and this page describes the code. The Allele names panel
-      caption in <code>dash-panels.ts</code> and the panel's own lede both say
-      that where two alleles would shorten to the same label, <em>"both keep
-      their full name instead"</em>. The shortener appends <code>#2</code>
-      instead, and the comment in <code>gene-naming.ts</code> says that is
-      deliberate, because falling back to the full name would put a
-      190-character label on an axis. The same two strings also give
-      <code>IGHV1-18*04+8</code> as the example label, without the
-      <code>~</code> token the code has emitted since the token was added.
-      Should both captions be corrected to match the code?
-    </p>
   </section>
 
   <section>

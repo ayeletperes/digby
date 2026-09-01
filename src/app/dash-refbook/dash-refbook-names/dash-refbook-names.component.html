@@ -13,9 +13,12 @@
         <strong>{{ shortenedRows.length }}</strong> of {{ rows.length }} alleles of
         {{ selection.asc }} are shown under a shortened label in the plots.
         <span class="rule">
-          A label like <code>IGHV1-18*04+8</code> means that allele carries 8
-          positions from <code>IGHV1-18*04</code>. Where two alleles would
-          shorten to the same label, both keep their full name instead.
+          A label like <code>IGHV1-18*04+8~i93</code> means that allele differs from
+          <code>IGHV1-18*04</code> at 8 positions; the three characters after the
+          <code>~</code> are derived from those positions, so the label stays the
+          same as more alleles are loaded. Where two alleles would still shorten
+          alike, the second is marked <code>#2</code> and this table is what
+          resolves it.
         </span>
       } @else {
         No allele of {{ selection.asc }} needs shortening. Every name is shown in

@@ -88,10 +88,12 @@ export const DASH_PANELS: DashPanel[] = [
     label: 'Allele names',
     description: 'What the shortened labels in the plots stand for.',
     caption: 'Allele names carrying many substitutions are too long for a chart axis, so ' +
-             'the plots collapse the suffix to a count: IGHV1-18*04+8 is the allele that ' +
-             'differs from IGHV1-18*04 at eight positions. This is the key. Where two alleles ' +
-             'would shorten to the same label, both keep their full name instead, so a ' +
-             'shortened label always identifies exactly one allele.',
+             'the plots collapse the suffix to a count and a token: IGHV1-18*04+8~i93 is ' +
+             'the allele that differs from IGHV1-18*04 at eight positions, and the token ' +
+             'is derived from those positions so the label does not change as more alleles ' +
+             'are loaded. Where two alleles would still shorten alike the second is marked ' +
+             '#2, so a shortened label always identifies exactly one allele, and this panel ' +
+             'is what resolves it.',
     requires: [],
     multi: false,
     load: () => import('./dash-refbook-names/dash-refbook-names.component')
