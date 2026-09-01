@@ -5,11 +5,11 @@ import { of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { QtlService } from '../qtl.service';
+import { ascDisplayName } from '../../shared/models/gene-naming';
 import { QtlGenotypeCountsComponent } from '../qtl-genotype-counts/qtl-genotype-counts.component';
 import {
   QtlAssociation, QtlVariantLookup, usageThreshold,
 } from '../../shared/models/qtl-selection.model';
-import { ascDisplayName } from '../../shared/models/gene-naming';
 
 type SortKey = 'asc' | 'neglog10_p' | 'beta' | 'n' | 'min_genotype_group';
 
@@ -54,6 +54,8 @@ export class QtlVariantLookupComponent implements OnChanges {
 
   /** The counting note, behind the site's info control. */
   infoOpen = false;
+  /** And what the genotype counts are, behind its own. */
+  genotypeInfoOpen = false;
 
 
   /** Most genes clear nothing; the whole tested list is a wall of noise. */
@@ -84,9 +86,48 @@ export class QtlVariantLookupComponent implements OnChanges {
       .join(' · ');
   }
 
+  // ------------------------------------------------------------ table filters
+  geneSegment = '';
+  geneFilter = '';
+
+
+  /** Segments this variant was actually tested against. */
+  get geneSegments(): string[] {
+    const order = ['V', 'D', 'J', 'C'];
+    const present = new Set((this.result?.associations ?? []).map(a => a.segment));
+    return order.filter(x => present.has(x))
+      .concat([...present].filter(x => !order.includes(x as string)).sort() as string[]);
+  }
+
+  toggleGeneSegment(segment: string): void {
+    this.geneSegment = this.geneSegment === segment ? '' : segment;
+  }
+
+  get filtersOn(): boolean {
+    return !!this.geneSegment || !!this.geneFilter.trim() || this.significantOnly;
+  }
+
+  clearFilters(): void {
+    this.geneSegment = '';
+    this.geneFilter = '';
+    this.significantOnly = false;
+  }
+
+  /** How many the filters are hiding, so a short table cannot read as a short scan. */
+  get totalRows(): number {
+    return this.result?.associations?.length ?? 0;
+  }
+
   get rows(): QtlAssociation[] {
     const all = this.result?.associations ?? [];
-    const kept = this.significantOnly ? all.filter(a => a.significant) : all;
+    const q = this.geneFilter.trim().toUpperCase();
+    const kept = all.filter(a =>
+      (!this.significantOnly || a.significant)
+      && (!this.geneSegment || a.segment === this.geneSegment)
+      // matched as stored and as displayed, so "V3" and "IGHV3" find the same
+      // genes and IGH's D clusters, which carry the locus, are not a special case
+      && (!q || String(a.asc).toUpperCase().includes(q)
+             || ascDisplayName(this.result?.locus, a.asc).toUpperCase().includes(q)));
     const direction = this.sortDesc ? -1 : 1;
 
     return [...kept].sort((a, b) => {
@@ -122,6 +163,10 @@ export class QtlVariantLookupComponent implements OnChanges {
 
   toggleInfo(): void {
     this.infoOpen = !this.infoOpen;
+  }
+
+  toggleGenotypeInfo(): void {
+    this.genotypeInfoOpen = !this.genotypeInfoOpen;
   }
 
   /** Outside links for the identifiers this variant has. */

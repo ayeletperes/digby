@@ -58,15 +58,22 @@
     <div class="lookup-row">
         @if (genotypeSpread) {
           <section class="card genotype-card">
-            <h4>Genotypes in the scanned cohort</h4>
+            <h4>Genotypes in the scanned cohort
+              <button type="button" class="info-button"
+                      [attr.aria-expanded]="genotypeInfoOpen"
+                      title="What these counts are"
+                      (click)="toggleGenotypeInfo()">ⓘ</button>
+            </h4>
+            @if (genotypeInfoOpen) {
+              <p class="caption-body">
+                The subjects this scan was run on, not a population frequency.
+                Every p-value here rests on these counts; for a
+                reference-population frequency, follow the dbSNP link above.
+              </p>
+            }
             <app-qtl-genotype-counts [counts]="result.genotype_counts"
                                      [variant]="result.variant.variant">
             </app-qtl-genotype-counts>
-            <p class="note">
-              The subjects this scan was run on, not a population frequency.
-              Every p-value here rests on these counts; for a reference-population
-              frequency, follow the dbSNP link above.
-            </p>
           </section>
         }
 
@@ -76,17 +83,32 @@
           <button type="button" class="info-button" [attr.aria-expanded]="infoOpen"
                   title="How these are counted" (click)="toggleInfo()">ⓘ</button>
         </h4>
-        <label class="toggle">
-          <input type="checkbox" [(ngModel)]="significantOnly">
-          significant only
-        </label>
+        <div class="gene-filters">
+          @if (geneSegments.length > 1) {
+            @for (seg of geneSegments; track seg) {
+              <button type="button" class="segment-chip" [class.on]="geneSegment === seg"
+                      (click)="toggleGeneSegment(seg)"
+                      [title]="'Only ' + seg + ' genes'">{{ seg }}</button>
+            }
+          }
+          <input class="gene-filter" type="text" [(ngModel)]="geneFilter"
+                 placeholder="filter by gene name" />
+          <label class="toggle">
+            <input type="checkbox" [(ngModel)]="significantOnly">
+            significant only
+          </label>
+          @if (filtersOn) {
+            <button type="button" class="clear-filters" (click)="clearFilters()">clear</button>
+            <span class="shown-count">{{ rows.length }} of {{ totalRows }}</span>
+          }
+        </div>
       </div>
 
       @if (!rows.length) {
         <p class="note">
-          @if (significantOnly) {
-            No gene's usage was significantly associated with this variant.
-            Untick to see every scan it appeared in.
+          @if (filtersOn) {
+            No gene matches those filters. The other
+            {{ totalRows }} are still there; the filters are hiding them.
           } @else {
             No scans are held for this variant.
           }
@@ -104,6 +126,7 @@
             Open a row to see the usage behind it.
           </p>
         }
+        <div class="assoc-scroll">
         <table class="assoc">
           <tr>
             <th><button type="button" class="sort" (click)="sortBy('asc')">gene</button></th>
@@ -143,6 +166,7 @@
             </tr>
           }
         </table>
+        </div>
 
 
       }

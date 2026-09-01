@@ -86,6 +86,15 @@
 .lookup-row {
   display: flex; gap: 0.8rem; align-items: flex-start; margin-top: 0.6rem;
 }
+
+/* Untick "significant only" and this is 70 rows, which ran the card past the
+   counts beside it and pushed the region track off the screen. The table
+   scrolls in place instead, under a header that stays put. */
+.assoc-scroll { max-height: 24rem; overflow-y: auto; }
+.assoc-scroll .assoc th {
+  position: sticky; top: 0; background: #fff; z-index: 1;
+  box-shadow: inset 0 -1px 0 #e8eaed;
+}
 .genotype-card { flex: 0 0 19rem; min-width: 0; }
 .genes-card { flex: 1 1 0; min-width: 0; }
 @media (max-width: 1000px) {
@@ -108,3 +117,20 @@
   font-size: 0.85rem; color: #3c4043; max-width: 80ch;
   text-transform: none; font-weight: 400; letter-spacing: 0;
 }
+
+.gene-filters { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+.segment-chip {
+  font-size: 0.72rem; padding: 0.05rem 0.5rem; border-radius: 10px;
+  border: 1px solid #dadce0; background: #fff; color: #5f6368; cursor: pointer;
+}
+.segment-chip:hover { border-color: var(--vdj-teal); }
+.segment-chip.on { background: var(--vdj-teal); border-color: var(--vdj-teal); color: #fff; }
+.gene-filter {
+  font-size: 0.78rem; padding: 0.1rem 0.4rem; min-width: 10rem;
+  border: 1px solid var(--vdj-teal-border); border-radius: 4px;
+}
+.clear-filters {
+  font-size: 0.72rem; padding: 0.05rem 0.5rem; border-radius: 10px;
+  border: 1px solid #d62839; background: #fff; color: #d62839; cursor: pointer;
+}
+.shown-count { font-size: 0.74rem; color: var(--vdj-muted); }
