@@ -253,6 +253,9 @@ export class QtlRegionComponent implements OnChanges {
   /** About the distance a hand holds still. Below this a press is a click. */
   private static readonly DRAG_SLOP_PX = 5;
 
+  /** Held only while a drag is in progress, so it can be released. */
+  private captured: { target: Element; pointerId: number } | null = null;
+
   readonly view = VIEW;
   readonly height = TRACK_HEIGHT;
   readonly geneY = GENE_Y;
@@ -613,7 +616,7 @@ export class QtlRegionComponent implements OnChanges {
     this.dragStartX = event.clientX;
     this.brushFrom = this.toView(event);
     this.brushTo = this.brushFrom;
-    (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
+    // deliberately NOT capturing the pointer here; see onBrushMove
   }
 
   onBrushMove(event: PointerEvent): void {
@@ -621,12 +624,34 @@ export class QtlRegionComponent implements OnChanges {
       return;
     }
     this.brushTo = this.toView(event);
-    if (Math.abs(event.clientX - this.dragStartX) > QtlRegionComponent.DRAG_SLOP_PX) {
+    if (Math.abs(event.clientX - this.dragStartX) <= QtlRegionComponent.DRAG_SLOP_PX) {
+      return;
+    }
+
+    /*
+     * Capture only once this is actually a drag, never on the press.
+     *
+     * While an element holds the pointer capture the browser dispatches the
+     * click that ends the gesture to the *capturing* element, so capturing on
+     * pointerdown sent every click to the track and none to the circle under the
+     * cursor. Clicking a variant did nothing, and the track looked static.
+     *
+     * A drag wants the capture, so that leaving the SVG mid-gesture still tracks
+     * and still ends. A click does not, and now does not get it.
+     */
+    if (!this.dragged) {
       this.dragged = true;
+      const target = event.currentTarget as Element;
+      target.setPointerCapture?.(event.pointerId);
+      this.captured = { target, pointerId: event.pointerId };
     }
   }
 
   onBrushEnd(): void {
+    if (this.captured) {
+      this.captured.target.releasePointerCapture?.(this.captured.pointerId);
+      this.captured = null;
+    }
     const from = this.brushFrom;
     const to = this.brushTo;
     this.brushFrom = this.brushTo = null;
