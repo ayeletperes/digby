@@ -233,8 +233,11 @@
 .omnibus-block summary .info-button { margin-left: 0.3rem; }
 
 .sig-mark { color: #009E73; font-weight: 700; }
-.key-sep {
-  color: var(--vdj-muted); font-size: 0.72rem;
-  border-top: 1px solid var(--vdj-rule); padding-top: 0.3rem; margin-top: 0.1rem;
+/* the star key is too wide for the corner cell, which clipped it. Its own row,
+   full width, where both meanings fit side by side. */
+.star-key {
+  display: flex; gap: 1.6rem; flex-wrap: wrap;
+  margin: 0.5rem 0 0; font-size: 0.74rem; color: var(--vdj-muted);
 }
+.star-group strong { color: var(--vdj-body); font-weight: 600; margin-right: 0.3rem; }
 .tag.moved { background: #fdf0dd; color: #b06000; }

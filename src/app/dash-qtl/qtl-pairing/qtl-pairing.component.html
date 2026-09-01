@@ -140,21 +140,24 @@
         class of five is not a distribution however tight its box.
         <br><br>
         <strong>Stars in the grid</strong> are the post-hoc test on that one
-        cell: <span class="sig-mark">*</span> p&lt;0.05,
+        cell, uncorrected: <span class="sig-mark">*</span> p&lt;0.05,
         <span class="sig-mark">**</span> p&lt;0.01,
         <span class="sig-mark">***</span> p&lt;0.001, the same cuts the
         manuscript figure uses, so a cell carries the same number of stars in
         both. <em>Which</em> cells are starred is the pipeline's own call and is
-        not recomputed here: it is p&lt;0.05 under an omnibus that reached
+        not recomputed here: p&lt;0.05 under an omnibus that reached
         significance. A cell under a row that did not is not evidence, so it is
         not starred at all, however small its own p-value.
         <br><br>
-        <strong>A star on an overall panel is a different test.</strong> It is
-        the usage scan, which asks whether the variant changes how much that gene
-        is used at all, and it is one star or none. A gene marked there moves in
-        both, and its pairing result should be read knowing that. Under this
-        variant, {{ partnersMovedInUsage }} of {{ partners.length }}
-        {{ partnerSide }} genes move in usage.
+        <strong>A star on an overall panel is a different test at a different
+        bar.</strong> It is the usage scan, and it is not a p-value cut: the gene
+        clears the run's own threshold@if (usageThresholdText) {,
+        {{ usageThresholdText }}}, corrected across the independent variants in
+        the locus. That is about four orders of magnitude stricter than the cut
+        that earns a cell its first asterisk, so the two marks are not
+        comparable, and it is one star or none. Under this variant,
+        {{ partnersMovedInUsage }} of {{ partners.length }} {{ partnerSide }}
+        genes clear it.
       </p>
     }
 
@@ -214,11 +217,6 @@
                 @for (k of genotypeKey; track k.label) {
                   <li><i class="key-swatch" [style.border-color]="k.colour"></i>{{ k.label }}</li>
                 }
-                <li class="key-sep">
-                  <span class="sig-mark">*</span> p&lt;0.05
-                  <span class="sig-mark">**</span> p&lt;0.01
-                  <span class="sig-mark">***</span> p&lt;0.001
-                </li>
               </ul>
             </div>
           }
@@ -229,16 +227,27 @@
         }
       </div>
 
+      <p class="star-key">
+        <span class="star-group">
+          <strong>Cells</strong>
+          <span class="sig-mark">*</span> p&lt;0.05
+          <span class="sig-mark">**</span> p&lt;0.01
+          <span class="sig-mark">***</span> p&lt;0.001,
+          under an omnibus that reached significance
+        </span>
+        <span class="star-group">
+          <strong>Overall panels</strong>
+          <span class="sig-mark">*</span> the gene's own usage clears the scan's
+          threshold@if (usageThresholdText) {, {{ usageThresholdText }}}, which is
+          a stricter bar than any of the cell cuts
+        </span>
+      </p>
+
       @if (!showPartnerMarginal || !showAnchorMarginal) {
         <ul class="genotype-key inline">
           @for (k of genotypeKey; track k.label) {
             <li><i class="key-swatch" [style.border-color]="k.colour"></i>{{ k.label }}</li>
           }
-          <li class="key-sep">
-            <span class="sig-mark">*</span> p&lt;0.05
-            <span class="sig-mark">**</span> p&lt;0.01
-            <span class="sig-mark">***</span> p&lt;0.001
-          </li>
         </ul>
       }
 

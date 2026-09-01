@@ -171,6 +171,21 @@ export class QtlPairingComponent implements OnChanges {
    */
   usage: Record<string, Usage> = {};
 
+  /**
+   * The run's own thresholds.
+   *
+   * The usage flag on the overall panels is set against the study-wide corrected
+   * threshold, not against 0.05. It is roughly four orders of magnitude stricter
+   * than the cut that earns a cell its first asterisk, so the two cannot share a
+   * key without the stricter one being read as the looser.
+   */
+  thresholds: any[] = [];
+
+  get usageThresholdText(): string | null {
+    const t = this.thresholds.find(x => x.analysis === 'usage');
+    return t ? `p ≤ ${t.threshold.toExponential(2)}` : null;
+  }
+
   rows: AnchorRow[] = [];
   countsData: unknown[] = [];
   countsLayout: Record<string, unknown> = {};
@@ -422,6 +437,7 @@ export class QtlPairingComponent implements OnChanges {
         this.marks = result.marks ?? [];
         this.genotypes = result.genotypes ?? [];
         this.usage = result.usage ?? {};
+        this.thresholds = result.thresholds ?? [];
         // open the strongest anchor, which is the one the scan is about
         const best = [...this.anchors].sort(
           (a, b) => (this.omnibus[b]?.neglog10_p ?? 0) - (this.omnibus[a]?.neglog10_p ?? 0));
