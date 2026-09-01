@@ -20,6 +20,7 @@ import { GeneTableSelectorService } from '../gene-table-selector/gene-table-sele
 import { GeneTableSelection } from '../gene-table-selector/gene-table-selector.model';
 import { RefbookService } from '../../../projects/digby-swagger-client/api/refbook.service';
 import { DashDrillService, DrillEvent } from './dash-drill.service';
+import { PanelGalleryComponent } from './panel-gallery/panel-gallery.component';
 
 /**
  * Genes pre-selected when a locus is opened, so the first panel has something to
@@ -40,7 +41,7 @@ const MAX_GENES = 3;
   styleUrls: ['./dash-refbook.component.scss'],
   standalone: true,
   imports: [CommonModule, FormsModule, NgbModule,
-            GeneTableSelectorComponent, GenePickerComponent, CheckDropdownComponent],
+            GeneTableSelectorComponent, GenePickerComponent, CheckDropdownComponent, PanelGalleryComponent],
   providers: [{ provide: RefbookService, useClass: RefbookService }, DashDrillService],
 })
 export class DashRefbookComponent implements OnInit, OnDestroy {
@@ -221,6 +222,16 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
   pickerOpen = false;
 
   /**
+   * The card gallery, shown in place of a panel.
+   *
+   * Only on a cold arrival: a deep link, a drill and the back button all name a
+   * panel in the URL, so this never stands between a reader and the analysis
+   * they asked for. Opening a card writes the panel to the URL, which is what
+   * takes the gallery down and keeps it down.
+   */
+  showGallery = false;
+
+  /**
    * One selection object per gene, reused between change detection runs.
    *
    * Faceted panels take a single-gene selection as an @Input, and a fresh object
@@ -284,6 +295,9 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
    * URL and can be undone with the chip or the browser's back button.
    */
   private applyDrill(event: DrillEvent): void {
+    // a drill is a request for a particular view, so it leaves the cards behind
+    this.showGallery = false;
+
     if (event.kind === 'allele') {
       const alreadyOpen = this.selectedAlleles.includes(event.value);
 
@@ -363,6 +377,17 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
       return;
     }
     this.activePanelId = panel.id;
+    this.showGallery = false;
+    this.writeToUrl();
+  }
+
+  /** Bound into the gallery, which asks per card rather than holding the rule. */
+  readonly galleryBlocked = (panel: DashPanel): string | null => this.blockedReason(panel);
+
+  /** Back to the cards, without losing the species, locus or filters. */
+  openGallery(): void {
+    this.showGallery = true;
+    // drops `panel` from the URL, so a reload or a shared link comes back here
     this.writeToUrl();
   }
 
@@ -811,7 +836,11 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: {
-        panel: this.activePanelId,
+        // no panel while the cards are up, so the URL says what is on screen.
+        // writeToUrl re-enters restoreFromUrl through the queryParamMap
+        // subscription, and naming a panel here would take the gallery straight
+        // back down again.
+        panel: this.showGallery ? null : this.activePanelId,
         segment: this.segment,
         projects: this.selectedProjects.join(',') || null,
         samples: this.selectedSamples.join(',') || null,
@@ -861,6 +890,9 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     if (wanted && !(wanted.needsAllele && !this.selectedAlleles.length)) {
       this.activePanelId = wanted.id;
     }
+
+    // no panel named means nobody has chosen one yet: show what there is to choose
+    this.showGallery = !params.get('panel');
   }
 
   /** Re-read the selection when the browser moves through history. */

@@ -165,3 +165,45 @@
   text-transform: none;
   letter-spacing: 0;
 }
+
+/* the way back to the cards, quieter than the panel title beside it */
+.all-analyses {
+  margin-left: 0.6rem;
+  border: 1px solid var(--vdj-rule);
+  background: #fff;
+  color: var(--vdj-body);
+  border-radius: 999px;
+  padding: 0.05rem 0.65rem;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.all-analyses:hover { border-color: var(--vdj-teal); color: var(--vdj-teal-dark); }
+.all-analyses:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 1px; }
+
+/* the filters read as one group with a shared scope, not four loose sections */
+.rail-filters {
+  border-top: 1px solid var(--vdj-rule);
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+}
+
+.filters-banner { margin: 0 0 0.4rem; }
+
+.filters-title {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--vdj-ink);
+  font-weight: 600;
+}
+
+.filters-note {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--vdj-muted, #7a8c8b);
+}

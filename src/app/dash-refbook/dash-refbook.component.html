@@ -21,7 +21,7 @@
               @for (panel of panelsIn(group); track panel.id) {
                 <li>
                   <button type="button" class="panel-link"
-                          [class.on]="panel.id === activePanelId"
+                          [class.on]="!showGallery && panel.id === activePanelId"
                           [disabled]="!!blockedReason(panel)"
                           [title]="blockedReason(panel) ?? panel.description"
                           (click)="selectPanel(panel)">
@@ -33,6 +33,17 @@
             </ul>
           }
         </section>
+
+        <!-- The four filter sections share one banner. Analyses first reads well,
+             but on its own it invites "these filters belong to the open analysis",
+             which is backwards: one selection feeds all of them. The banner says
+             so, and the dimming below marks the exceptions. -->
+        <div class="rail-filters">
+          <p class="filters-banner">
+            <span class="filters-title">Filters</span>
+            <span class="filters-note">One selection, shared by every analysis. A dimmed
+              control does not reach the one that is open.</span>
+          </p>
 
         <section class="rail-section">
           <h3 class="rail-heading">Dataset</h3>
@@ -150,12 +161,19 @@
                            (selectedChange)="onGenesChange($event)">
           </app-gene-picker>
         </section>
+        </div>
 
       </div>
     }
   </aside>
 
   <main class="dash-canvas">
+    @if (showGallery) {
+      <app-panel-gallery [panels]="panels" [groups]="panelGroups"
+                         [species]="selection.species" [locus]="selection.chain"
+                         [blocked]="galleryBlocked"
+                         (opened)="selectPanel($event)"></app-panel-gallery>
+    } @else {
     <header class="canvas-head">
       <div class="canvas-title">
         <h2>{{ activePanel.label }}</h2>
@@ -163,6 +181,8 @@
                 [attr.aria-expanded]="captionOpen[activePanel.id] === true"
                 title="About this plot"
                 (click)="toggleCaption(activePanel.id)">ⓘ</button>
+        <button type="button" class="all-analyses" (click)="openGallery()"
+                title="See every analysis">All analyses</button>
       </div>
 
       <div class="filter-chips">
@@ -226,6 +246,7 @@
       }
     } @else {
       <div class="panel-blocked"><p class="description">Loading…</p></div>
+    }
     }
     }
   </main>
