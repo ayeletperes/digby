@@ -59,12 +59,13 @@
         @if (genotypeSpread) {
           <section class="card genotype-card">
             <h4>Genotypes in the scanned cohort</h4>
-            <plotly-plot [data]="genotypePlot" [layout]="genotypeLayout"
-                         [config]="plotConfig"></plotly-plot>
+            <app-qtl-genotype-counts [counts]="result.genotype_counts"
+                                     [variant]="result.variant.variant">
+            </app-qtl-genotype-counts>
             <p class="note">
-              The HUSA subjects this scan was run on, not a population frequency.
-              Every p-value on this page rests on these counts; for a frequency in
-              a reference population, follow the dbSNP link above.
+              The subjects this scan was run on, not a population frequency.
+              Every p-value here rests on these counts; for a reference-population
+              frequency, follow the dbSNP link above.
             </p>
           </section>
         }

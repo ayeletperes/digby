@@ -6,6 +6,7 @@ import { EMPTY } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { QtlService } from '../qtl.service';
+import { QtlGenotypeCountsComponent } from '../qtl-genotype-counts/qtl-genotype-counts.component';
 import { ExportTable, exportButtons } from '../../shared/plot-export/plot-export';
 
 /**
@@ -109,7 +110,7 @@ interface AnchorRow {
   templateUrl: './qtl-pairing.component.html',
   styleUrls: ['./qtl-pairing.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, PlotlyModule],
+  imports: [CommonModule, FormsModule, PlotlyModule, QtlGenotypeCountsComponent],
 })
 export class QtlPairingComponent implements OnChanges {
   @Input() species?: string;
@@ -187,8 +188,6 @@ export class QtlPairingComponent implements OnChanges {
   }
 
   rows: AnchorRow[] = [];
-  countsData: unknown[] = [];
-  countsLayout: Record<string, unknown> = {};
   partnerData: unknown[] = [];
   partnerLayout: Record<string, unknown> = {};
   readonly plotConfig = { responsive: true, displaylogo: false };
@@ -283,19 +282,6 @@ export class QtlPairingComponent implements OnChanges {
     })),
   };
 
-  readonly countsConfig = {
-    responsive: true, displaylogo: false,
-    modeBarButtonsToAdd: exportButtons(() => ({
-      name: `${this.variant}_genotype_counts`,
-      title: `Subjects carrying each ${this.variant} genotype`,
-      source: `/api/qtl/pairing/${this.species}/${this.locus}/${this.variant}`
-              + `?conditional=${encodeURIComponent(this.conditional)}`,
-      table: {
-        columns: ['genotype', 'subjects'],
-        rows: this.genotypes.map(g => [GENOTYPE_LABEL[g.genotype], g.n]),
-      },
-    })),
-  };
   readonly rowHeight = ROW_HEIGHT;
 
   constructor(private qtl: QtlService) {}
@@ -462,7 +448,6 @@ export class QtlPairingComponent implements OnChanges {
   private draw(): void {
     if (!this.data) {
       this.rows = [];
-      this.countsData = [];
       this.partnerData = [];
       return;
     }
@@ -470,27 +455,6 @@ export class QtlPairingComponent implements OnChanges {
     const partnerLabels = this.partners.map(p => this.short(p));
     const allCells: Cell[] = this.data.cells ?? [];
 
-    // ---- subject counts. The figure puts these beside the grid for a reason:
-    // a genotype class of five subjects is not a distribution, whatever the box
-    // looks like.
-    this.countsData = [{
-      type: 'bar',
-      x: this.genotypes.map(g => GENOTYPE_LABEL[g.genotype]),
-      y: this.genotypes.map(g => g.n),
-      text: this.genotypes.map(g => String(g.n)),
-      textposition: 'outside',
-      cliponaxis: false,
-      marker: { color: this.genotypes.map(g => GENOTYPE_COLOUR[g.genotype]) },
-      hovertemplate: '%{x}: %{y} subjects<extra></extra>',
-    }];
-    this.countsLayout = {
-      height: ROW_HEIGHT,
-      margin: { l: 46, r: 10, t: 8, b: 34 },
-      showlegend: false,
-      // Plotly 3 drops a plain string title silently and draws nothing
-      xaxis: { title: { text: 'Genotype' } },
-      yaxis: { title: { text: '# subjects' }, rangemode: 'tozero' },
-    };
 
     // ---- one row per chosen anchor
     this.rows = this.chosen.map(anchor => {

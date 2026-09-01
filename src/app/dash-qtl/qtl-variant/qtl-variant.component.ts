@@ -6,6 +6,7 @@ import { catchError } from 'rxjs/operators';
 
 import { QtlService } from '../qtl.service';
 import { QtlRegionComponent } from '../qtl-region/qtl-region.component';
+import { QtlGenotypeCountsComponent } from '../qtl-genotype-counts/qtl-genotype-counts.component';
 import { ascDisplayName } from '../../shared/models/gene-naming';
 import { ExportTable, exportButtons } from '../../shared/plot-export/plot-export';
 import {
@@ -34,7 +35,8 @@ const GENOTYPE_COLOUR: Record<number, string> = { 0: '#2a78d6', 1: '#e34948', 2:
   templateUrl: './qtl-variant.component.html',
   styleUrls: ['./qtl-variant.component.scss'],
   standalone: true,
-  imports: [CommonModule, PlotlyModule, QtlRegionComponent],
+  imports: [CommonModule, PlotlyModule, QtlRegionComponent,
+            QtlGenotypeCountsComponent],
 })
 export class QtlVariantComponent implements OnChanges {
   @Input() selection: QtlSelection;
@@ -91,8 +93,6 @@ export class QtlVariantComponent implements OnChanges {
   plotLayout: Record<string, unknown> = {};
 
   /** Group sizes, shown beside the boxes: a class of five is not a distribution. */
-  countsPlot: unknown[] = [];
-  countsLayout: Record<string, unknown> = {};
   /**
    * The usage boxplot's own table.
    *
@@ -164,17 +164,6 @@ export class QtlVariantComponent implements OnChanges {
     })),
   };
 
-  /** The genotype counts are a second figure and export themselves. */
-  readonly countsConfig = {
-    responsive: true, displaylogo: false,
-    modeBarButtonsToAdd: exportButtons(() => ({
-      name: `${this.variant?.variant}_genotype_counts`,
-      title: `Subjects carrying each ${this.variant?.variant} genotype`,
-      source: `/api/qtl/variant/${this.selection?.species}/${this.selection?.locus}`
-              + `/${this.variant?.variant}`,
-      data: this.countsPlot, layout: this.countsLayout,
-    })),
-  };
 
   constructor(private qtl: QtlService) {}
 
@@ -263,23 +252,5 @@ export class QtlVariantComponent implements OnChanges {
                rangemode: 'tozero', automargin: true },
     };
 
-    const counts = this.counts;
-    this.countsPlot = [{
-      type: 'bar',
-      x: counts.map(c => c.label),
-      y: counts.map(c => c.n),
-      marker: { color: counts.map(c => GENOTYPE_COLOUR[c.genotype]) },
-      text: counts.map(c => String(c.n)),
-      textposition: 'outside',
-      hovertemplate: '%{x}: %{y} subjects<extra></extra>',
-    }];
-    this.countsLayout = {
-      autosize: true,
-      height: 440,
-      margin: { l: 50, r: 20, t: 24, b: 44 },
-      showlegend: false,
-      xaxis: { title: { text: 'Genotype' }, automargin: true },
-      yaxis: { title: { text: 'Subjects' }, rangemode: 'tozero', automargin: true },
-    };
   }
 }

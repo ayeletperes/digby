@@ -227,6 +227,13 @@
     @if (error) {
       <p class="qtl-status error">{{ error }}</p>
     } @else if (atGallery) {
+      <!-- One cohort, said once, where someone lands. Every number in every
+           analysis here comes from it, and none of them says so on its own. -->
+      <p class="cohort-note">
+        Every analysis here is one study: <strong>project P28</strong>, the
+        cohort the guQTL scan was run on. Nothing on these pages is pooled across
+        studies, and a count or a frequency is that project's, not a population's.
+      </p>
       <app-panel-gallery [panels]="galleryPanels" [groups]="galleryGroups"
                          [species]="selection.species ?? ''"
                          [locus]="selection.locus ?? ''"
@@ -281,8 +288,10 @@
          the variant in both tabs - the gene tab's plotted one, the variant tab's
          own subject - and its `asc` is undefined when no single gene is chosen,
          which is exactly when the track should fall back to the best per variant. -->
-    @if (!error && !isPlotting && view !== 'pairing' && view !== 'summary'
-         && plotSelection.variant) {
+    <!-- `view` keeps its value while the cards are up, so this has to ask
+         whether an analysis is actually open, not just which one it would be. -->
+    @if (!error && !atGallery && !isPlotting && view !== 'pairing'
+         && view !== 'summary' && plotSelection.variant) {
       <section class="region-panel">
         <h4>Around {{ plotSelection.variant }}</h4>
         <app-qtl-region [selection]="plotSelection" [fallbackAsc]="pointAsc"

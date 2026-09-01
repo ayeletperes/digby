@@ -145,3 +145,10 @@
 }
 .v-meta { float: right; font-size: 0.7rem; color: #80868b; }
 .v-gene { display: block; font-size: 0.68rem; color: #80868b; }
+
+.cohort-note {
+  margin: 0 0 0.9rem; padding: 0.55rem 0.75rem; font-size: 0.82rem;
+  color: #3c4043; background: #f8f9fa;
+  border-left: 3px solid var(--vdj-teal); border-radius: 0 4px 4px 0;
+  max-width: 80ch;
+}

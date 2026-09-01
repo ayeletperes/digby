@@ -85,8 +85,10 @@
            were an orphan panel that never lined up with the row beside it. -->
       <section class="counts-card">
         <h4>Subjects by genotype</h4>
-        <plotly-plot [data]="countsData" [layout]="countsLayout"
-                     [config]="countsConfig"></plotly-plot>
+        <app-qtl-genotype-counts [counts]="genotypes" [variant]="variant ?? ''"
+                                 [source]="'/api/qtl/pairing/' + species + '/' + locus
+                                           + '/' + variant">
+        </app-qtl-genotype-counts>
       </section>
     </div>
 
