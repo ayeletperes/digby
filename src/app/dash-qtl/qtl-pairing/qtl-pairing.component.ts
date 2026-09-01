@@ -484,24 +484,35 @@ export class QtlPairingComponent implements OnChanges {
 
       const marg = (this.data.anchor_marginal ?? [])
         .filter((m: any) => m.gene === anchor && m.box);
-      const marginalData: unknown[] = [{
-        type: 'box',
-        x: marg.map((m: any) => GENOTYPE_LABEL[m.genotype]),
-        q1: marg.map((m: any) => m.box.q1),
-        median: marg.map((m: any) => m.box.median),
-        q3: marg.map((m: any) => m.box.q3),
-        lowerfence: marg.map((m: any) => m.box.min),
-        upperfence: marg.map((m: any) => m.box.max),
-        marker: { color: marg.map((m: any) => GENOTYPE_COLOUR[m.genotype]) },
-        line: { width: 1.1 },
-        fillcolor: 'rgba(0,0,0,0)',
-        showlegend: false,
-        hovertemplate: '%{x}<br>median %{median:.4f}<extra></extra>',
-      }];
+      // One trace per genotype, as the grid and the partner marginal already do.
+      // A box trace takes a single colour, not one per box: handed an array it
+      // ignores it and draws every box in the default, which is how these three
+      // came out black while the same three genotypes were coloured everywhere
+      // else on the page.
+      const marginalData: unknown[] = [0, 1, 2].map(gt => {
+        const m = marg.find((x: any) => x.genotype === gt);
+        return {
+          type: 'box',
+          name: GENOTYPE_LABEL[gt],
+          x: [GENOTYPE_LABEL[gt]],
+          q1: [m?.box.q1 ?? null],
+          median: [m?.box.median ?? null],
+          q3: [m?.box.q3 ?? null],
+          lowerfence: [m?.box.min ?? null],
+          upperfence: [m?.box.max ?? null],
+          marker: { color: GENOTYPE_COLOUR[gt] },
+          line: { width: 1.1 },
+          fillcolor: 'rgba(0,0,0,0)',
+          showlegend: false,
+          hovertemplate: `${GENOTYPE_LABEL[gt]}<br>median %{median:.4f}<extra></extra>`,
+        };
+      });
       const marginalLayout: Record<string, unknown> = {
         height: ROW_HEIGHT,
         margin: { l: 46, r: 10, t: 8, b: 4 },
-        xaxis: { type: 'category', showticklabels: false, ticks: '' },
+        xaxis: { type: 'category', categoryorder: 'array',
+                 categoryarray: [0, 1, 2].map(g => GENOTYPE_LABEL[g]),
+                 showticklabels: false, ticks: '' },
         yaxis: { title: { text: `P(${label})` }, rangemode: 'tozero' },
       };
 
