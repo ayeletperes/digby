@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 import { DashPanel } from '../dash-panels';
@@ -17,7 +18,7 @@ import { DashPanel } from '../dash-panels';
 @Component({
   selector: 'app-panel-gallery',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './panel-gallery.component.html',
   styleUrls: ['./panel-gallery.component.scss'],
 })

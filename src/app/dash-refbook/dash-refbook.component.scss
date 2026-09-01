@@ -207,3 +207,6 @@
   line-height: 1.4;
   color: var(--vdj-muted, #7a8c8b);
 }
+
+/* Home sits above the groups, so it needs the separation the group names give */
+.home-link { margin-bottom: 0.35rem; }

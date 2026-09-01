@@ -15,6 +15,15 @@
              which is off the bottom of a laptop screen on arrival. -->
         <section class="rail-section">
           <h3 class="rail-heading">Analyses</h3>
+          <ul class="panel-list">
+            <li>
+              <button type="button" class="panel-link home-link"
+                      [class.on]="showGallery" (click)="openGallery()"
+                      title="Every analysis, with a line on what each one shows">
+                <span class="panel-name">Home</span>
+              </button>
+            </li>
+          </ul>
           @for (group of panelGroups; track group) {
             <p class="group-name">{{ group }}</p>
             <ul class="panel-list">

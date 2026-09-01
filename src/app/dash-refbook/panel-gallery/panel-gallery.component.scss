@@ -86,3 +86,14 @@
 @media (prefers-reduced-motion: reduce) {
   .card, .card:hover:not(:disabled) { transition: none; transform: none; }
 }
+
+.gallery-docs {
+  margin: 0.5rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--vdj-rule, #e7eeed);
+  max-width: 62ch;
+  font-size: 0.85rem;
+  color: var(--vdj-muted, #7a8c8b);
+}
+
+.gallery-docs a { color: var(--vdj-teal, #188080); }
