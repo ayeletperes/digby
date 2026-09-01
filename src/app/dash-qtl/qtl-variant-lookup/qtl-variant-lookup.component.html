@@ -51,21 +51,25 @@
         </span>
       </p>
 
-      @if (genotypeSpread) {
-        <section class="card genotype-card">
-          <h4>Genotypes in the scanned cohort</h4>
-          <plotly-plot [data]="genotypePlot" [layout]="genotypeLayout"
-                       [config]="plotConfig"></plotly-plot>
-          <p class="note">
-            The HUSA subjects this scan was run on, not a population frequency.
-            Every p-value on this page rests on these counts; for a frequency in
-            a reference population, follow the dbSNP link above.
-          </p>
-        </section>
-      }
     </section>
 
-    <section class="card">
+    <!-- the counts and the genes side by side: the bar is three columns wide
+         and was holding a full-width row to itself -->
+    <div class="lookup-row">
+        @if (genotypeSpread) {
+          <section class="card genotype-card">
+            <h4>Genotypes in the scanned cohort</h4>
+            <plotly-plot [data]="genotypePlot" [layout]="genotypeLayout"
+                         [config]="plotConfig"></plotly-plot>
+            <p class="note">
+              The HUSA subjects this scan was run on, not a population frequency.
+              Every p-value on this page rests on these counts; for a frequency in
+              a reference population, follow the dbSNP link above.
+            </p>
+          </section>
+        }
+
+    <section class="card genes-card">
       <div class="card-head">
         <h4>{{ significantOnly ? 'Genes it drives' : 'Every gene it was tested against' }}
           <button type="button" class="info-button" [attr.aria-expanded]="infoOpen"
@@ -142,6 +146,7 @@
 
       }
     </section>
+    </div>
 
   } @else if (notFound) {
     <p class="qtl-status">
