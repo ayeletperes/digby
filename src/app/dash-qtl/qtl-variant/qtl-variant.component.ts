@@ -7,7 +7,7 @@ import { catchError } from 'rxjs/operators';
 import { QtlService } from '../qtl.service';
 import { QtlRegionComponent } from '../qtl-region/qtl-region.component';
 import { ascDisplayName } from '../../shared/models/gene-naming';
-import { exportButtons } from '../../shared/plot-export/plot-export';
+import { ExportTable, exportButtons } from '../../shared/plot-export/plot-export';
 import {
   QtlAssociation, QtlFit, QtlSelection, QtlVariant,
 } from '../../shared/models/qtl-selection.model';
@@ -83,11 +83,27 @@ export class QtlVariantComponent implements OnChanges {
   countsPlot: unknown[] = [];
   countsLayout: Record<string, unknown> = {};
   /**
-   * The usage boxplot exports its own points: the traces hold one usage value
-   * per subject, which is the data and not a summary of it. The stats that
-   * qualify the whole figure - effect, p, and the smallest genotype class -
-   * ride in the title, so a downloaded table cannot be read without them.
+   * The usage boxplot's own table.
+   *
+   * Its traces hold one usage value per subject in `y`, with the genotype in the
+   * trace *name* rather than an `x` array. The generic reader pairs a category
+   * with a value and skips a row that has only one, so it read these as empty -
+   * silently, until `exportButtons` grew a guard against exactly that. The
+   * subject ids ride in `text` and it would have dropped those too, and they are
+   * the reason this figure is worth downloading at all.
+   *
+   * The stats that qualify the whole figure - effect, p, the smallest genotype
+   * class - ride in the title, since they belong to the fit and not to a row.
    */
+  get usageTable(): ExportTable {
+    return {
+      columns: ['subject', 'genotype', 'usage'],
+      rows: this.subjects
+        .filter(s => s.genotype !== null && s.usage !== null)
+        .map(s => [s.subject, GENOTYPE_LABEL[s.genotype as number] ?? '', s.usage as number]),
+    };
+  }
+
   readonly plotConfig = {
     responsive: true, displaylogo: false,
     modeBarButtonsToAdd: exportButtons(() => ({
@@ -104,7 +120,7 @@ export class QtlVariantComponent implements OnChanges {
             : ''),
       source: `/api/qtl/variant_usage/${this.selection?.species}/${this.selection?.locus}`
               + `/${this.variant?.variant}?asc=${this.plottedAsc}`,
-      data: this.plotData, layout: this.plotLayout,
+      table: this.usageTable,
     })),
   };
 
