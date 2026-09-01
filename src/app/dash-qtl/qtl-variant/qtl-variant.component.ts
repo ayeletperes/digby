@@ -71,6 +71,17 @@ export class QtlVariantComponent implements OnChanges {
   error: string | null = null;
 
   variant: QtlVariant | null = null;
+  /**
+   * What the world outside VDJbase calls this variant.
+   *
+   * `applies` is false where the map has nothing to say (the light chains are
+   * already on chromosome coordinates); `mapped` is false where it applies and
+   * the variant is simply not in dbSNP. Two different answers, and only the
+   * second one is "no identifier".
+   */
+  dbsnp: { mapped: boolean; applies: boolean; rsids: string[];
+           grch38: { contig: string; pos: number } | null;
+           source: string | null } | null = null;
   associations: QtlAssociation[] = [];
   subjects: SubjectPoint[] = [];
   association: QtlFit | null = null;
@@ -95,6 +106,35 @@ export class QtlVariantComponent implements OnChanges {
    * The stats that qualify the whole figure - effect, p, the smallest genotype
    * class - ride in the title, since they belong to the fit and not to a row.
    */
+  /**
+   * Outside links for the identifiers this variant has.
+   *
+   * One per rsID, because 7,107 mapped positions carry more than one and
+   * picking would invent an identity; plus the GRCh38 coordinate, which reaches
+   * a browser even where dbSNP has no name for the site.
+   */
+  get outsideLinks(): { label: string; url: string; title: string }[] {
+    const d = this.dbsnp;
+    if (!d?.mapped) {
+      return [];
+    }
+    const links = d.rsids.map(rs => ({
+      label: rs,
+      url: `https://www.ncbi.nlm.nih.gov/snp/${rs}`,
+      title: `${rs} at dbSNP`,
+    }));
+    if (d.grch38) {
+      const at = `${d.grch38.contig}:${d.grch38.pos}`;
+      links.push({
+        label: at,
+        url: 'https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position='
+             + `${d.grch38.contig}%3A${d.grch38.pos}-${d.grch38.pos}`,
+        title: `${at} on GRCh38, at the UCSC browser`,
+      });
+    }
+    return links;
+  }
+
   get usageTable(): ExportTable {
     return {
       columns: ['subject', 'genotype', 'usage'],
@@ -110,7 +150,7 @@ export class QtlVariantComponent implements OnChanges {
       name: `${this.variant?.variant}_${this.plottedAsc}_usage`,
       title: `Usage of ${this.plottedAsc} by ${this.variant?.variant} genotype`
         + (this.association
-            ? ` — effect ${this.association.beta.toFixed(3)},`
+            ? `. Effect ${this.association.beta.toFixed(3)},`
               + ` p ${this.association.p_value.toExponential(2)},`
               + ` n ${this.association.n}`
               + (this.association.min_genotype_group !== null
@@ -184,6 +224,7 @@ export class QtlVariantComponent implements OnChanges {
       .subscribe(result => {
         this.isFetching = false;
         this.variant = result.detail?.variant ?? null;
+        this.dbsnp = result.detail?.dbsnp ?? null;
         this.associations = result.detail?.associations ?? [];
         this.hasGenotypes = !!result.detail?.has_genotypes;
         this.subjects = result.usage?.subjects ?? [];

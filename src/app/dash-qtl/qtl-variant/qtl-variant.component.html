@@ -17,6 +17,20 @@
           }
         }
       </p>
+      @if (outsideLinks.length) {
+        <p class="outside">
+          Also known as
+          @for (link of outsideLinks; track link.url) {
+            <a [href]="link.url" [title]="link.title"
+               target="_blank" rel="noopener">{{ link.label }}</a>
+          }
+        </p>
+      } @else if (dbsnp?.applies && !dbsnp?.mapped) {
+        <p class="outside none">
+          Not in the dbSNP map, so it has no rsID to link to. It was tested all
+          the same.
+        </p>
+      }
     </div>
     @if (plottedAsc) {
       <button type="button" class="back-to-gene" (click)="backToGene.emit()"
