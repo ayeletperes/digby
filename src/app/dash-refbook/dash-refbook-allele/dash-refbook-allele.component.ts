@@ -342,6 +342,10 @@ export class DashRefbookAlleleComponent
 
     this.carrierPlot = DATA_SOURCES.map(source => {
       const label = DATA_SOURCE_LABELS[source];
+      const counts = this.carrierProjects.map(project =>
+        (this.projectTotals[source].has(project) || this.carrierCounts[source].has(project)
+          ? this.carrierCounts[source].get(project) ?? 0
+          : null));
 
       return {
         type: 'bar',
@@ -349,10 +353,7 @@ export class DashRefbookAlleleComponent
         x: this.carrierProjects,
         // null, not 0: a database that does not hold the project has no bar to
         // draw there, and a zero bar would read as "nobody carries it"
-        y: this.carrierProjects.map(project =>
-          (this.projectTotals[source].has(project) || this.carrierCounts[source].has(project)
-            ? this.carrierCounts[source].get(project) ?? 0
-            : null)),
+        y: counts,
         customdata: this.carrierProjects.map(project =>
           this.carrierText(project, this.carrierCounts[source].get(project) ?? 0,
                            this.projectTotals[source].get(project))),
@@ -360,13 +361,20 @@ export class DashRefbookAlleleComponent
                   line: { color: SOURCE_STYLE[source].line, width: 1 } },
         hovertemplate: `%{customdata}<extra>${label}</extra>`,
       };
-    });
+    // A database that holds none of these projects has no bar anywhere, and
+    // Plotly still lists an all-null trace in the legend. On a genomic-only
+    // locus that named AIRR-seq beside a colour the reader would never find.
+    }).filter(trace => trace.y.some(count => count !== null));
     this.carrierLayout = {
       ...base,
       barmode: 'group',
-      margin: { ...base.margin, t: 24 },
+      // room above the plot for the legend to sit in, rather than on the bars
+      margin: { ...base.margin, t: 30 },
       showlegend: true,
-      legend: { orientation: 'h', x: 0, y: 1.18, font: { size: 10 } },
+      // anchored to the figure, not to the plotting area: "just above the plot"
+      // is a normalised offset, and on a chart this short it landed inside it
+      legend: { orientation: 'h', x: 0, xanchor: 'left', font: { size: 10 },
+                yref: 'container', y: 1, yanchor: 'top' },
       xaxis: { title: { text: 'Project' }, type: 'category', automargin: true },
       yaxis: { title: { text: 'Samples carrying the allele' }, rangemode: 'tozero', automargin: true },
     };
