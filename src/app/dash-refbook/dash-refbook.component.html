@@ -10,6 +10,30 @@
 
     @if (railOpen) {
       <div class="rail-body">
+        <!-- first, not last: the analyses are what the rail is for and the filters
+             refine them. Below the four filter sections they started 1550px down,
+             which is off the bottom of a laptop screen on arrival. -->
+        <section class="rail-section">
+          <h3 class="rail-heading">Analyses</h3>
+          @for (group of panelGroups; track group) {
+            <p class="group-name">{{ group }}</p>
+            <ul class="panel-list">
+              @for (panel of panelsIn(group); track panel.id) {
+                <li>
+                  <button type="button" class="panel-link"
+                          [class.on]="panel.id === activePanelId"
+                          [disabled]="!!blockedReason(panel)"
+                          [title]="blockedReason(panel) ?? panel.description"
+                          (click)="selectPanel(panel)">
+                    <span class="panel-name">{{ panel.label }}</span>
+                    @if (blockedReason(panel)) { <span class="panel-lock">·</span> }
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
         <section class="rail-section">
           <h3 class="rail-heading">Dataset</h3>
           <app-gene-table-selector [showGenomic]="false" [showAssembly]="false"
@@ -127,26 +151,6 @@
           </app-gene-picker>
         </section>
 
-        <section class="rail-section">
-          <h3 class="rail-heading">Analyses</h3>
-          @for (group of panelGroups; track group) {
-            <p class="group-name">{{ group }}</p>
-            <ul class="panel-list">
-              @for (panel of panelsIn(group); track panel.id) {
-                <li>
-                  <button type="button" class="panel-link"
-                          [class.on]="panel.id === activePanelId"
-                          [disabled]="!!blockedReason(panel)"
-                          [title]="blockedReason(panel) ?? panel.description"
-                          (click)="selectPanel(panel)">
-                    <span class="panel-name">{{ panel.label }}</span>
-                    @if (blockedReason(panel)) { <span class="panel-lock">·</span> }
-                  </button>
-                </li>
-              }
-            </ul>
-          }
-        </section>
       </div>
     }
   </aside>
