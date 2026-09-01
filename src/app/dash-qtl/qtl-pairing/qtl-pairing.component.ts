@@ -104,6 +104,8 @@ export class QtlPairingComponent implements OnChanges {
 
   /** How to read the surrounding panels, behind the site's info control. */
   infoOpen = false;
+  /** What the omnibus test is, behind its own. */
+  testInfoOpen = false;
 
   /** The genotype key, drawn in HTML so it can sit outside any one figure. */
   readonly genotypeKey = [0, 1, 2].map(g => ({
@@ -290,6 +292,10 @@ export class QtlPairingComponent implements OnChanges {
 
   toggleInfo(): void {
     this.infoOpen = !this.infoOpen;
+  }
+
+  toggleTestInfo(): void {
+    this.testInfoOpen = !this.testInfoOpen;
   }
 
   toggleAnchorMarginal(): void {

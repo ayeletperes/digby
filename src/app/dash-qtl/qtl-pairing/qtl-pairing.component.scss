@@ -168,12 +168,19 @@
 .tag.shown { background: var(--vdj-teal); color: #fff; }
 
 /* the test and the subject counts, side by side above the figure */
-.pairing-top { display: flex; gap: 0.7rem; align-items: flex-start; flex-wrap: wrap; }
+/* the two cards are one row, so they share a bottom edge. Left to themselves the
+   table is as tall as its anchor count, which is 6 for one conditional and 24 for
+   the other, and the counts card sat well short of it. */
+.pairing-top { display: flex; gap: 0.7rem; align-items: stretch; flex-wrap: wrap; }
 .pairing-top .omnibus-block { flex: 1 1 32rem; min-width: 0; margin-bottom: 0; }
 .counts-card {
   flex: 0 0 14rem; border: 1px solid #e8eaed; border-radius: 8px;
   padding: 0.5rem 0.6rem; background: #fff; min-width: 0;
+  display: flex; flex-direction: column;
 }
+/* the plot is a fixed height, so it centres in whatever the row turns out to be
+   rather than leaving all the slack underneath it */
+.counts-card plotly-plot { margin: auto 0; }
 .counts-card h4 {
   margin: 0 0 0.2rem; font-size: 0.72rem; font-weight: 700;
   letter-spacing: 0.05em; text-transform: uppercase; color: var(--vdj-muted);
@@ -189,8 +196,11 @@
 }
 .figure.one-column { grid-template-columns: minmax(0, 1fr); }
 
-/* the key, in the corner the counts used to occupy */
-.legend-cell { display: flex; align-items: flex-end; padding-bottom: 4.6rem; }
+/* the key, in the corner the counts used to occupy. Top-aligned and stacked: it
+   sat at the foot of a tall cell, which put it below the plot it belongs to and
+   let it wrap to two ragged lines. */
+.legend-cell { display: flex; align-items: flex-start; padding-top: 0.4rem; }
+.legend-cell .genotype-key { flex-direction: column; gap: 0.3rem; }
 .genotype-key {
   list-style: none; margin: 0; padding: 0; display: flex; gap: 0.7rem;
   flex-wrap: wrap; font-size: 0.76rem; color: var(--vdj-body);
@@ -212,3 +222,12 @@
   background: #f8f9fa; border-left: 3px solid var(--vdj-teal); border-radius: 0 4px 4px 0;
   font-size: 0.85rem; color: #3c4043; max-width: 80ch;
 }
+
+/* the anchor list is 6 rows under one conditional and 24 under the other, so it
+   scrolls instead of setting the height of the row it shares */
+.omnibus-scroll { max-height: 15rem; overflow-y: auto; }
+.omnibus-scroll .omnibus-table th {
+  position: sticky; top: 0; background: #fff; z-index: 1;
+  box-shadow: inset 0 -1px 0 #e8eaed;
+}
+.omnibus-block summary .info-button { margin-left: 0.3rem; }

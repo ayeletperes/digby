@@ -35,7 +35,20 @@
         Pairing test, MANOVA of {{ conditional }} on genotype,
         one per {{ anchorSide }} gene
         <em>({{ anchorsWithSignal }} of {{ anchors.length }} significant)</em>
+        <button type="button" class="info-button" [attr.aria-expanded]="testInfoOpen"
+                title="What this test asks"
+                (click)="$event.preventDefault(); toggleTestInfo()">ⓘ</button>
       </summary>
+
+      @if (testInfoOpen) {
+        <p class="caption-body">
+          Pillai's trace on the full partner distribution, so it asks whether the
+          variant moved the pairing <em>at all</em>, not whether it moved any one
+          partner. The cells below are post-hoc: under a row that is not
+          significant they describe, they do not show.
+        </p>
+      }
+      <div class="omnibus-scroll">
       <table class="omnibus-table">
         <tr>
           <th>{{ anchorSide }} gene</th><th class="n">Pillai</th><th class="n">F</th>
@@ -64,12 +77,7 @@
           </tr>
         }
       </table>
-      <p class="note">
-        Pillai's trace on the full partner distribution, so it asks whether
-        the variant moved the pairing <em>at all</em>, not whether it moved
-        any one partner. The cells below are post-hoc: under a row that is
-        not significant they describe, they do not show.
-      </p>
+      </div>
     </details>
 
       <!-- The subject counts sit with the test rather than in the corner of the
