@@ -239,6 +239,19 @@ export class QtlRegionComponent implements OnChanges {
   brushTo: number | null = null;
   /** Set by a drag, so the click that ends it does not also select a mark. */
   private dragged = false;
+  /**
+   * Where the pointer went down, in client pixels.
+   *
+   * The drag threshold has to be measured in pixels, not viewBox units. It was
+   * 3 units of a 1000-unit box, which on a track rendered 1,500 px wide is 4.5
+   * real pixels: a mouse that wobbles two pixels between press and release was
+   * read as a drag, and the click it produced was swallowed. Nothing happened
+   * and nothing said why.
+   */
+  private dragStartX = 0;
+
+  /** About the distance a hand holds still. Below this a press is a click. */
+  private static readonly DRAG_SLOP_PX = 5;
 
   readonly view = VIEW;
   readonly height = TRACK_HEIGHT;
@@ -597,6 +610,7 @@ export class QtlRegionComponent implements OnChanges {
       return;
     }
     this.dragged = false;
+    this.dragStartX = event.clientX;
     this.brushFrom = this.toView(event);
     this.brushTo = this.brushFrom;
     (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
@@ -607,7 +621,7 @@ export class QtlRegionComponent implements OnChanges {
       return;
     }
     this.brushTo = this.toView(event);
-    if (Math.abs(this.brushTo - this.brushFrom) > 3) {
+    if (Math.abs(event.clientX - this.dragStartX) > QtlRegionComponent.DRAG_SLOP_PX) {
       this.dragged = true;
     }
   }
