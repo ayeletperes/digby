@@ -139,8 +139,22 @@
         <strong>Subjects by genotype</strong>, beside the test above, because a
         class of five is not a distribution however tight its box.
         <br><br>
-        <strong>✳</strong> is the pipeline's own call on a cell, carried through
-        rather than recomputed, so these are the same cells the manuscript stars.
+        <strong>Stars in the grid</strong> are the post-hoc test on that one
+        cell: <span class="sig-mark">*</span> p&lt;0.05,
+        <span class="sig-mark">**</span> p&lt;0.01,
+        <span class="sig-mark">***</span> p&lt;0.001, the same cuts the
+        manuscript figure uses, so a cell carries the same number of stars in
+        both. <em>Which</em> cells are starred is the pipeline's own call and is
+        not recomputed here: it is p&lt;0.05 under an omnibus that reached
+        significance. A cell under a row that did not is not evidence, so it is
+        not starred at all, however small its own p-value.
+        <br><br>
+        <strong>A star on an overall panel is a different test.</strong> It is
+        the usage scan, which asks whether the variant changes how much that gene
+        is used at all, and it is one star or none. A gene marked there moves in
+        both, and its pairing result should be read knowing that. Under this
+        variant, {{ partnersMovedInUsage }} of {{ partners.length }}
+        {{ partnerSide }} genes move in usage.
       </p>
     }
 
@@ -176,6 +190,15 @@
                   @if (r.marks.length) {
                     · ✳ {{ r.marks.length }} of {{ partners.length }}
                   }
+                  @if (usageOf(r.anchor); as u) {
+                    · overall use of {{ r.label }}
+                    @if (u.significant) {
+                      <span class="tag moved">also moves, p
+                        {{ u.p_value?.toExponential(2) }}</span>
+                    } @else {
+                      <span class="tag">does not move</span>
+                    }
+                  }
                 </span>
               }
             </div>
@@ -191,6 +214,11 @@
                 @for (k of genotypeKey; track k.label) {
                   <li><i class="key-swatch" [style.border-color]="k.colour"></i>{{ k.label }}</li>
                 }
+                <li class="key-sep">
+                  <span class="sig-mark">*</span> p&lt;0.05
+                  <span class="sig-mark">**</span> p&lt;0.01
+                  <span class="sig-mark">***</span> p&lt;0.001
+                </li>
               </ul>
             </div>
           }
@@ -206,6 +234,11 @@
           @for (k of genotypeKey; track k.label) {
             <li><i class="key-swatch" [style.border-color]="k.colour"></i>{{ k.label }}</li>
           }
+          <li class="key-sep">
+            <span class="sig-mark">*</span> p&lt;0.05
+            <span class="sig-mark">**</span> p&lt;0.01
+            <span class="sig-mark">***</span> p&lt;0.001
+          </li>
         </ul>
       }
 

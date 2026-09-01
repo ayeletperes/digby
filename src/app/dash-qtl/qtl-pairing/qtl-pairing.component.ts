@@ -34,6 +34,37 @@ import { ExportTable, exportButtons } from '../../shared/plot-export/plot-export
 const GENOTYPE_LABEL: Record<number, string> = { 0: '0/0', 1: '0/1', 2: '1/1' };
 const GENOTYPE_COLOUR: Record<number, string> = { 0: '#2a78d6', 1: '#e34948', 2: '#eda100' };
 
+/**
+ * Asterisks by p-value, on the manuscript's own cuts.
+ *
+ * `SIG_CUTS <- c(0, 0.001, 0.01, 0.05, Inf)` against `c("***", "**", "*", "ns")`
+ * in igqtl_variant_panel.R, so a cell here carries the same number of stars it
+ * carries in the printed figure.
+ *
+ * WHICH cells are starred is a separate question from how many stars they get,
+ * and it is not decided here: that is the pipeline's `marked`, which was checked
+ * against the data and is exactly "p < 0.05 and the omnibus is significant"
+ * (42 of 42 and 12 of 12 under significant omnibuses for igh_37391, none of the
+ * 33 and 4 under the ones that are not). A post-hoc cell under an omnibus that
+ * did not reach significance is not evidence, so it is not starred at all.
+ */
+const SIG_CUTS: [number, string][] = [[0.001, '***'], [0.01, '**'], [0.05, '*']];
+
+/** The manuscript's star colour, so the two figures read as one convention. */
+const SIG_COLOUR = '#009E73';
+
+function stars(p: number | null | undefined): string {
+  if (p === null || p === undefined) {
+    return '*';       // marked, but the p did not travel: say something, not nothing
+  }
+  for (const [cut, symbol] of SIG_CUTS) {
+    if (p < cut) {
+      return symbol;
+    }
+  }
+  return '*';
+}
+
 /** More than three rows and each is too short to read a box off. */
 const MAX_ANCHORS = 3;
 
@@ -50,6 +81,12 @@ interface Mark {
   p_value: number | null; delta_mean: number | null; n_low: number | null; n_high: number | null;
   omnibus_significant: boolean;
 }
+/** The usage scan's verdict on one gene, which is a different question. */
+interface Usage {
+  beta: number | null; p_value: number | null; neglog10_p: number | null;
+  significant: boolean; n: number | null; min_genotype_group: number | null;
+}
+
 interface Omnibus {
   n: number; pillai: number; f_stat: number; p_value: number; neglog10_p: number;
   min_genotype_group: number | null; significant: boolean;
@@ -124,6 +161,15 @@ export class QtlPairingComponent implements OnChanges {
   omnibus: Record<string, Omnibus> = {};
   marks: Mark[] = [];
   genotypes: { genotype: number; n: number }[] = [];
+  /**
+   * The usage scan, keyed by the same ASC names the pairing scan uses.
+   *
+   * Drawn on the marginal panels because those panels ask the usage question:
+   * does the variant change how much a gene is used, as against who it pairs
+   * with. Marked with a triangle and not the cell test's asterisk, because the
+   * two are different tests and one glyph for both would read as one.
+   */
+  usage: Record<string, Usage> = {};
 
   rows: AnchorRow[] = [];
   countsData: unknown[] = [];
@@ -327,6 +373,15 @@ export class QtlPairingComponent implements OnChanges {
       .join('/');
   }
 
+  usageOf(gene: string): Usage | null {
+    return this.usage[gene] ?? null;
+  }
+
+  /** How many partners the usage scan also calls significant, for the caption. */
+  get partnersMovedInUsage(): number {
+    return this.partners.filter(p => this.usage[p]?.significant).length;
+  }
+
   omnibusOf(anchor: string): Omnibus | null {
     return this.omnibus[anchor] ?? null;
   }
@@ -366,6 +421,7 @@ export class QtlPairingComponent implements OnChanges {
         this.omnibus = result.omnibus ?? {};
         this.marks = result.marks ?? [];
         this.genotypes = result.genotypes ?? [];
+        this.usage = result.usage ?? {};
         // open the strongest anchor, which is the one the scan is about
         const best = [...this.anchors].sort(
           (a, b) => (this.omnibus[b]?.neglog10_p ?? 0) - (this.omnibus[a]?.neglog10_p ?? 0));
@@ -454,10 +510,11 @@ export class QtlPairingComponent implements OnChanges {
           type: 'scatter', mode: 'text', showlegend: false,
           x: starred.map(m => this.short(m.partner)),
           y: starred.map(() => top * 1.03),
-          text: starred.map(() => '✳'),
-          textfont: { size: 12, color: '#188080' },
+          text: starred.map(m => stars(m.p_value)),
+          textfont: { size: 12, color: SIG_COLOUR },
           hovertext: starred.map(m =>
-            `${this.short(m.partner)} · p ${m.p_value?.toExponential(2) ?? '–'}`
+            `${this.short(m.partner)} ${stars(m.p_value)} · `
+            + `cell p ${m.p_value?.toExponential(2) ?? '–'}`
             + `<br>n ${m.n_low ?? '?'} vs ${m.n_high ?? '?'}`),
           hovertemplate: '%{hovertext}<extra></extra>',
         });
@@ -507,6 +564,19 @@ export class QtlPairingComponent implements OnChanges {
           hovertemplate: `${GENOTYPE_LABEL[gt]}<br>median %{median:.4f}<extra></extra>`,
         };
       });
+      const anchorUsage = this.usage[anchor];
+      if (anchorUsage?.significant) {
+        const top = Math.max(0.0001, ...marg.map((m: any) => m.box.max));
+        marginalData.push({
+          type: 'scatter', mode: 'text', showlegend: false,
+          x: [GENOTYPE_LABEL[1]], y: [top * 1.04], text: ['*'],
+          textfont: { size: 15, color: SIG_COLOUR },
+          hovertext: [`overall use of ${label} moves with genotype: `
+                      + `p ${anchorUsage.p_value?.toExponential(2) ?? '?'}`],
+          hovertemplate: '%{hovertext}<extra></extra>',
+        });
+      }
+
       const marginalLayout: Record<string, unknown> = {
         height: ROW_HEIGHT,
         margin: { l: 46, r: 10, t: 8, b: 4 },
@@ -543,6 +613,23 @@ export class QtlPairingComponent implements OnChanges {
           + 'median %{median:.4f}<extra></extra>',
       };
     });
+    const movedPartners = this.partners.filter(p => this.usage[p]?.significant);
+    if (movedPartners.length) {
+      const top = Math.max(0.0001,
+        ...pm.filter((m: any) => m.box).map((m: any) => m.box.max));
+      this.partnerData = [...this.partnerData, {
+        type: 'scatter', mode: 'text', showlegend: false,
+        x: movedPartners.map(p => this.short(p)),
+        y: movedPartners.map(() => top * 1.04),
+        text: movedPartners.map(() => '*'),
+        textfont: { size: 15, color: SIG_COLOUR },
+        hovertext: movedPartners.map(p =>
+          `overall use of ${this.short(p)} moves with genotype: `
+          + `p ${this.usage[p]?.p_value?.toExponential(2) ?? '?'}`),
+        hovertemplate: '%{hovertext}<extra></extra>',
+      }];
+    }
+
     this.partnerLayout = {
       height: ROW_HEIGHT + 70,
       margin: { ...GRID_MARGIN, b: 78 },
