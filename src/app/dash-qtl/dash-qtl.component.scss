@@ -118,3 +118,13 @@
 .segment-chip.on { background: var(--vdj-teal); border-color: var(--vdj-teal); color: #fff; }
 .segment-chip.clear { font-style: italic; }
 .asc-filter { margin-bottom: 0.35rem; }
+
+.canvas-title { display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap; }
+.panel-of { font-weight: 400; color: #5f6368; }
+.all-analyses {
+  margin-left: auto; border: 1px solid var(--vdj-teal-border); background: #fff;
+  color: var(--vdj-teal); border-radius: 999px; padding: 0.05rem 0.7rem;
+  font-size: 0.78rem; cursor: pointer;
+}
+.all-analyses:hover { background: var(--vdj-teal-wash); }
+.panel-link.home { font-weight: 500; }

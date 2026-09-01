@@ -43,6 +43,12 @@
           <h3 class="rail-heading">Analysis</h3>
           <ul class="panel-list">
             <li>
+              <button type="button" class="panel-link home" [class.on]="atGallery"
+                      title="All analyses" (click)="showGallery()">
+                <span class="panel-name">Home</span>
+              </button>
+            </li>
+            <li>
               <button type="button" class="panel-link" [class.on]="view === 'summary'"
                       title="Every significant variant, by segment and location"
                       (click)="showView('summary')">
@@ -71,13 +77,15 @@
               </button>
             </li>
           </ul>
-          <p class="rail-note">{{ viewNote }}</p>
+          @if (!atGallery) {
+            <p class="rail-note">{{ viewNote }}</p>
+          }
         </section>
 
         <!-- The open analysis's own subject, in the shape its question needs:
              ~35 genes are worth browsing, thousands of variants must be typed. -->
         <section class="rail-section"
-                 [class.hidden]="view === 'pairing' || view === 'summary'">
+                 [class.hidden]="atGallery || view === 'pairing' || view === 'summary'">
           @if (view === 'gene') {
             <h3 class="rail-heading">Gene</h3>
 
@@ -148,7 +156,15 @@
 
   <main class="qtl-canvas">
     <header class="canvas-head">
-      <h2>Gene usage QTL</h2>
+      <div class="canvas-title">
+        <h2>Gene usage QTL@if (!atGallery) {<span class="panel-of">&nbsp;·
+          {{ openPanelLabel }}</span>}</h2>
+        @if (!atGallery) {
+          <button type="button" class="all-analyses" (click)="showGallery()">
+            All analyses
+          </button>
+        }
+      </div>
       <p class="canvas-sub">
         Where variation in the locus explains how much each gene is used.
         @if (selection.species && selection.locus) {
@@ -159,6 +175,13 @@
 
     @if (error) {
       <p class="qtl-status error">{{ error }}</p>
+    } @else if (atGallery) {
+      <app-panel-gallery [panels]="galleryPanels" [groups]="galleryGroups"
+                         [species]="selection.species ?? ''"
+                         [locus]="selection.locus ?? ''"
+                         [art]="galleryArt" [blocked]="galleryBlocked"
+                         (opened)="openFromGallery($event)">
+      </app-panel-gallery>
     } @else if (view === 'summary') {
       <app-qtl-summary [species]="selection.species" [locus]="selection.locus"
                        (genePicked)="onSummaryGene($event)"

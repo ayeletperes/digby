@@ -13,6 +13,8 @@ import { QtlVariantLookupComponent } from './qtl-variant-lookup/qtl-variant-look
 import { QtlRegionComponent } from './qtl-region/qtl-region.component';
 import { QtlPairingComponent } from './qtl-pairing/qtl-pairing.component';
 import { QtlSummaryComponent } from './qtl-summary/qtl-summary.component';
+import { GalleryPanel, PanelGalleryComponent, thumb }
+  from '../shared/panel-gallery/panel-gallery.component';
 import { QtlAsc, QtlSelection } from '../shared/models/qtl-selection.model';
 import { ascDisplayName } from '../shared/models/gene-naming';
 
@@ -31,7 +33,7 @@ import { ascDisplayName } from '../shared/models/gene-naming';
   standalone: true,
   imports: [CommonModule, FormsModule, QtlManhattanComponent, QtlVariantComponent,
             QtlSearchComponent, QtlVariantLookupComponent, QtlRegionComponent,
-            QtlPairingComponent, QtlSummaryComponent],
+            QtlPairingComponent, QtlSummaryComponent, PanelGalleryComponent],
 })
 export class DashQtlComponent implements OnInit, OnDestroy {
   /** An ASC written as a gene name; IGH's D clusters already carry the locus. */
@@ -53,6 +55,92 @@ export class DashQtlComponent implements OnInit, OnDestroy {
    * there is exactly one place to make a choice at any moment.
    */
   view: 'gene' | 'variant' | 'pairing' | 'summary' = 'summary';
+
+  /**
+   * True while the cards are up, which is whenever the URL names no analysis.
+   *
+   * A deep link, a drill from another panel and the browser's back button all
+   * name one, so the gallery never stands between a reader and the analysis they
+   * asked for. `view` keeps its own default so that leaving the cards lands
+   * somewhere sensible rather than nowhere.
+   */
+  atGallery = true;
+
+  /** The analyses as cards. The same four the rail lists, in the same order. */
+  readonly galleryPanels: GalleryPanel[] = [
+    { id: 'summary', group: 'Overview', label: 'Summary of hits',
+      description: 'Every significant variant in the run at once, by which '
+                 + "segment's genes it explains and what it sits in." },
+    { id: 'gene', group: 'One at a time', label: 'Start from a gene',
+      description: 'Pick a gene and see every variant tested against its usage, '
+                 + 'along the locus.' },
+    { id: 'variant', group: 'One at a time', label: 'Start from a variant',
+      description: 'Pick a variant and see every gene whose usage it was tested '
+                 + 'against, and what it sits in.' },
+    { id: 'pairing', group: 'One at a time', label: 'Gene pairing',
+      description: 'Whether a variant moves which partner a gene recombines '
+                 + 'with, in either direction. IGH only.' },
+  ];
+
+  readonly galleryGroups = ['Overview', 'One at a time'];
+
+  /**
+   * Drawings for the four cards.
+   *
+   * Built with the shared `thumb` rather than added to the reference
+   * dashboard's map, so the two dashboards do not share a file to collide in.
+   */
+  readonly galleryArt: Record<string, string> = {
+    summary: thumb('<rect x="14" y="34" width="14" height="30" fill="var(--vdj-teal,#188080)"/>'
+      + '<rect x="32" y="20" width="14" height="44" fill="#8b6bb1"/>'
+      + '<rect x="54" y="44" width="14" height="20" fill="#e8a33d"/>'
+      + '<rect x="72" y="14" width="14" height="50" fill="#8b6bb1"/>'
+      + '<rect x="90" y="50" width="14" height="14" fill="#35a67c"/>'),
+    gene: thumb('<line x1="10" y1="52" x2="110" y2="52" stroke="rgba(24,128,128,0.28)"/>'
+      + '<circle cx="24" cy="44" r="3" fill="rgba(24,128,128,0.28)"/>'
+      + '<circle cx="40" cy="46" r="3" fill="rgba(24,128,128,0.28)"/>'
+      + '<circle cx="56" cy="20" r="4" fill="#d62839"/>'
+      + '<circle cx="62" cy="28" r="4" fill="#d62839"/>'
+      + '<circle cx="78" cy="42" r="3" fill="rgba(24,128,128,0.28)"/>'
+      + '<circle cx="96" cy="47" r="3" fill="rgba(24,128,128,0.28)"/>'),
+    variant: thumb('<line x1="60" y1="10" x2="60" y2="62" stroke="var(--vdj-teal,#188080)"'
+      + ' stroke-dasharray="3 3"/><circle cx="60" cy="16" r="5" fill="#fff"'
+      + ' stroke="#202124" stroke-width="2"/>'
+      + '<rect x="18" y="42" width="26" height="9" fill="#188080"/>'
+      + '<rect x="76" y="42" width="26" height="9" fill="#188080"/>'
+      + '<rect x="46" y="42" width="8" height="9" fill="#e08a1e"/>'),
+    pairing: thumb('<rect x="16" y="18" width="30" height="9" fill="#2a78d6"/>'
+      + '<rect x="16" y="32" width="30" height="9" fill="#e34948"/>'
+      + '<rect x="16" y="46" width="30" height="9" fill="#eda100"/>'
+      + '<rect x="74" y="18" width="30" height="9" fill="#2a78d6"/>'
+      + '<rect x="74" y="32" width="30" height="9" fill="#e34948"/>'
+      + '<rect x="74" y="46" width="30" height="9" fill="#eda100"/>'
+      + '<line x1="46" y1="22" x2="74" y2="50" stroke="rgba(24,128,128,0.5)"/>'
+      + '<line x1="46" y1="50" x2="74" y2="22" stroke="rgba(24,128,128,0.5)"/>'),
+  };
+
+  /** Why a card cannot be opened. Only pairing has a reason, and only off IGH. */
+  readonly galleryBlocked = (panel: GalleryPanel): string | null =>
+    panel.id === 'pairing' && this.selection.locus !== 'IGH'
+      ? `No partner-pairing scan has been run for ${this.selection.locus ?? 'this locus'}.`
+        + ' Only IGH has one loaded.'
+      : null;
+
+  openFromGallery(panel: GalleryPanel): void {
+    this.atGallery = false;
+    this.showView(panel.id as 'gene' | 'variant' | 'pairing' | 'summary');
+  }
+
+  /** Back to the cards, which is the one state the URL says nothing about. */
+  showGallery(): void {
+    this.atGallery = true;
+    this.writeToUrl();
+  }
+
+  /** The open analysis, for the title beside the way back. */
+  get openPanelLabel(): string {
+    return this.galleryPanels.find(p => p.id === this.view)?.label ?? '';
+  }
 
   /**
    * The other half of the pair being plotted, or absent when nothing is.
@@ -376,6 +464,7 @@ export class DashQtlComponent implements OnInit, OnDestroy {
    * tab it was opened from.
    */
   showView(view: 'gene' | 'variant' | 'pairing' | 'summary'): void {
+    this.atGallery = false;
     this.view = view;
     this.plot = undefined;
     this.pointAsc = undefined;
@@ -461,7 +550,7 @@ export class DashQtlComponent implements OnInit, OnDestroy {
         locus: this.selection.locus ?? null,
         asc: this.selection.asc ?? null,
         variant: this.selection.variant ?? null,
-        view: this.view === 'summary' ? null : this.view,
+        view: this.atGallery ? null : this.view,
         plot: this.plot ?? null,
       },
       queryParamsHandling: 'merge',
@@ -471,10 +560,14 @@ export class DashQtlComponent implements OnInit, OnDestroy {
 
   private restoreFromUrl(): void {
     const params = this.route.snapshot.queryParamMap;
-    // the summary is the landing view, so it is the one the URL leaves unsaid
+    // The cards are up when the URL names no analysis, so a reload or a shared
+    // link comes back to them. Writing `view` while they are up would take them
+    // straight down again, since writeToUrl re-enters here.
     const asked = params.get('view');
-    this.view = asked === 'variant' || asked === 'pairing' || asked === 'gene'
-      ? asked : 'summary';
+    const known = asked === 'variant' || asked === 'pairing'
+                  || asked === 'gene' || asked === 'summary';
+    this.atGallery = !known;
+    this.view = known ? asked as typeof this.view : 'summary';
     this.plot = params.get('plot') ?? undefined;
     this.selection = {
       species: params.get('species') ?? undefined,
