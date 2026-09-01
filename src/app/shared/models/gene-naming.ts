@@ -74,6 +74,20 @@ function suffixToken(suffix: string): string {
 }
 
 
+/**
+ * How many positions an allele's name says it differs from its stem allele.
+ *
+ * The split is the first _ AFTER the allele, for the same reason the shortener
+ * splits there: a gene name can contain underscores. IGHV4-NL_1*01 has no
+ * suffix at all and differs at nothing, but splitting on every underscore
+ * counts it as one.
+ */
+export function nameDifferences(name: string): number {
+  const star = (name ?? '').indexOf('*');
+  const cut = (name ?? '').indexOf('_', star >= 0 ? star + 1 : 0);
+  return cut < 0 ? 0 : name.slice(cut + 1).split('_').length;
+}
+
 /** One name, with no knowledge of its neighbours - use only where a clash is impossible. */
 export function shortenAlleleName(name: string, limit = NAME_LIMIT): string {
   if (!name || name.length <= limit) {

@@ -8,10 +8,12 @@ import { Type } from '@angular/core';
  * derived from this list, so nothing else needs editing.
  *
  * Narrative documentation (how-tos, tutorials, news) is NOT listed here. It
- * lives in WordPress and is fetched by the hub through WordpressService. Only
- * pages that quote numbers out of the loaded database belong in this registry,
- * because those have to be rendered from the API to stay correct across a
- * reload.
+ * lives in WordPress and is fetched by the hub through WordpressService. What
+ * belongs in this registry is documentation that has to move with the code:
+ * pages quoting numbers out of the loaded database, which have to be rendered
+ * from the API to stay correct across a reload, and pages describing what the
+ * application computes, which have to be edited in the same commit as the
+ * computation. `fromDatabase` distinguishes the two on the hub.
  */
 export interface DocsPage {
   /**
@@ -25,6 +27,12 @@ export interface DocsPage {
   group: string;
   /** One line describing the page, shown on its hub card. */
   summary: string;
+  /**
+   * True when the page renders numbers out of the loaded database, which is
+   * what the hub card's tag claims on its behalf. A page of static prose
+   * leaves it unset rather than making that claim.
+   */
+  fromDatabase?: boolean;
   load: () => Promise<Type<unknown>>;
 }
 
@@ -39,8 +47,19 @@ export const DOCS_PAGES: DocsPage[] = [
     summary: 'How the guQTL scan is run and how to read its output: the usage ' +
              'phenotype, the per-ASC significance threshold, and what the scan ' +
              'deliberately does not claim.',
+    fromDatabase: true,
     load: () => import('./guqtl-methods/guqtl-methods.component')
       .then(m => m.GuqtlMethodsComponent),
+  },
+  {
+    slug: 'explorer-guide',
+    group: 'Methods',
+    title: 'Repertoire & Genome Explorer: guide',
+    summary: 'What each of the eight analyses computes, how to read it, and ' +
+             'what it does not claim: the shared selection, the two cohorts, ' +
+             'the distances behind the clustering, and the shortened labels.',
+    load: () => import('./explorer-guide/explorer-guide.component')
+      .then(m => m.ExplorerGuideComponent),
   },
 ];
 

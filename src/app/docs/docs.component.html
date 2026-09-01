@@ -2,10 +2,10 @@
   <header class="docs-head">
     <h1 id="documentation">Documentation</h1>
     <p class="lede">
-      Reference material for VDJbase. Method pages are rendered from the loaded
-      database, so the numbers they quote are those of the data currently
-      served. Guides and tutorials are maintained separately and open on the
-      VDJbase WordPress site.
+      Reference material for VDJbase. A page marked as rendered from the
+      database quotes numbers from the data currently served, rather than
+      transcribed ones. Guides and tutorials are maintained separately and open
+      on the VDJbase WordPress site.
     </p>
   </header>
 
@@ -17,7 +17,9 @@
           <a class="doc-card" [routerLink]="['/docs', page.slug]">
             <h3>{{ page.title }}</h3>
             <p>{{ page.summary }}</p>
-            <span class="card-tag">Rendered from the database</span>
+            @if (page.fromDatabase) {
+              <span class="card-tag">Rendered from the database</span>
+            }
           </a>
         }
       </div>

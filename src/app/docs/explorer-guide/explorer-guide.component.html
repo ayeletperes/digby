@@ -1,0 +1,716 @@
+<article class="doc">
+
+  <header class="doc-head">
+    <p class="eyebrow">Guide</p>
+    <h1 id="explorer-guide">Repertoire &amp; Genome Explorer</h1>
+    <p class="lede">
+      The Explorer puts the two VDJbase databases, genomic and AIRR-seq, behind
+      one selection and eight analyses of it. This page describes what each
+      analysis computes, how to read it, and what it deliberately does not
+      claim. It is a companion to the short note behind the &#9432; control
+      beside every panel title, not a replacement for it.
+    </p>
+    <p class="note">
+      The Explorer is at <a routerLink="/dash_refbook">/dash_refbook</a>.
+    </p>
+  </header>
+
+  <section>
+    <h2 id="shape">How the page is arranged</h2>
+    <p>
+      A rail on the left and one large canvas on the right. The rail lists the
+      analyses first and the filters below them; the canvas holds whichever
+      analysis is open. Arriving without naming a panel shows a gallery of
+      cards instead, one per analysis, and <strong>Home</strong> at the top of
+      the rail goes back to it.
+    </p>
+    <p>
+      <strong>The whole selection lives in the query string.</strong> Species,
+      locus, segment, databases, projects, samples, genes, the drilled allele
+      and the open panel are all in the URL, so a view can be linked to and the
+      browser's back button steps back through an exploration rather than
+      leaving the page.
+    </p>
+  </section>
+
+  <section>
+    <h2 id="rail">The rail: one selection, shared by every analysis</h2>
+    <p>
+      The filters are not properties of the analysis you happen to have open.
+      There is one selection, and every panel is drawn from it, which is what
+      makes moving between panels a change of view rather than a change of
+      question. A control that does not reach the panel currently open is
+      <em>dimmed</em> and carries the reason, rather than being disabled:
+      choosing a gene while looking at the locus map is a reasonable thing to
+      do, and the other panels will use it.
+    </p>
+
+    <h3 id="rail-dataset">Dataset</h3>
+    <p>
+      Species and locus, then two more controls.
+    </p>
+    <dl>
+      <dt>Segment</dt>
+      <dd>
+        V, D, J or C, with the number of genes in each. The segment is read
+        from the fourth character of the gene name (<code>IGHV1-2</code> gives
+        V); there is no separate field for it in the API. Choosing a segment
+        narrows the gene list and starts the new segment with one gene
+        selected, the way a new locus starts.
+      </dd>
+      <dt>Data</dt>
+      <dd>
+        Which of the two databases to read, genomic or AIRR-seq or both. A
+        database this locus does not hold is disabled with that reason, and at
+        least one must stay on. Turning one off changes which projects and
+        samples exist, so those lists are refetched.
+      </dd>
+    </dl>
+
+    <h3 id="rail-samples">Samples</h3>
+    <p>
+      Project and Sample, both multi-select, and both grouped under the
+      database that holds them. This grouping matters: the two databases name
+      entirely different studies, so <strong>a selection made in one narrows
+      only that one</strong>. A database with none of the selection is left
+      unfiltered rather than reporting zero, and the panel says which databases
+      were actually narrowed in the note above its figure.
+    </p>
+
+    <h3 id="rail-seen-in">Seen in</h3>
+    <p>
+      Two sliders, one per database, setting a minimum number of samples an
+      allele must be seen in. A slider appears only for a database being read,
+      and only when the selected genes reach more than one sample in it.
+    </p>
+    <ul>
+      <li>
+        The range is taken from the data, not fixed, so it spans exactly what
+        the selected genes actually reach. Changing gene rebuilds it and the
+        thresholds are clamped to the new maximum rather than silently
+        excluding everything.
+      </li>
+      <li>
+        The handle moves between stops rather than over the raw range. Counts
+        are heavily skewed, most alleles sitting in one or two samples while a
+        few reach several hundred, so every value up to 12 gets its own detent
+        and the long tail is compressed onto a ladder.
+      </li>
+      <li>
+        The threshold resolves to a list of allele names and travels as the
+        <code>alleles</code> parameter, so every panel honours it, including
+        the alignment, which is rendered on the server.
+      </li>
+      <li>
+        If nothing clears the thresholds the canvas says so and offers a reset.
+        An empty allele list on the wire would read as "no filter" and show
+        everything, which would contradict the rail.
+      </li>
+    </ul>
+
+    <h3 id="rail-genes">Genes</h3>
+    <p>
+      Search and family grouping, because a flat list does not work when
+      rhesus IGH holds hundreds of genes in one locus. <strong>At most three
+      genes</strong> can be selected: each one is drawn as its own facet, its
+      own component instance and its own request, and beyond a few the faceted
+      view stops being readable. Each facet heading carries a
+      <em>focus</em> control that opens that gene on its own.
+    </p>
+
+    <h3 id="rail-chips">Chips</h3>
+    <p>
+      Every active filter appears as a removable chip above the figure. Species
+      and locus are not chips: they are the dataset being looked at rather than
+      something narrowing it, and removing them would leave nothing to show.
+    </p>
+  </section>
+
+  <section>
+    <h2 id="panels">The eight analyses</h2>
+    <p>
+      Grouped in the rail as Locus, Reference and Detail. A panel that needs a
+      database the locus does not hold, or that you have switched off, is
+      listed with the reason rather than hidden.
+    </p>
+
+    <h3 id="panel-sunburst">Locus map</h3>
+    <div class="panel-block">
+      <p class="needs">Whole locus. Ignores the gene, sample and Data filters.</p>
+      <p>
+        <strong>What it shows.</strong> Every allele in the locus as nested
+        rings: chain, gene type, subgroup, gene, allele, from the centre out.
+        An arc is as wide as the number of alleles beneath it. Four rings are
+        drawn at once and drilling into a gene reveals its alleles, because at
+        full locus width an allele arc is about a pixel across and no label
+        fits in one.
+      </p>
+      <p>
+        <strong>How to read it.</strong> Click a ring to drill in, click the
+        same ring again to step back out, click an allele to open it in the
+        Allele panel. The breadcrumb above the figure shows where you are and
+        Reset returns to the whole locus. Drilled to a gene, the map offers
+        <em>Explore &lt;gene&gt; &rarr;</em>, which selects that gene and opens
+        the Overview. Colour marks the drill position, not anything about the
+        data. Hovering an allele says which databases hold it and whether it is
+        in the baseline reference set; hovering a branch counts the alleles
+        beneath it, how many are not in the baseline set, and how many are held
+        in each database.
+      </p>
+      <p>
+        <strong>What it does not claim.</strong> Every number on this figure
+        counts <em>alleles</em>, never samples or subjects. Samples cannot be
+        added across alleles without counting the same subject many times,
+        whereas an allele belongs to exactly one node at every level. The ring
+        is also not a physical map: arcs are ordered V, D, J, C and then by
+        gene name read numerically, not by position in the locus.
+      </p>
+      <p>
+        This is the reference content of the locus, so it is drawn from both
+        databases whatever the Data toggle says, and no gene, sample or
+        "seen in" filter narrows it. Pseudogenes and orphons (names containing
+        <code>/OR</code>) are excluded, and on the genomic side only sequences
+        recorded as Functional or ORF are taken.
+      </p>
+    </div>
+
+    <h3 id="panel-overview">Overview</h3>
+    <div class="panel-block">
+      <p class="needs">One gene. Uses every filter.</p>
+      <p>
+        <strong>What it shows.</strong> Every allele recorded for the gene and
+        how many samples each was seen in, as one horizontal bar per database
+        side by side. An allele held in both databases has two bars, and their
+        heights can differ because the databases hold different samples. A
+        database you have not selected is omitted rather than drawn empty, and
+        a genuine zero draws no bar at all rather than a floor-height one.
+      </p>
+      <p>
+        Above the chart: the number of alleles, how many are in the baseline
+        reference set, how many are novel, and a box giving the size of each
+        cohort. That box states whether any sample was sequenced both ways, and
+        opens a per-project breakdown of where the samples come from.
+      </p>
+      <p>
+        <strong>How to read it.</strong> Rows sort by most carried or by name.
+        Clicking a bar opens that allele. The counts are of samples carrying
+        the allele, counted from the sample tables at request time so that they
+        agree with the filters and with the carrier figures elsewhere; they are
+        not the whole-dataset totals written when the database was built.
+      </p>
+      <p>
+        <strong>The Both bar.</strong> Where it appears, it is a true
+        intersection: samples that carry the allele in the genomic
+        <em>and</em> the AIRR-seq database. That is only possible where the
+        same subject is in both cohorts. In human the two cohorts are disjoint,
+        so Both is necessarily zero and the series is not drawn at all; the
+        cohort box says "Separate cohorts, no overlap". In rhesus macaque the
+        same animals were sequenced both ways, so Both is meaningful there.
+      </p>
+      <p>
+        <strong>Novel and baseline.</strong> "Novel" means not in the baseline
+        reference set, and nothing more; baseline is simply the remainder.
+        Deletion markers, the <code>*Del</code> names, are counted as baseline
+        alleles even though no sample carries a sequence for them. They are
+        genotype states rather than alleles, and they dominate the rows that no
+        sample carries. The toolbar says how many such rows there are and
+        points at the "seen in" sliders as the way to drop them.
+      </p>
+    </div>
+
+    <h3 id="panel-names">Allele names</h3>
+    <div class="panel-block">
+      <p class="needs">One gene.</p>
+      <p>
+        <strong>What it shows.</strong> Every allele of the gene with its full
+        name, the label the plots draw it under, and the number of germline
+        substitutions its name records. This is the key to the shortened labels
+        on every other figure. Clicking a name opens that allele.
+      </p>
+      <p>
+        <strong>How to read it.</strong> See
+        <a href="#labels">Allele labels</a> below for the rule. A dash in the
+        "Shown as" column means the name is short enough to be drawn in full.
+      </p>
+      <p>
+        <strong>What it does not claim.</strong> The Differences column counts
+        the substitutions written into the allele's name. Those are
+        <strong>germline</strong> differences from a reference allele. They are
+        not somatic hypermutation, and nothing in the Explorer measures somatic
+        hypermutation.
+      </p>
+    </div>
+
+    <h3 id="panel-alignment">Alignment</h3>
+    <div class="panel-block">
+      <p class="needs">One gene.</p>
+      <p>
+        <strong>What it shows.</strong> Every allele of the gene aligned
+        against the first one alphabetically, which acts as the reference row.
+        Dashes mean the codon matches the reference, lower-case letters mark a
+        substitution, and dots are IMGT alignment gaps. Numbers above the rows
+        are codon positions and, for V genes, the CDR regions are marked.
+      </p>
+      <p>
+        <strong>How to read it.</strong> Codons per line is adjustable, and the
+        text can be copied or downloaded as a plain text file. Names longer
+        than 26 characters are shortened, with a legend above the alignment
+        giving the originals: the format indents every sequence past the
+        longest name, and a single long name would push the sequences hundreds
+        of columns to the right.
+      </p>
+      <p>
+        <strong>What it does not claim.</strong> Drilling into a single allele
+        keeps the gene's first allele as the reference row, since a lone
+        sequence has nothing to be compared against. Rows with no stored
+        sequence, and the <code>*Del</code> deletion markers, are not in the
+        alignment at all.
+      </p>
+      <p>
+        The alignment is rendered on the server by
+        <code>receptor_utils.sequence_alignment</code> rather than
+        reimplemented in the browser, so it cannot drift from the reference
+        implementation. It is memoised per database build.
+      </p>
+    </div>
+
+    <h3 id="panel-tree">Group clustering</h3>
+    <div class="panel-block">
+      <p class="needs">One gene.</p>
+      <p>
+        <strong>What it shows.</strong> The alleles of the gene grouped by how
+        much their sequences differ, drawn as a dendrogram with the distance on
+        the x axis, labelled "Distance (nt)".
+      </p>
+      <p class="callout">
+        <strong>This is not a phylogenetic tree.</strong> A tree claims
+        descent. This groups alleles by sequence similarity and says nothing
+        about ancestry: two alleles one position apart group closely whether or
+        not one came from the other.
+      </p>
+      <p>
+        <strong>Complete linkage.</strong> Two groups join at the distance of
+        their <em>furthest</em> pair. So where a join sits on the axis is that
+        distance, and it is not each allele's distance to the rest of its
+        group.
+      </p>
+      <p>
+        <strong>Two different distances, and the note under the figure says
+        which was used.</strong>
+      </p>
+      <ul>
+        <li>
+          <strong>V.</strong> V alleles are stored IMGT-gapped, so the columns
+          correspond by construction and the distance is a count of the columns
+          at which two alleles differ. A terminal gap is unrecorded sequence,
+          not a difference: an allele recorded only from position 20 onwards
+          must not read as 19 substitutions against a full-length one. Internal
+          gaps are kept, because those are real indels. A novel allele carrying
+          an insertion or deletion shifts every later column, so those rows are
+          put back into the gene's own column frame and the inserted columns,
+          which the frame cannot represent, are added back by their length. The
+          note also says how many of the gapped positions actually vary between
+          these alleles.
+        </li>
+        <li>
+          <strong>D and J.</strong> These have no gapped form and differ in
+          length, so each pair is aligned end to end with a Needleman-Wunsch
+          global alignment and the distance is an edit distance: an inserted or
+          deleted base counts the same as a substituted one. End gaps are
+          penalised here, unlike the V path, because nothing distinguishes an
+          unrecorded end from a genuinely shorter allele, and free end gaps
+          would score every pair as identical.
+        </li>
+      </ul>
+      <p>
+        <strong>How to read it.</strong> Clicking a leaf marker opens that
+        allele; clicking a branch does nothing. Alleles that are identical over
+        the compared positions stay as separate leaves joined at distance zero
+        and are also listed above the figure, so no allele silently disappears.
+        With only one allele in the selection there is nothing to cluster and
+        the panel says so.
+      </p>
+      <p>
+        The downloads are the linkage itself, not the drawing: a table in
+        scipy's <code>Z</code> format (which two clusters joined, at what
+        distance, and how many alleles that left) and a short script that
+        redraws it with <code>scipy.cluster.hierarchy.dendrogram</code>.
+      </p>
+    </div>
+
+    <h3 id="panel-usage">Allele Usage</h3>
+    <div class="panel-block">
+      <p class="needs">One gene. Needs AIRR-seq data.</p>
+      <p>
+        <strong>What it shows.</strong> The relative usage of each allele: one
+        horizontal box per allele, one point per sample. A sample in which the
+        allele was not detected contributes no point, so a box describes the
+        samples where the allele was seen and not the whole cohort.
+      </p>
+      <p class="todo">
+        <strong>TODO(ayelet):</strong> the exact denominator. The endpoint
+        computes each point as the allele's <code>count</code> divided by the
+        sum of <code>total_count</code> over that sample's allele rows
+        (<code>api/refbook/refbook.py</code>, <code>AscUsage</code>). Is the
+        right description "the share of the sample's rearrangements assigned to
+        this allele", as the panel's own caption says, or is the denominator
+        narrower or wider than that? Please state it in one sentence and I will
+        not have guessed.
+      </p>
+      <p>
+        <strong>How to read it.</strong> Individual sample points can be turned
+        off to read the boxes alone. Clicking a point adds that sample to the
+        filter; clicking the box itself opens the allele. Where the allele
+        names are long, the axis carries shortened labels and a legend above
+        the figure gives the originals.
+      </p>
+      <p>
+        <strong>What it does not claim.</strong> The panel says what is
+        plotted and stops there. What a narrow box, or a wide one, means about
+        the allele is a reading the panel does not make for you.
+      </p>
+    </div>
+
+    <h3 id="panel-zygosity">Zygosity</h3>
+    <div class="panel-block">
+      <p class="needs">One gene. Either database.</p>
+      <p>
+        <strong>What it shows.</strong> Which combinations of alleles occur
+        together in the same subject, as an UpSet plot. Each column is a
+        combination, its bar counts the samples carrying <em>exactly</em> that
+        set, and the dots below say which alleles are in it. The bars on the
+        left are how often each allele appears overall, regardless of what it
+        appears with.
+      </p>
+      <p>
+        <strong>The two databases are unioned per subject.</strong> The unit of
+        zygosity is the subject, not the record, so the sets are keyed on
+        sample name across both databases. Where the same subject was sequenced
+        both ways, as the rhesus macaque cohort was, the two databases describe
+        one animal and must not become two rows. Where the cohorts are
+        disjoint, as in the human data, the union is simply a concatenation.
+      </p>
+      <p>
+        <strong>How to read it.</strong> Zygosity is which alleles a subject
+        carries, which the genomic database reports as well as the AIRR-seq
+        one, so this panel is not gated on AIRR-seq: only usage is. Drilling
+        into an allele keeps the carriers of that allele and shows their whole
+        sets, which is what makes the plot answer what an allele occurs
+        alongside.
+      </p>
+      <p>
+        The chart draws shortened labels, but the downloads under it carry the
+        alleles under their full names, since a downloaded file is something
+        someone will join on.
+      </p>
+    </div>
+
+    <h3 id="panel-allele">Allele</h3>
+    <div class="panel-block">
+      <p class="needs">One allele. Opened by clicking an allele in any plot.</p>
+      <p>
+        <strong>What it shows.</strong> The level below the gene, assembled
+        from the same endpoints the other panels use, each narrowed to one
+        allele:
+      </p>
+      <ul>
+        <li>
+          <em>Where it was seen</em>: how many genomic and how many AIRR-seq
+          samples, and whether the project selection actually narrowed each
+          database.
+        </li>
+        <li>
+          <em>Usage</em>: its median share of a repertoire and the number of
+          samples behind that, plotted per project so a project that behaves
+          differently is visible.
+        </li>
+        <li>
+          <em>Carriers</em>: how many subjects carry it, how many carry it as
+          their only allele of the gene, and the carriers per project split by
+          database.
+        </li>
+        <li>
+          <em>Occurs alongside</em>: the other alleles of the gene found in the
+          same subjects, and an UpSet plot of the combinations among its
+          carriers. The allele itself is dropped from those sets: every carrier
+          has it by definition, so keeping it would add one set covering the
+          whole chart.
+        </li>
+        <li>
+          <em>Sequence</em>: the allele against the gene's reference allele.
+        </li>
+      </ul>
+      <p>
+        <strong>What it does not claim.</strong> Opening an allele does
+        <em>not</em> narrow the gene-level panels to it. An Overview of a gene
+        filtered to one allele is a chart with one bar, which is not an
+        overview of anything, so the gene-level panels stay as they were and
+        stepping back up is one click.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="drilling">Drilling between panels</h2>
+    <p>
+      Clicks inside a figure are how you move between levels. None of them is
+      destructive: every one lands in the URL and can be undone with its chip
+      or with the browser's back button, and clicking the same thing again
+      steps back out.
+    </p>
+    <ul>
+      <li>
+        <strong>An allele</strong>, in any plot, opens the Allele panel.
+        Clicking the same allele again steps back up to the Overview.
+      </li>
+      <li>
+        <strong>A sample</strong>, from a point in the usage boxplot, is added
+        to the sample filter.
+      </li>
+      <li>
+        <strong>A gene</strong>, from the locus map, means "take me to this
+        gene": it is selected and the Overview opens. From a gene-level panel a
+        gene only narrows the selection, without changing panel.
+      </li>
+    </ul>
+    <p>
+      Only the gene ring of the locus map leads anywhere. A subgroup is not
+      something the other panels take, and an allele already opens its own
+      panel.
+    </p>
+  </section>
+
+  <section>
+    <h2 id="labels">Allele labels</h2>
+    <p>
+      VDJbase writes every germline substitution of a novel allele into its
+      name, which takes the longest names past 190 characters against a median
+      of about 23. No chart axis can carry that, so long names are shortened,
+      by <strong>one rule shared by the whole application</strong>.
+    </p>
+    <p class="formula">IGHV1-18*04_t81a_t90c_a106g_g112t &rarr; IGHV1-18*04+4~i93</p>
+    <ul>
+      <li>
+        A name of 26 characters or fewer is drawn in full.
+      </li>
+      <li>
+        Otherwise the name is cut at the first underscore <em>after</em> the
+        allele, not at the first underscore in the string: gene names
+        themselves contain underscores, as in
+        <code>IGHV4-NL_1*01_a157g</code>, and cutting at the first one drops
+        the allele and miscounts the substitutions.
+      </li>
+      <li>
+        What follows is <code>+N</code>, the number of substitutions in the
+        suffix, and <code>~</code> plus a three-character token. The token is
+        an FNV-1a hash of the allele's own suffix in base 36. The count alone
+        is not distinguishing: a large minority of the names long enough to be
+        shortened share a stem and a count with another allele. Deriving the
+        token from the allele's own suffix also means it never moves when more
+        data is loaded, which a positional numbering would.
+      </li>
+      <li>
+        A long name with no suffix at all is truncated and marked with a
+        trailing <code>~</code>.
+      </li>
+      <li>
+        Any remaining clash is disambiguated with <code>#2</code>,
+        <code>#3</code> and so on. Both sides sort the names before assigning,
+        so a <code>#2</code> lands on the same allele in the browser as it does
+        on the server, which receive their names in different orders.
+      </li>
+    </ul>
+    <p>
+      The rule is mirrored byte for byte between
+      <code>shared/models/gene-naming.ts</code> in the client and
+      <code>abbreviate_names</code> in
+      <code>api/refbook/refbook.py</code> on the server. It has to be: the
+      alignment's labels are rendered into server-side text and a divergence
+      could not be fixed in the browser.
+    </p>
+    <p class="callout">
+      <strong>The label is a label.</strong> The stored name is the identity
+      that every join uses and is never rewritten. When you need the real name,
+      the Allele names panel is the key, and the clustering, usage and
+      alignment panels each carry a legend for the names they shortened.
+    </p>
+    <p class="todo">
+      <strong>TODO(ayelet):</strong> two strings in the interface disagree with
+      the code, and this page describes the code. The Allele names panel
+      caption in <code>dash-panels.ts</code> and the panel's own lede both say
+      that where two alleles would shorten to the same label, <em>"both keep
+      their full name instead"</em>. The shortener appends <code>#2</code>
+      instead, and the comment in <code>gene-naming.ts</code> says that is
+      deliberate, because falling back to the full name would put a
+      190-character label on an axis. The same two strings also give
+      <code>IGHV1-18*04+8</code> as the example label, without the
+      <code>~</code> token the code has emitted since the token was added.
+      Should both captions be corrected to match the code?
+    </p>
+  </section>
+
+  <section>
+    <h2 id="cohorts">The two databases</h2>
+    <p>
+      Almost everything surprising in the Explorer comes from one fact: the
+      genomic and AIRR-seq databases are separate builds over different sample
+      sets, and how different depends on the species.
+    </p>
+    <ul>
+      <li>
+        <strong>Human.</strong> The two cohorts are disjoint. They share no
+        sample and no project. A "Both" count is therefore necessarily zero,
+        and the genomic and AIRR-seq sample counts add up.
+      </li>
+      <li>
+        <strong>Rhesus macaque.</strong> One cohort sequenced both ways, with
+        the sample names matching across the two databases. An allele really
+        can be seen in the same animal by both, so "Both" is meaningful, and
+        counting the animals twice would be wrong. The zygosity union and the
+        site's headline sample count both key on sample name for this reason.
+      </li>
+    </ul>
+    <p>
+      The same fact drives the project and sample lists, which are grouped
+      under the database that holds each entry, and the scope note above each
+      figure, which says which databases the selection actually narrowed.
+    </p>
+    <p class="note">
+      The macaque figures quoted in the code are 106 of 106 sample names
+      matching. Whether that holds for every species and locus in a given
+      deployment is a property of the data loaded, not of the code, and the
+      Overview's cohort box reports it for whatever is loaded.
+    </p>
+  </section>
+
+  <section>
+    <h2 id="downloads">Taking a figure away</h2>
+    <p>
+      Every figure offers two downloads beside the standard "Download plot as a
+      PNG" in the Plotly toolbar: <strong>Data (TSV)</strong> and
+      <strong>Python</strong>. Where a figure has no Plotly toolbar, which is
+      the case for the zygosity UpSet plot and the charts inside the Allele
+      panel, the same two sit as buttons under the figure.
+    </p>
+    <dl>
+      <dt>Data (TSV)</dt>
+      <dd>
+        One row per drawn point, tab separated. The rows are read off the
+        traces the panel handed to the chart, so what was filtered out was
+        never in them: the download is the figure on screen, filters and
+        ordering included, and there is no second data path that can disagree
+        with it. Column headings come from the axis titles.
+      </dd>
+      <dt>Python</dt>
+      <dd>
+        A runnable script that redraws the same figure with pandas and
+        matplotlib. The rows are embedded rather than fetched, so it is the
+        figure as drawn and it runs on a machine that cannot reach the server;
+        the endpoint is named in a comment for re-querying.
+      </dd>
+    </dl>
+    <p>
+      Two panels override both, because their traces are not their data. The
+      clustering panel's traces are line vertices, so it exports the linkage
+      matrix and a <code>scipy</code> dendrogram script instead of the drawing.
+      The zygosity panel exports one row per combination, with the alleles
+      under their full names, and a script using <code>upsetplot</code>.
+    </p>
+    <p>
+      The alignment is text rather than a figure, and has its own Copy and
+      Download controls in its toolbar.
+    </p>
+  </section>
+
+  <section>
+    <h2 id="limits">What the Explorer does not claim</h2>
+    <p class="limit">
+      <strong>Group clustering is not phylogeny.</strong> It groups by sequence
+      similarity under complete linkage. No node is an ancestor and no height
+      is a divergence time.
+    </p>
+    <p class="limit">
+      <strong>The locus map is not a genomic map.</strong> Arcs are ordered by
+      segment and then by gene name; arc width counts alleles, not physical
+      extent and not samples.
+    </p>
+    <p class="limit">
+      <strong>Suffixes in allele names are germline variation.</strong> A name
+      like <code>IGHV1-18*04_a157g</code> records where that germline allele
+      differs from its reference allele. Nothing here measures somatic
+      hypermutation.
+    </p>
+    <p class="limit">
+      <strong>Novel means "not in the baseline reference set".</strong> It is a
+      statement about the reference set, not about how recently or how rarely
+      the allele arose. An allele called novel in either database is marked
+      novel, because the two databases are built separately and only one of
+      them may have seen it.
+    </p>
+    <p class="limit">
+      <strong>Absence in a panel is not absence from the data.</strong> Two
+      filters remove alleles quietly by design: the "seen in" thresholds, and
+      restricting the Data toggle to one database. The scope note above each
+      figure and the chips above the canvas are what say so.
+    </p>
+    <p class="limit">
+      <strong>Not everything is offered.</strong> Pseudogenes and orphons are
+      excluded from the gene lists and the locus map; on the genomic side only
+      sequences recorded as Functional or ORF are read; and <code>IGHC</code>
+      is not offered as a locus.
+    </p>
+  </section>
+
+  <section>
+    <h2 id="where">Where this is implemented</h2>
+    <p>
+      For anyone checking a claim on this page against the code:
+    </p>
+    <ul>
+      <li>
+        Panel registry, and the caption behind each &#9432;:
+        <code>src/app/dash-refbook/dash-panels.ts</code>.
+      </li>
+      <li>
+        The rail, the filters, the URL state and the drill routing:
+        <code>src/app/dash-refbook/dash-refbook.component.ts</code>.
+      </li>
+      <li>
+        Allele label shortening:
+        <code>src/app/shared/models/gene-naming.ts</code> and
+        <code>abbreviate_names</code> in
+        <code>api/refbook/refbook.py</code>.
+      </li>
+      <li>
+        Counting, cohorts, alignment, usage and zygosity:
+        <code>api/refbook/refbook.py</code>.
+      </li>
+      <li>
+        Distances and linkage: <code>api/refbook/tree.py</code>, which carries
+        a self-check of the cases described above.
+      </li>
+      <li>
+        The locus hierarchy: <code>api/refbook/sunburst.py</code>.
+      </li>
+      <li>
+        The two downloads:
+        <code>src/app/shared/plot-export/plot-export.ts</code>.
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2 id="citing">Citing</h2>
+    <p class="todo">
+      <strong>TODO(ayelet):</strong> which references belong here. The guQTL
+      methods page cites VDJbase
+      (<a href="https://doi.org/10.1093/nar/gkaf1094" target="_blank"
+          rel="noopener">doi:10.1093/nar/gkaf1094</a>), Digger and PIgLET.
+      The Explorer draws on the genomic and AIRR-seq database builds and on
+      <code>receptor_utils</code> for the alignment. Please say which of those,
+      and which study accessions for the cohorts behind the loaded data, should
+      be listed, and I will not have guessed at a citation list.
+    </p>
+  </section>
+
+</article>

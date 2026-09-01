@@ -8,7 +8,7 @@ import { retryWithBackoff } from '../../shared/retry_with_backoff';
 import {
   SpeciesGeneSelection, sourcesParam, projectsParam, samplesParam, allelesParam,
 } from '../../shared/models/species-gene-selection.model';
-import { shortenAlleleNames } from '../../shared/models/gene-naming';
+import { nameDifferences, shortenAlleleNames } from '../../shared/models/gene-naming';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { DashDrillService } from '../dash-drill.service';
 
@@ -86,7 +86,7 @@ export class DashRefbookNamesComponent implements OnChanges {
             shortened: shown !== full,
             // the suffix names each position where this allele differs from
             // the stem allele: germline variation, not somatic mutation
-            differences: full.includes('_') ? full.split('_').length - 1 : 0,
+            differences: nameDifferences(full),
           };
         });
         this.isFetching = false;

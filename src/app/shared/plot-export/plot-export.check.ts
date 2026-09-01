@@ -6,7 +6,7 @@
  *   && node /tmp/pxcheck/plot-export.check.js
  */
 
-import { ExportTrace, python, table, tsv } from './plot-export';
+import { ExportTrace, exportButtons, python, table, tsv } from './plot-export';
 
 function ok(condition: boolean, what: string): void {
   if (!condition) { throw new Error('FAILED: ' + what); }
@@ -90,6 +90,27 @@ const boxScript = python(boxes, {
 });
 ok(boxScript.includes('ax.boxplot'), 'a box chart plots as a boxplot');
 ok(boxScript.includes('vert=False'), 'and keeps the orientation');
+
+// a figure whose traces are not its data must not export a header with no rows:
+// server-side box summaries carry no y, and table() flattens them to nothing
+const SUMMARY: ExportTrace[] = [{ type: 'box', orientation: 'h', name: 'g', y: ['g'] }];
+ok(table(SUMMARY, {}).rows.length === 0, 'a trace with no values yields no rows');
+
+interface Clickable { click: () => void; }
+
+const buttons: Clickable[] =
+  exportButtons(() => ({ name: 'empty', title: 'empty', data: SUMMARY })) as Clickable[];
+let refused = false;
+try { buttons[0].click(); } catch (e) { refused = /Nothing to export/.test(String(e)); }
+ok(refused, 'the data button refuses an empty table rather than saving one');
+
+// and an override makes the same figure exportable
+const overridden: Clickable[] = exportButtons(() => ({
+  name: 'ok', title: 'ok', data: SUMMARY,
+  table: { columns: ['allele', 'median'], rows: [['IGHV1-2*02', 0.01]] },
+  script: '# supplied',
+})) as Clickable[];
+ok(typeof overridden[0].click === 'function', 'an override restores both buttons');
 
 console.log('ok: ' + bars.rows.length + ' bar rows, ' + boxes.rows.length + ' box rows, '
             + script.split('\n').length + '-line script');

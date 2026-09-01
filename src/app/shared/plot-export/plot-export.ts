@@ -228,9 +228,25 @@ const CODE_ICON = {
  * once and the figure changes under it.
  */
 export function exportButtons(spec: () => ExportSpec): unknown[] {
-  const rows = () => {
-    const it = spec();
-    return it.table ?? table(it.data ?? [], it.layout ?? {});
+  /**
+   * Refuses to hand over an empty table.
+   *
+   * `table()` reads the traces, so a figure whose traces are not its data -
+   * server-side box summaries carrying no y, a multicategory axis held as two
+   * parallel arrays, an SVG track whose marks are viewBox geometry - flattens
+   * to nothing. Writing that out is a file the reader would trust and a wrong
+   * answer either way. Such a panel supplies `table` and `script` itself; this
+   * says so instead of saving a header with no rows.
+   */
+  const rows = (it: ExportSpec): ExportTable => {
+    const data = it.table ?? table(it.data ?? [], it.layout ?? {});
+    if (!data.rows.length) {
+      throw new Error(
+        `Nothing to export for "${it.name}": its traces carry no plottable x/y pairs. `
+        + 'A figure whose traces are not its data must pass `table` (and usually `script`) '
+        + 'to exportButtons.');
+    }
+    return data;
   };
 
   return [
@@ -240,7 +256,7 @@ export function exportButtons(spec: () => ExportSpec): unknown[] {
       icon: DOWNLOAD_ICON,
       click: () => {
         const it = spec();
-        saveText(tsv(rows()), `${safeStem(it.name)}.tsv`, 'text/tab-separated-values');
+        saveText(tsv(rows(it)), `${safeStem(it.name)}.tsv`, 'text/tab-separated-values');
       },
     },
     {
@@ -250,7 +266,7 @@ export function exportButtons(spec: () => ExportSpec): unknown[] {
       click: () => {
         const it = spec();
         const traces = it.data ?? [];
-        const script = it.script ?? python(rows(), {
+        const script = it.script ?? python(rows(it), {
           title: it.title || it.name,
           source: it.source ?? '',
           kind: traces.find(t => t?.type)?.type ?? 'bar',
