@@ -19,11 +19,19 @@ export function familyOf(gene: string): string {
   return match ? match[1] : gene;
 }
 
-/** Segments present in a gene list, in V/D/J/C order, with their counts. */
-export function segmentsIn(genes: string[]): { code: string; count: number }[] {
+/**
+ * Segments present in a gene list, in V/D/J/C order, with their counts.
+ *
+ * `by` is what the databases record, which is the only thing that can tell a
+ * constant gene apart: IGHA1 and IGHG1 do not carry a segment in their name,
+ * and IGHD is both the delta constant gene and the prefix of every D gene. The
+ * name is the fallback for a caller that has no map.
+ */
+export function segmentsIn(genes: string[],
+                           by: Record<string, string> = {}): { code: string; count: number }[] {
   const counts = new Map<string, number>();
   for (const gene of genes) {
-    const code = segmentOf(gene);
+    const code = by[gene] ?? segmentOf(gene);
     counts.set(code, (counts.get(code) ?? 0) + 1);
   }
   return [...SEGMENT_ORDER, '?']

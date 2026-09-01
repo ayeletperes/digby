@@ -12,7 +12,7 @@ import {
   countFilterExcludesAll,
 } from '../shared/models/species-gene-selection.model';
 import { DASH_PANELS, DashPanel, PANEL_GROUPS, panelBlockedReason } from './dash-panels';
-import { segmentLabel, segmentOf, segmentsIn } from '../shared/models/gene-naming';
+import { segmentLabel, segmentsIn } from '../shared/models/gene-naming';
 import { CheckDropdownComponent, CheckOption } from './check-dropdown/check-dropdown.component';
 import { GenePickerComponent } from './gene-picker/gene-picker.component';
 import { GeneTableSelectorComponent } from '../gene-table-selector/gene-table-selector.component';
@@ -197,6 +197,15 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
 
   ascLoading = false;
   ascError: string | null = null;
+  /**
+   * The segment of each gene, as the databases record it.
+   *
+   * Not derived from the name any more. IGHA1 and IGHG1 do not carry theirs,
+   * and IGHD is the delta constant gene as well as the prefix every D gene
+   * shares, so a name cannot tell them apart. It also had IGKC and the IGLC
+   * genes filed under V, because the old rule defaulted there.
+   */
+  segmentByGene: Record<string, string> = {};
   /**
    * The panel to land on.
    *
@@ -692,7 +701,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
   /** Narrow the gene list to the chosen segment, or show all when none is chosen. */
   private applySegment(): void {
     this.availableAscs = this.segment
-      ? this.allAscs.filter(gene => segmentOf(gene) === this.segment)
+      ? this.allAscs.filter(gene => this.segmentByGene[gene] === this.segment)
       : [...this.allAscs];
   }
 
@@ -811,6 +820,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
           // straight back, so a stale segment= would put the chip back
           this.segments = [];
           this.segment = null;
+          this.segmentByGene = {};
           this.allAscs = [];
           this.availableAscs = [];
           this.applyAscs([]);
@@ -822,10 +832,12 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
         }),
         takeUntil(this.destroy$),
       )
-      .subscribe((rec: { ascs: string[]; genomic: boolean; airr_seq: boolean }) => {
+      .subscribe((rec: { ascs: string[]; segments?: Record<string, string>;
+                        genomic: boolean; airr_seq: boolean }) => {
         this.ascLoading = false;
         this.allAscs = rec.ascs ?? [];
-        this.segments = segmentsIn(this.allAscs);
+        this.segmentByGene = rec.segments ?? {};
+        this.segments = segmentsIn(this.allAscs, this.segmentByGene);
 
         // keep the segment if the new locus has it, else default to the largest
         if (!this.segments.some(s => s.code === this.segment)) {
