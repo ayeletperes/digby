@@ -3,7 +3,17 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
-import { DashPanel } from '../dash-panels';
+/**
+ * All a card needs. GalleryPanel satisfies it structurally, and so does whatever
+ * the guQTL shell calls its panels, so neither dashboard has to adopt the
+ * other's type to get the same landing.
+ */
+export interface GalleryPanel {
+  id: string;
+  label: string;
+  group: string;
+  description: string;
+}
 
 /**
  * What the dashboard can do, as cards, for someone who has not been here before.
@@ -23,23 +33,29 @@ import { DashPanel } from '../dash-panels';
   styleUrls: ['./panel-gallery.component.scss'],
 })
 export class PanelGalleryComponent {
-  @Input() panels: DashPanel[] = [];
+  @Input() panels: GalleryPanel[] = [];
   @Input() groups: string[] = [];
   /** Where the cards say the figures come from. */
   @Input() species = '';
   @Input() locus = '';
   /** Null when the panel can be opened, otherwise why it cannot. */
-  @Input() blocked: (panel: DashPanel) => string | null = () => null;
+  @Input() blocked: (panel: GalleryPanel) => string | null = () => null;
+  /**
+   * Thumbnails by panel id, merged over the ones below. A second dashboard
+   * brings its own rather than editing a shared map, which is one fewer file
+   * for two people to collide in.
+   */
+  @Input() art: Record<string, string> = {};
 
-  @Output() opened = new EventEmitter<DashPanel>();
+  @Output() opened = new EventEmitter<GalleryPanel>();
 
   constructor(private sanitizer: DomSanitizer) {}
 
-  panelsIn(group: string): DashPanel[] {
+  panelsIn(group: string): GalleryPanel[] {
     return this.panels.filter(panel => panel.group === group);
   }
 
-  open(panel: DashPanel): void {
+  open(panel: GalleryPanel): void {
     if (!this.blocked(panel)) {
       this.opened.emit(panel);
     }
@@ -52,12 +68,16 @@ export class PanelGalleryComponent {
    * thumbnail only has to say "bars", "circle", "tree" from across the page.
    */
   thumbnail(id: string): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(THUMBNAILS[id] ?? THUMBNAILS['default']);
+    return this.sanitizer.bypassSecurityTrustHtml(
+      this.art[id] ?? THUMBNAILS[id] ?? THUMBNAILS['default']);
   }
 }
 
-const t = (body: string) =>
+/** A thumbnail is a 120x72 drawing. Exported so a caller can build its own. */
+export const thumb = (body: string) =>
   `<svg viewBox="0 0 120 72" role="img" aria-hidden="true">${body}</svg>`;
+
+const t = thumb;
 
 const BAR = 'var(--vdj-teal, #188080)';
 const ALT = '#f2864b';

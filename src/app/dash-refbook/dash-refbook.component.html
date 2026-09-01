@@ -181,7 +181,7 @@
       <app-panel-gallery [panels]="panels" [groups]="panelGroups"
                          [species]="selection.species" [locus]="selection.chain"
                          [blocked]="galleryBlocked"
-                         (opened)="selectPanel($event)"></app-panel-gallery>
+                         (opened)="openFromGallery($event)"></app-panel-gallery>
     } @else {
     <header class="canvas-head">
       <div class="canvas-title">

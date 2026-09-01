@@ -20,7 +20,7 @@ import { GeneTableSelectorService } from '../gene-table-selector/gene-table-sele
 import { GeneTableSelection } from '../gene-table-selector/gene-table-selector.model';
 import { RefbookService } from '../../../projects/digby-swagger-client/api/refbook.service';
 import { DashDrillService, DrillEvent } from './dash-drill.service';
-import { PanelGalleryComponent } from './panel-gallery/panel-gallery.component';
+import { PanelGalleryComponent } from '../shared/panel-gallery/panel-gallery.component';
 
 /**
  * Genes pre-selected when a locus is opened, so the first panel has something to
@@ -370,6 +370,17 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
 
   get activePanel(): DashPanel {
     return this.panels.find(panel => panel.id === this.activePanelId) ?? this.panels[0];
+  }
+
+  /**
+   * From the gallery, which speaks its own minimal panel shape so a second
+   * dashboard can use it without adopting DashPanel. Resolve by id.
+   */
+  openFromGallery(panel: { id: string }): void {
+    const found = this.panels.find(p => p.id === panel.id);
+    if (found) {
+      this.selectPanel(found);
+    }
   }
 
   selectPanel(panel: DashPanel): void {
