@@ -5,7 +5,7 @@
  * derived from the name: there is no separate field for either in the refbook API.
  */
 
-export const SEGMENT_ORDER = ['V', 'D', 'J', 'C'];
+const SEGMENT_ORDER = ['V', 'D', 'J', 'C'];
 
 /** V, D, J or C, from the fourth character of an ASC name (IGHV1-2 -> V). */
 export function segmentOf(gene: string): string {
@@ -36,15 +36,6 @@ export function segmentLabel(code: string): string {
 }
 
 /**
- * A short display label for a long allele name.
- *
- * VDJbase encodes every SNP of a novel allele in its name, which reaches 193
- * characters here. Axis ticks and set labels cannot show that, so a long name is
- * reduced to its stem plus the number of substitutions it carried:
- * IGHV1-2*02_t211c_t213c_g225a becomes IGHV1-2*02+3. The full name stays available
- * for tooltips.
- */
-/**
  * The one allele-label rule for the whole app.
  *
  * VDJbase encodes every SNP of a novel allele in its name, so they reach 193
@@ -61,7 +52,7 @@ export function segmentLabel(code: string): string {
  * fallback would put a 193-character label on a chart axis, which is the problem
  * this exists to solve; the Allele names panel is what resolves a `#2`.
  */
-export const NAME_LIMIT = 26;
+const NAME_LIMIT = 26;
 
 /** FNV-1a 32-bit, mirrored byte-for-byte in refbook.py. */
 function fnv1a(text: string): number {

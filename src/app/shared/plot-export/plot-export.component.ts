@@ -78,7 +78,7 @@ export class PlotExportComponent {
   }
 
   downloadData(): void {
-    this.save(tsv(this.rows()), `${safeStem(this.name)}.tsv`, 'text/tab-separated-values');
+    saveText(tsv(this.rows()), `${safeStem(this.name)}.tsv`, 'text/tab-separated-values');
   }
 
   downloadCode(): void {
@@ -88,10 +88,7 @@ export class PlotExportComponent {
       kind: this.kind,
       horizontal: this.horizontal,
     });
-    this.save(script, `${safeStem(this.name)}.py`, 'text/x-python');
+    saveText(script, `${safeStem(this.name)}.py`, 'text/x-python');
   }
 
-  private save(text: string, filename: string, type: string): void {
-    saveText(text, filename, type);
-  }
 }

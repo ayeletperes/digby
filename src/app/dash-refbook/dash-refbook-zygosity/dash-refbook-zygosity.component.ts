@@ -26,7 +26,7 @@ const SET_CHART_SHARE = 0.18;
 /** Row height per allele. Below about 20 the 10px labels start to touch. */
 const ROW_PX = 24;
 
-export class ZygosityData {
+class ZygosityData {
   samples: {
     name: string;
     sets: string[];

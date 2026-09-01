@@ -11,7 +11,7 @@ import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { PlotlyModule } from 'angular-plotly.js';
 import { exportButtons } from '../../shared/plot-export/plot-export';
 
-export class UsageData {
+class UsageData {
   alleles: {
     name: string;
     usage: number[];

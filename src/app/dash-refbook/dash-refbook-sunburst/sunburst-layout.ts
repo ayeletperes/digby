@@ -44,8 +44,8 @@ export const PALETTE = [
   '#FDB462', '#FF69B4', '#FF7F50', '#FF4500', '#FF6347', '#FF1493',
 ];
 
-export const LIGHTEN_PER_LEVEL = 0.05;
-export const WASH = 0.5;
+const LIGHTEN_PER_LEVEL = 0.05;
+const WASH = 0.5;
 export const DRILLED_FILL = '#9aa5a4';
 export const ROOT_FILL = '#ffffff';
 

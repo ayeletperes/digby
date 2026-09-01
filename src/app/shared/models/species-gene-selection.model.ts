@@ -64,11 +64,6 @@ export class SourceAvailability {
   airrseq = false;
 }
 
-/** The species, and the loci available for each, as returned by /refbook/species_and_loci. */
-export class AvailableSpeciesAndData {
-  species: string[];
-  loci: Record<string, string[]>;
-}
 
 /** Comma-separated source list for the API, or undefined to let it default to all. */
 export function sourcesParam(selection: SpeciesGeneSelection): string | undefined {

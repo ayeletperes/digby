@@ -41,7 +41,7 @@ function axisName(axis: { title?: { text?: string } }, fallback: string): string
  * category axis is the other. Every panel here is one or the other.
  */
 function horizontal(traces: ExportTrace[]): boolean {
-  return traces.some(t => t.orientation === 'h' || t.type === 'box' && t.orientation === 'h');
+  return traces.some(t => t.orientation === 'h');
 }
 
 /**

@@ -32,7 +32,7 @@ const DEFAULT_GENE_COUNT = 1;
  * Most panels draw one chart per gene, so the selection is capped: beyond a few
  * genes the faceted view stops being readable and the request count grows with it.
  */
-export const MAX_GENES = 3;
+const MAX_GENES = 3;
 
 @Component({
   selector: 'app-dash-refbook',
@@ -219,17 +219,6 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
    * of the viewport, which leaves no room for the plots they configure.
    */
   pickerOpen = false;
-
-  /** One-line description of the current selection, shown while collapsed. */
-  get selectionSummary(): string {
-    const genes = this.selection.ascs ?? [];
-    const parts = [this.selection.species, this.selection.chain].filter(Boolean);
-    if (this.segment) {
-      parts.push(this.segmentLabel(this.segment));
-    }
-    return [parts.join(' · '), genes.join(', ') || 'no genes selected']
-      .filter(Boolean).join('  —  ');
-  }
 
   /**
    * One selection object per gene, reused between change detection runs.

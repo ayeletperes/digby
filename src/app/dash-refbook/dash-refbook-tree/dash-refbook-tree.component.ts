@@ -26,8 +26,6 @@ interface TreeData {
   duplicate_groups: string[][];
   /** IMGT columns when gapped, the longest sequence otherwise. */
   columns: number;
-  /** 'hamming_gapped' over IMGT columns (V), or 'edit' from a pairwise alignment (D, J). */
-  metric: string;
   /** False for D and J, which have no gapped form. */
   gapped: boolean;
 }
