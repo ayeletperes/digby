@@ -39,7 +39,7 @@
   @if (genes) {
     <section class="card">
       <div class="card-head">
-        <h4>Per gene — {{ locus }}</h4>
+        <h4>Per gene, {{ locus }}</h4>
         <span class="head-note">
           {{ genes.n_genes_with_signal }} of {{ genes.n_genes_scanned }} genes
           scanned have a significant variant
@@ -92,7 +92,7 @@
       <p class="note">
         These counts are per gene, so unlike the chart above they do sum: a
         variant significant for two genes is counted under each. Genes with
-        nothing are listed too — a table of only the genes that hit would read as
+        nothing are listed too, a table of only the genes that hit would read as
         though the rest were never looked at.
       </p>
     </section>

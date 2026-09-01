@@ -45,7 +45,7 @@
       name and coordinates. Blocks narrower than a pixel are drawn at minimum
       width, so a seven-base heptamer is visible but not to scale, and the dots
       shrink as the window widens so a crowded region reads as crowded rather
-      than solid — every tested variant is drawn at every width, none are thinned
+      than solid, every tested variant is drawn at every width, none are thinned
       away.
     </p>
   }
@@ -141,7 +141,7 @@
     <div class="detail-head">
       <span class="detail-title">{{ detailGene }}</span>
       <span class="detail-sub">
-        gene model at its own scale — {{ detailEnd - detailStart | number }} bp across
+        gene model at its own scale, {{ detailEnd - detailStart | number }} bp across
         @if (detailDistance > 0) {
           · the selected variant is {{ detailDistance | number }} bp outside it
         } @else {
@@ -202,7 +202,7 @@
 
   @if (!detailGene && genesInWindow.length) {
     <p class="note detail-hint">
-      Click a gene above for its structure at its own scale — leader, coding, RSS
+      Click a gene above for its structure at its own scale, leader, coding, RSS
       and UTR are sub-pixel at this width and only legible there.
     </p>
   }

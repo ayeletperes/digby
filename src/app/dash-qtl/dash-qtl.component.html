@@ -105,10 +105,10 @@
             <select class="form-select form-select-sm" id="qtlAsc"
                     [(ngModel)]="selection.asc" (ngModelChange)="onAscChange()"
                     [disabled]="!ascs.length" [size]="filteredAscs.length > 8 ? 10 : 0">
-              <option [ngValue]="undefined">All genes — best per variant</option>
+              <option [ngValue]="undefined">All genes, best per variant</option>
               @for (a of filteredAscs; track a.asc) {
                 <option [ngValue]="a.asc">
-                  {{ ascName(selection.locus, a.asc) }} — {{ a.n_significant }} significant
+                  {{ ascName(selection.locus, a.asc) }}, {{ a.n_significant }} significant
                 </option>
               }
             </select>
@@ -125,7 +125,7 @@
           } @else {
             <h3 class="rail-heading">Variant</h3>
             <app-qtl-search [species]="selection.species" kind="variant"
-                            placeholder="A variant id — chr22_22756855"
+                            placeholder="A variant id, chr22_22756855"
                             (variantPicked)="onSearchVariant($event)">
             </app-qtl-search>
             @if (selection.variant) {
@@ -187,7 +187,7 @@
         <p class="qtl-status">
           Click any point below to open that variant, or type an id in the
           sidebar. Each point is a variant's strongest result across every gene
-          in {{ selection.locus }} — only variants the scan actually tested are
+          in {{ selection.locus }}, only variants the scan actually tested are
           held.
         </p>
         <app-qtl-manhattan [selection]="variantPickerSelection"

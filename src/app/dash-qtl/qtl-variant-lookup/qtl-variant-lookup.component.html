@@ -36,7 +36,7 @@
           @if (genotypeSpread) {
             Genotypes: {{ genotypeSpread }}
             @if (result.min_genotype_group !== null && result.min_genotype_group < 5) {
-              <strong class="weak">— the rarest class has only
+              <strong class="weak">The rarest class has only
               {{ result.min_genotype_group }}
               {{ result.min_genotype_group === 1 ? 'subject' : 'subjects' }}.</strong>
             }
@@ -110,7 +110,7 @@
           genotype group: the pipeline documents the extreme tail as
           anti-conservative, so a small p-value resting on a handful of subjects
           is flagged rather than trusted. The run publishes that number only for
-          lead variants, so it is counted from the genotypes for the rest — which
+          lead variants, so it is counted from the genotypes for the rest, which
           reproduces the run's own value wherever the run gives one. Open a row
           to see the usage behind it.
         </p>

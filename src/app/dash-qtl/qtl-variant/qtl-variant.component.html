@@ -79,8 +79,7 @@
       <h4>Every gene this variant was tested against</h4>
       <p class="note">
         Each gene is its own scan, so a variant has one result per gene. Click one
-        to plot that gene's usage instead. Strongest first —
-        <strong>{{ associations.length }}</strong> genes,
+        to plot that gene's usage instead. Strongest first, <strong>{{ associations.length }}</strong> genes,
         <strong>{{ significantCount }}</strong> reaching significance.
         @if (significantCount) {
           <label class="sig-toggle">
@@ -118,7 +117,7 @@
       @if (significantOnly && significantCount < associations.length) {
         <p class="note">
           Showing {{ significantCount }} of {{ associations.length }} genes. The
-          rest were tested and did not reach the threshold — they are results,
+          rest were tested and did not reach the threshold, they are results,
           not absences.
         </p>
       }
