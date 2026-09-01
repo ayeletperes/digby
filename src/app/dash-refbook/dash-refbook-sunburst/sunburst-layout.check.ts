@@ -10,7 +10,8 @@
  */
 
 import {
-  DRILLED_FILL, PALETTE, ROOT_FILL, SunburstPayload, colour, fills, layout, lighten,
+  DRILLED_FILL, PALETTE, ROOT_FILL, SunburstPayload, collapseGroup, colour, fills, layout,
+  lighten,
 } from './sunburst-layout';
 
 declare const process: { argv: string[] };
@@ -107,6 +108,17 @@ function check(payload: SunburstPayload, name: string): void {
 
   console.log(name + ': ok, ' + n + ' nodes, ' + plan.value[0] + ' alleles');
 }
+
+// merged gene groups. Only the long-form kind, which repeats the stem on both
+// sides, is worth collapsing; IMGT's own compact form must survive intact or a
+// real gene and a merge sitting next to it both read as 12-3.
+ok(collapseGroup('12-3/4') === '12-3/4', 'a compact IMGT merge is left whole');
+ok(collapseGroup('12-3/4*01') === '12-3/4*01', 'and so are its alleles');
+ok(collapseGroup('1-69/1-69D') === '1-69*', 'a long-form merge collapses to its first member');
+ok(collapseGroup('1-69/1-69D*01') === '1-69/1-69D*01',
+   'an allele of a merged group keeps its name: 1-69**01 is noise and 1-69*01 is a lie');
+ok(collapseGroup('1-18') === '1-18', 'a plain gene is untouched');
+ok(collapseGroup('1-18*01_a157g') === '1-18*01_a157g', 'and so is a plain allele');
 
 check(SAMPLE, 'sample');
 

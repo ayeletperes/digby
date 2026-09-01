@@ -10,7 +10,8 @@ import { retryWithBackoff } from '../../shared/retry_with_backoff';
 import { SpeciesGeneSelection } from '../../shared/models/species-gene-selection.model';
 import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
-import { fills, layout, SunburstLayout, SunburstPayload } from './sunburst-layout';
+import { collapseGroup, fills, layout, SunburstLayout, SunburstPayload }
+  from './sunburst-layout';
 
 /**
  * The locus as a sunburst: chain, gene type, subgroup, ASC, allele.
@@ -165,12 +166,7 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
       const prefix = label[0] + label[this.plan.topOf[i]];         // IGH + V
       const base = depth === alleleDepth ? (short.get(name) ?? name) : name;
       const trimmed = base.startsWith(prefix) ? base.slice(prefix.length) : base;
-      // a collapsed gene group (IGHV1-69/IGHV1-69D) is too wide for its arc, so
-      // it shows its first member starred. Nothing in the current data has one:
-      // this is written for HUSA and has not been exercised on real names, and
-      // alleles of such a group are left alone rather than guessed at.
-      const slash = depth < alleleDepth ? trimmed.indexOf('/') : -1;
-      return slash < 0 ? trimmed : trimmed.slice(0, slash) + '*';
+      return collapseGroup(trimmed);
     });
   }
 

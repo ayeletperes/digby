@@ -60,6 +60,34 @@ export function lighten(hex: string, f: number): string {
   return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
 }
 
+/**
+ * A merged gene group, short enough for an arc.
+ *
+ * Two conventions share the slash and only one of them needs collapsing. IMGT
+ * already writes its merges compactly, eliding the shared part: TRBV12-3/4 in
+ * Human TRB is six characters once the locus prefix is off, and shortening it
+ * to TRBV12-3* would lose the 4 for nothing. A long-form merge repeats the
+ * stem on both sides, IGHV1-69/IGHV1-69D, and that is the one worth
+ * collapsing to its first member starred.
+ *
+ * The test is therefore whether the members share a prefix, not how long the
+ * name is. Applied to the allele ring too, on the part before the *, so a
+ * gene and its alleles do not disagree about what the gene is called.
+ */
+export function collapseGroup(label: string): string {
+  // An allele name already contains a *, so marking a group with one would give
+  // 1-69**01, and dropping to 1-69*01 would name a different gene. Gene ring
+  // only; the alleles of such a group keep their full name, which is longer but
+  // never ambiguous. Revisit if HUSA ships names that make it worth a marker of
+  // its own.
+  const slash = label.indexOf('*') < 0 ? label.indexOf('/') : -1;
+  if (slash < 0) {
+    return label;
+  }
+  const first = label.slice(0, slash);
+  return label.slice(slash + 1).startsWith(first) ? `${first}*` : label;
+}
+
 export function colour(index: number): string {
   return index >= 0 ? PALETTE[index % PALETTE.length] : ROOT_FILL;
 }
