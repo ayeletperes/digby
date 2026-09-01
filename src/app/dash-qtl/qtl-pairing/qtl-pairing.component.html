@@ -1,226 +1,206 @@
-<div class="pairing-head">
-  <div class="direction">
-    <span class="direction-label">Direction</span>
-    @for (c of conditionals; track c) {
-      <button type="button" class="dir-button" [class.on]="conditional === c"
-              (click)="conditional = c; onConditionalChange()"
-              [title]="c === 'P(J|D)' ? 'Anchor on a J, spread the D genes'
-                                      : 'Anchor on a D, spread the J genes'">
-        {{ c }}
-      </button>
+<section class="pairing-main">
+  @if (error) {
+    <p class="qtl-status error">{{ error }}</p>
+  } @else if (loading) {
+    <p class="qtl-status">Loading the pairing…</p>
+  } @else if (!data) {
+    <p class="qtl-status">
+      Pick a variant to see what it does to {{ conditional }}.
+    </p>
+  } @else {
+
+    <div class="variant-head">
+      <h3 class="variant-name">{{ data.variant.variant }}</h3>
+      <p class="variant-sub">
+        {{ data.variant.contig }}:{{ data.variant.pos | number }}
+        · MAF {{ data.variant.maf | percent:'1.1-1' }}
+        @if (data.variant.gene) {
+          · {{ data.variant.feature }} of <strong>{{ data.variant.gene }}</strong>
+        }
+        · {{ data.subjects.genotyped }} subjects genotyped
+        @if (data.subjects.enrichment_rows_without_genotype) {
+          · {{ data.subjects.enrichment_rows_without_genotype | number }} pairing
+          rows belong to subjects this variant was not called in and are in no box
+        }
+      </p>
+    </div>
+
+    <!-- The test that put this variant on the list. It was ranked by its
+         omnibus, so the omnibus belongs on the page with the boxes it
+         justifies rather than being something the reader has to take on
+         trust from the ordering of a sidebar. -->
+    <div class="pairing-top">
+    <details class="omnibus-block" open>
+      <summary>
+        Pairing test, MANOVA of {{ conditional }} on genotype,
+        one per {{ anchorSide }} gene
+        <em>({{ anchorsWithSignal }} of {{ anchors.length }} significant)</em>
+      </summary>
+      <table class="omnibus-table">
+        <tr>
+          <th>{{ anchorSide }} gene</th><th class="n">Pillai</th><th class="n">F</th>
+          <th class="n">p</th><th class="n">−log10 p</th><th class="n">n</th>
+          <th class="n">smallest class</th><th></th><th></th>
+        </tr>
+        @for (r of omnibusRows; track r.anchor) {
+          <tr [class.on]="isChosen(r.anchor)" [class.quiet]="!r.o.significant">
+            <td>
+              <button type="button" class="link-button" (click)="toggleAnchor(r.anchor)"
+                      [disabled]="!isChosen(r.anchor) && atAnchorLimit">
+                {{ r.label }}
+              </button>
+            </td>
+            <td class="n">{{ r.o.pillai | number:'1.3-3' }}</td>
+            <td class="n">{{ r.o.f_stat | number:'1.2-2' }}</td>
+            <td class="n">{{ r.o.p_value.toExponential(2) }}</td>
+            <td class="n">{{ r.o.neglog10_p | number:'1.1-1' }}</td>
+            <td class="n muted">{{ r.o.n }}</td>
+            <td class="n" [class.weak]="r.o.min_genotype_group !== null
+                                        && r.o.min_genotype_group < 5">
+              {{ r.o.min_genotype_group ?? '–' }}
+            </td>
+            <td>@if (r.o.significant) { <span class="tag sig">significant</span> }</td>
+            <td>@if (isChosen(r.anchor)) { <span class="tag shown">shown below</span> }</td>
+          </tr>
+        }
+      </table>
+      <p class="note">
+        Pillai's trace on the full partner distribution, so it asks whether
+        the variant moved the pairing <em>at all</em>, not whether it moved
+        any one partner. The cells below are post-hoc: under a row that is
+        not significant they describe, they do not show.
+      </p>
+    </details>
+
+      <!-- The subject counts sit with the test rather than in the corner of the
+           figure. They qualify every box below equally, and inside the grid they
+           were an orphan panel that never lined up with the row beside it. -->
+      <section class="counts-card">
+        <h4>Subjects by genotype</h4>
+        <plotly-plot [data]="countsData" [layout]="countsLayout"
+                     [config]="countsConfig"></plotly-plot>
+      </section>
+    </div>
+
+    <!-- the anchors on show, as a small multi-select -->
+    <div class="anchor-strip">
+      <span class="strip-label">Show {{ anchorSide }}
+        <em>(up to {{ maxAnchors }})</em></span>
+      @for (a of anchors; track a) {
+        <button type="button" class="anchor-chip"
+                [class.on]="isChosen(a)"
+                [class.sig]="omnibusOf(a)?.significant"
+                [disabled]="!isChosen(a) && atAnchorLimit"
+                (click)="toggleAnchor(a)"
+                [title]="'p ' + omnibusOf(a)?.p_value?.toExponential(2)
+                         + ' · n ' + omnibusOf(a)?.n">
+          {{ short(a) }}
+        </button>
+      }
+      <span class="panel-toggles">
+        <label>
+          <input type="checkbox" [checked]="showAnchorMarginal"
+                 (change)="toggleAnchorMarginal()" />
+          overall {{ anchorSide }} usage
+        </label>
+        <label>
+          <input type="checkbox" [checked]="showPartnerMarginal"
+                 (change)="togglePartnerMarginal()" />
+          overall {{ partnerSide }} usage
+        </label>
+        <label>
+          <input type="checkbox" [checked]="strictOnly" (change)="toggleStrict()" />
+          strict marks only
+        </label>
+        <button type="button" class="info-button" [attr.aria-expanded]="infoOpen"
+                title="How to read these panels" (click)="toggleInfo()">ⓘ</button>
+      </span>
+    </div>
+
+    @if (infoOpen) {
+      <p class="caption-body">
+        <strong>Overall {{ anchorSide }} usage</strong>, down the left, is how
+        much each {{ anchorSide }} gene is used at all, by genotype. A variant
+        that moves who a gene pairs with while leaving this flat is the whole
+        reason this scan is separate from the usage scan.
+        <br><br>
+        <strong>Overall {{ partnerSide }} usage</strong>, along the bottom, is
+        the same for each {{ partnerSide }} gene, so a column that is low under
+        every genotype reads as a rare partner rather than as an effect.
+        <br><br>
+        <strong>Subjects by genotype</strong>, beside the test above, because a
+        class of five is not a distribution however tight its box.
+        <br><br>
+        <strong>✳</strong> is the pipeline's own call on a cell, carried through
+        rather than recomputed, so these are the same cells the manuscript stars.
+      </p>
     }
-    <span class="direction-note">
-      Two scans over the same variants, never pooled: {{ conditional }} anchors on
-      a {{ anchorSide }} and asks how the {{ partnerSide }} it joins to is
-      distributed.
-    </span>
-  </div>
-</div>
 
-@if (listError) {
-  <p class="qtl-status error">{{ listError }}</p>
-} @else {
-
-  <div class="pairing-grid">
-
-    <!-- which variant. A pairing hit is not a usage hit, so this list is its own
-         scan's ranking rather than anything carried in from the usage views. -->
-    <aside class="variant-rail">
-      <h4>Variant</h4>
-      @if (loadingVariants) {
-        <p class="note">Loading the scan…</p>
-      } @else if (!hasScan) {
-        <p class="note none">
-          No partner-pairing scan has been run for {{ locus }}. This is a missing
-          scan, not a scan that found nothing, only IGH has one loaded.
-        </p>
-      } @else {
-        <input class="filter" type="text" [(ngModel)]="filter"
-               placeholder="filter by id or gene" />
-        <p class="note">
-          {{ scanned | number }} variants scanned under {{ conditional }};
-          the strongest {{ variants.length | number }} are listed.
-        </p>
-        <ul class="variant-list">
-          @for (v of shownVariants; track v.variant) {
-            <li>
-              <button type="button" class="variant-link" [class.on]="v.variant === variant"
-                      (click)="pickVariant(v.variant)">
-                <span class="v-id">{{ v.variant }}</span>
-                <span class="v-meta">
-                  {{ v.neglog10_p | number:'1.1-1' }}
-                  @if (v.n_significant_anchors) {
-                    · {{ v.n_significant_anchors }}/{{ v.n_anchors }} {{ anchorSide }}
+    @if (!rows.length) {
+      <p class="qtl-status">
+        Choose a {{ anchorSide }} gene above to draw its partner distribution.
+      </p>
+    } @else {
+      <!-- Laid out as the figure is: marginals down the left, the conditional
+           grid on the right, the partner marginal along the bottom sharing
+           the grid's categories, and the subject counts in the corner. -->
+      <div class="figure" [class.one-column]="!showAnchorMarginal">
+        @for (r of rows; track r.anchor) {
+          @if (showAnchorMarginal) {
+            <div class="fig-left">
+              <plotly-plot [data]="r.marginalData" [layout]="r.marginalLayout"
+                           [config]="marginalConfig(r.anchor)"></plotly-plot>
+            </div>
+          }
+          <div class="fig-right">
+            <div class="row-head">
+              <span class="row-name" [class.sig]="r.omnibus?.significant">
+                {{ r.label }}
+              </span>
+              @if (r.omnibus) {
+                <span class="row-stat">
+                  p {{ r.omnibus.p_value.toExponential(2) }} · n {{ r.omnibus.n }}
+                  @if (r.omnibus.significant) {
+                    <span class="tag sig">significant</span>
+                  } @else {
+                    <span class="tag">not significant</span>
+                  }
+                  @if (r.marks.length) {
+                    · ✳ {{ r.marks.length }} of {{ partners.length }}
                   }
                 </span>
-                <span class="v-gene">{{ v.gene ?? 'no gene' }} · {{ v.feature }}</span>
-              </button>
-            </li>
+              }
+            </div>
+            <plotly-plot [data]="r.gridData" [layout]="r.gridLayout"
+                         [config]="gridConfig(r.anchor)"></plotly-plot>
+          </div>
+        }
+
+        @if (showPartnerMarginal) {
+          @if (showAnchorMarginal) {
+            <div class="fig-left legend-cell">
+              <ul class="genotype-key">
+                @for (k of genotypeKey; track k.label) {
+                  <li><i class="key-swatch" [style.border-color]="k.colour"></i>{{ k.label }}</li>
+                }
+              </ul>
+            </div>
+          }
+          <div class="fig-right">
+            <plotly-plot [data]="partnerData" [layout]="partnerLayout"
+                         [config]="partnerConfig"></plotly-plot>
+          </div>
+        }
+      </div>
+
+      @if (!showPartnerMarginal || !showAnchorMarginal) {
+        <ul class="genotype-key inline">
+          @for (k of genotypeKey; track k.label) {
+            <li><i class="key-swatch" [style.border-color]="k.colour"></i>{{ k.label }}</li>
           }
         </ul>
-        @if (!shownVariants.length) {
-          <p class="note">Nothing matches “{{ filter }}”.</p>
-        }
       }
-    </aside>
 
-    <section class="pairing-main">
-      @if (error) {
-        <p class="qtl-status error">{{ error }}</p>
-      } @else if (loading) {
-        <p class="qtl-status">Loading the pairing…</p>
-      } @else if (!data) {
-        <p class="qtl-status">
-          Pick a variant to see what it does to {{ conditional }}.
-        </p>
-      } @else {
-
-        <div class="variant-head">
-          <h3 class="variant-name">{{ data.variant.variant }}</h3>
-          <p class="variant-sub">
-            {{ data.variant.contig }}:{{ data.variant.pos | number }}
-            · MAF {{ data.variant.maf | percent:'1.1-1' }}
-            @if (data.variant.gene) {
-              · {{ data.variant.feature }} of <strong>{{ data.variant.gene }}</strong>
-            }
-            · {{ data.subjects.genotyped }} subjects genotyped
-            @if (data.subjects.enrichment_rows_without_genotype) {
-              · {{ data.subjects.enrichment_rows_without_genotype | number }} pairing
-              rows belong to subjects this variant was not called in and are in no box
-            }
-          </p>
-        </div>
-
-        <!-- The test that put this variant on the list. It was ranked by its
-             omnibus, so the omnibus belongs on the page with the boxes it
-             justifies rather than being something the reader has to take on
-             trust from the ordering of a sidebar. -->
-        <details class="omnibus-block" open>
-          <summary>
-            Pairing test, MANOVA of {{ conditional }} on genotype,
-            one per {{ anchorSide }} gene
-            <em>({{ anchorsWithSignal }} of {{ anchors.length }} significant)</em>
-          </summary>
-          <table class="omnibus-table">
-            <tr>
-              <th>{{ anchorSide }} gene</th><th class="n">Pillai</th><th class="n">F</th>
-              <th class="n">p</th><th class="n">−log10 p</th><th class="n">n</th>
-              <th class="n">smallest class</th><th></th><th></th>
-            </tr>
-            @for (r of omnibusRows; track r.anchor) {
-              <tr [class.on]="isChosen(r.anchor)" [class.quiet]="!r.o.significant">
-                <td>
-                  <button type="button" class="link-button" (click)="toggleAnchor(r.anchor)"
-                          [disabled]="!isChosen(r.anchor) && atAnchorLimit">
-                    {{ r.label }}
-                  </button>
-                </td>
-                <td class="n">{{ r.o.pillai | number:'1.3-3' }}</td>
-                <td class="n">{{ r.o.f_stat | number:'1.2-2' }}</td>
-                <td class="n">{{ r.o.p_value.toExponential(2) }}</td>
-                <td class="n">{{ r.o.neglog10_p | number:'1.1-1' }}</td>
-                <td class="n muted">{{ r.o.n }}</td>
-                <td class="n" [class.weak]="r.o.min_genotype_group !== null
-                                            && r.o.min_genotype_group < 5">
-                  {{ r.o.min_genotype_group ?? '–' }}
-                </td>
-                <td>@if (r.o.significant) { <span class="tag sig">significant</span> }</td>
-                <td>@if (isChosen(r.anchor)) { <span class="tag shown">shown below</span> }</td>
-              </tr>
-            }
-          </table>
-          <p class="note">
-            Pillai's trace on the full partner distribution, so it asks whether
-            the variant moved the pairing <em>at all</em>, not whether it moved
-            any one partner. The cells below are post-hoc: under a row that is
-            not significant they describe, they do not show.
-          </p>
-        </details>
-
-        <!-- the anchors on show, as a small multi-select -->
-        <div class="anchor-strip">
-          <span class="strip-label">Show {{ anchorSide }}
-            <em>(up to {{ maxAnchors }})</em></span>
-          @for (a of anchors; track a) {
-            <button type="button" class="anchor-chip"
-                    [class.on]="isChosen(a)"
-                    [class.sig]="omnibusOf(a)?.significant"
-                    [disabled]="!isChosen(a) && atAnchorLimit"
-                    (click)="toggleAnchor(a)"
-                    [title]="'p ' + omnibusOf(a)?.p_value?.toExponential(2)
-                             + ' · n ' + omnibusOf(a)?.n">
-              {{ short(a) }}
-            </button>
-          }
-          <label class="strict-toggle">
-            <input type="checkbox" [checked]="strictOnly" (change)="toggleStrict()" />
-            strict marks only
-          </label>
-        </div>
-
-        @if (!rows.length) {
-          <p class="qtl-status">
-            Choose a {{ anchorSide }} gene above to draw its partner distribution.
-          </p>
-        } @else {
-          <!-- Laid out as the figure is: marginals down the left, the conditional
-               grid on the right, the partner marginal along the bottom sharing
-               the grid's categories, and the subject counts in the corner. -->
-          <div class="figure">
-            @for (r of rows; track r.anchor) {
-              <div class="fig-left">
-                <plotly-plot [data]="r.marginalData" [layout]="r.marginalLayout"
-                             [config]="marginalConfig(r.anchor)"></plotly-plot>
-              </div>
-              <div class="fig-right">
-                <div class="row-head">
-                  <span class="row-name" [class.sig]="r.omnibus?.significant">
-                    {{ r.label }}
-                  </span>
-                  @if (r.omnibus) {
-                    <span class="row-stat">
-                      p {{ r.omnibus.p_value.toExponential(2) }} · n {{ r.omnibus.n }}
-                      @if (r.omnibus.significant) {
-                        <span class="tag sig">significant</span>
-                      } @else {
-                        <span class="tag">not significant</span>
-                      }
-                      @if (r.marks.length) {
-                        · ✳ {{ r.marks.length }} of {{ partners.length }}
-                      }
-                    </span>
-                  }
-                </div>
-                <plotly-plot [data]="r.gridData" [layout]="r.gridLayout"
-                             [config]="gridConfig(r.anchor)"></plotly-plot>
-              </div>
-            }
-
-            <div class="fig-left counts">
-              <plotly-plot [data]="countsData" [layout]="countsLayout"
-                           [config]="countsConfig"></plotly-plot>
-            </div>
-            <div class="fig-right">
-              <plotly-plot [data]="partnerData" [layout]="partnerLayout"
-                           [config]="partnerConfig"></plotly-plot>
-            </div>
-          </div>
-
-          <p class="note">
-            Left: how much each {{ anchorSide }} gene is used overall, by
-            genotype, a variant that moves who a gene pairs with while leaving
-            this flat is the whole reason this scan is separate from the usage
-            scan. Bottom: the same for each {{ partnerSide }} gene, so a column
-            that is low under every genotype reads as a rare partner rather than
-            an effect. Corner: how many subjects carry each genotype, because a
-            class of five is not a distribution however tight its box.
-          </p>
-          <p class="note">
-            ✳ is the pipeline's own call on a cell, carried through rather than
-            recomputed, so these are the same cells the manuscript stars.
-          </p>
-        }
-      }
-    </section>
-  </div>
-}
+    }
+  }
+</section>

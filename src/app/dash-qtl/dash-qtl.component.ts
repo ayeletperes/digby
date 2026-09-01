@@ -127,7 +127,6 @@ export class DashQtlComponent implements OnInit, OnDestroy {
       : null;
 
   openFromGallery(panel: GalleryPanel): void {
-    this.atGallery = false;
     this.showView(panel.id as 'gene' | 'variant' | 'pairing' | 'summary');
   }
 
@@ -201,6 +200,11 @@ export class DashQtlComponent implements OnInit, OnDestroy {
           this.selection = { ...this.selection, locus: available[0] };
         }
         this.loadAscs();
+        // a direct link to the pairing tab restores the view without going
+        // through showView, so the list it needs has to be asked for here too
+        if (this.view === 'pairing') {
+          this.loadPairingVariants();
+        }
       });
   }
 
@@ -211,6 +215,83 @@ export class DashQtlComponent implements OnInit, OnDestroy {
 
   lociFor(species?: string): string[] {
     return species ? (this.loci[species] ?? []) : [];
+  }
+
+  // ------------------------------------------------- the pairing tab's subject
+  /**
+   * Which variant the pairing analysis is about, and in which direction.
+   *
+   * Held here rather than inside the panel because every other analysis has its
+   * subject chosen in the rail, and this one was the exception: its picker sat
+   * in a card beside the figure. The panel draws what it is handed.
+   *
+   * The ranking depends on the direction, since P(J|D) and P(D|J) are separate
+   * scans, so the direction control sits with the list it reorders.
+   */
+  readonly conditionals = ['P(J|D)', 'P(D|J)'];
+  pairingConditional = 'P(J|D)';
+  pairingVariant: string | null = null;
+  pairingVariants: any[] = [];
+  pairingScanned = 0;
+  pairingHasScan = true;
+  pairingLoading = false;
+  pairingError: string | null = null;
+  pairingFilter = '';
+
+  get shownPairingVariants(): any[] {
+    const q = this.pairingFilter.trim().toUpperCase();
+    const all = this.pairingVariants;
+    return (q ? all.filter(v => v.variant.toUpperCase().includes(q)
+                             || (v.gene ?? '').toUpperCase().includes(q))
+              : all).slice(0, 60);
+  }
+
+  get pairingAnchorSide(): string {
+    return this.pairingConditional === 'P(J|D)' ? 'J' : 'D';
+  }
+
+  setConditional(conditional: string): void {
+    if (conditional === this.pairingConditional) {
+      return;
+    }
+    this.pairingConditional = conditional;
+    // a different conditional is a different scan over the same variants, so
+    // its ranking is different and the chosen variant may not be in it
+    this.pairingVariant = null;
+    this.loadPairingVariants();
+  }
+
+  pickPairingVariant(variant: string): void {
+    this.pairingVariant = variant;
+  }
+
+  private loadPairingVariants(): void {
+    const { species, locus } = this.selection;
+    if (!species || !locus) {
+      this.pairingVariants = [];
+      return;
+    }
+    this.pairingLoading = true;
+    this.pairingError = null;
+
+    this.qtl.pairingVariants(species, locus, this.pairingConditional, 400)
+      .pipe(catchError(err => {
+        this.pairingError = err?.error?.message
+          ?? `No partner-pairing scan is held for ${locus}`;
+        this.pairingLoading = false;
+        this.pairingVariants = [];
+        return EMPTY;
+      }), takeUntil(this.destroy$))
+      .subscribe(result => {
+        this.pairingLoading = false;
+        this.pairingVariants = result.variants ?? [];
+        this.pairingScanned = result.n_variants_scanned ?? 0;
+        this.pairingHasScan = !!result.scanned;
+        if (this.pairingVariant
+            && !this.pairingVariants.some((v: any) => v.variant === this.pairingVariant)) {
+          this.pairingVariant = null;
+        }
+      });
   }
 
   /** ASCs worth offering first: the ones that actually have a signal. */
@@ -254,13 +335,27 @@ export class DashQtlComponent implements OnInit, OnDestroy {
   onSpeciesChange(): void {
     this.selection = { ...this.selection, locus: this.lociFor(this.selection.species)[0],
                        asc: undefined, variant: undefined };
+    this.pairingVariant = null;
+    this.pairingVariants = [];
+    this.pairingFilter = '';
+    this.pairingError = null;
     this.loadAscs();
+    if (this.view === 'pairing') {
+      this.loadPairingVariants();
+    }
   }
 
   onLocusChange(): void {
     // an ASC belongs to a locus, and so does a variant
     this.ascSegment = '';
     this.ascFilter = '';
+    this.pairingVariant = null;
+    this.pairingVariants = [];
+    this.pairingFilter = '';
+    this.pairingError = null;
+    if (this.view === 'pairing') {
+      this.loadPairingVariants();
+    }
     this.selection = { ...this.selection, asc: undefined, variant: undefined };
     this.loadAscs();
   }
@@ -478,6 +573,9 @@ export class DashQtlComponent implements OnInit, OnDestroy {
   showView(view: 'gene' | 'variant' | 'pairing' | 'summary'): void {
     this.atGallery = false;
     this.view = view;
+    if (view === 'pairing' && !this.pairingVariants.length && !this.pairingError) {
+      this.loadPairingVariants();
+    }
     this.plot = undefined;
     this.pointAsc = undefined;
     this.writeToUrl();
@@ -564,6 +662,8 @@ export class DashQtlComponent implements OnInit, OnDestroy {
         variant: this.selection.variant ?? null,
         view: this.atGallery ? null : this.view,
         plot: this.plot ?? null,
+      pairing: this.pairingVariant ?? null,
+      cond: this.pairingConditional === 'P(J|D)' ? null : this.pairingConditional,
       },
       queryParamsHandling: 'merge',
       replaceUrl: false,
@@ -581,6 +681,8 @@ export class DashQtlComponent implements OnInit, OnDestroy {
     this.atGallery = !known;
     this.view = known ? asked as typeof this.view : 'summary';
     this.plot = params.get('plot') ?? undefined;
+    this.pairingVariant = params.get('pairing');
+    this.pairingConditional = params.get('cond') === 'P(D|J)' ? 'P(D|J)' : 'P(J|D)';
     this.selection = {
       species: params.get('species') ?? undefined,
       locus: params.get('locus') ?? undefined,

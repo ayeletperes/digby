@@ -85,8 +85,66 @@
         <!-- The open analysis's own subject, in the shape its question needs:
              ~35 genes are worth browsing, thousands of variants must be typed. -->
         <section class="rail-section"
-                 [class.hidden]="atGallery || view === 'pairing' || view === 'summary'">
-          @if (view === 'gene') {
+                 [class.hidden]="atGallery || view === 'summary'">
+          @if (view === 'pairing') {
+            <h3 class="rail-heading">Direction</h3>
+            <div class="segment-chips">
+              @for (c of conditionals; track c) {
+                <button type="button" class="segment-chip mono"
+                        [class.on]="pairingConditional === c"
+                        (click)="setConditional(c)"
+                        [title]="c === 'P(J|D)' ? 'Anchor on a J, spread the D genes'
+                                                : 'Anchor on a D, spread the J genes'">
+                  {{ c }}
+                </button>
+              }
+            </div>
+            <p class="rail-note">
+              Two scans over the same variants, never pooled. {{ pairingConditional }}
+              anchors on a {{ pairingAnchorSide }}.
+            </p>
+
+            <h3 class="rail-heading">Variant</h3>
+            @if (pairingError) {
+              <p class="rail-note warn">{{ pairingError }}</p>
+            } @else if (!pairingHasScan) {
+              <p class="rail-note warn">
+                No partner-pairing scan has been run for {{ selection.locus }}.
+                This is a missing scan, not a scan that found nothing, only IGH
+                has one loaded.
+              </p>
+            } @else if (pairingLoading) {
+              <p class="rail-note">Loading the scan…</p>
+            } @else {
+              <input class="form-control form-control-sm asc-filter" type="text"
+                     [(ngModel)]="pairingFilter" placeholder="filter by id or gene" />
+              <p class="rail-note">
+                {{ pairingScanned | number }} scanned;
+                the strongest {{ pairingVariants.length | number }} are listed.
+              </p>
+              <ul class="variant-list">
+                @for (v of shownPairingVariants; track v.variant) {
+                  <li>
+                    <button type="button" class="variant-link"
+                            [class.on]="v.variant === pairingVariant"
+                            (click)="pickPairingVariant(v.variant)">
+                      <span class="v-id">{{ v.variant }}</span>
+                      <span class="v-meta">
+                        {{ v.neglog10_p | number:'1.1-1' }}
+                        @if (v.n_significant_anchors) {
+                          · {{ v.n_significant_anchors }}/{{ v.n_anchors }}
+                        }
+                      </span>
+                      <span class="v-gene">{{ v.gene ?? 'no gene' }} · {{ v.feature }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+              @if (!shownPairingVariants.length) {
+                <p class="rail-note">Nothing matches “{{ pairingFilter }}”.</p>
+              }
+            }
+          } @else if (view === 'gene') {
             <h3 class="rail-heading">Gene</h3>
 
             <!-- IGH scans 70 genes across three segments, which is more than a
@@ -181,7 +239,8 @@
                        (variantPicked)="onSummaryVariant($event)">
       </app-qtl-summary>
     } @else if (view === 'pairing') {
-      <app-qtl-pairing [species]="selection.species" [locus]="selection.locus">
+      <app-qtl-pairing [species]="selection.species" [locus]="selection.locus"
+                       [variant]="pairingVariant" [conditional]="pairingConditional">
       </app-qtl-pairing>
     } @else if (isPlotting) {
       <app-qtl-variant [selection]="plotSelection" [fallbackAsc]="pointAsc"

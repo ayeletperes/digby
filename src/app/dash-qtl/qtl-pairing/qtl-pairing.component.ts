@@ -77,24 +77,42 @@ interface AnchorRow {
 export class QtlPairingComponent implements OnChanges {
   @Input() species?: string;
   @Input() locus?: string;
-
-  readonly conditionals = ['P(J|D)', 'P(D|J)'];
-  conditional = 'P(J|D)';
+  /**
+   * Which variant, and which direction, both chosen in the rail.
+   *
+   * They used to live here, in a card beside the figure, which made this the one
+   * analysis whose subject was picked somewhere different from all the others.
+   * The shell owns them now, as it owns the gene for one tab and the variant for
+   * another, and this draws whatever it is handed.
+   */
+  @Input() variant: string | null = null;
+  @Input() conditional = 'P(J|D)';
   readonly maxAnchors = MAX_ANCHORS;
 
   /** Only strict marks by default: the looser rule stars a third of the grid. */
   strictOnly = true;
 
-  loadingVariants = false;
+  /**
+   * Which surrounding panels are drawn.
+   *
+   * Both are on by default because each answers a question the grid raises, but
+   * a reader who has already asked them is entitled to the space back: with
+   * three anchors and 24 partners the grid is the part that wants the pixels.
+   */
+  showAnchorMarginal = true;
+  showPartnerMarginal = true;
+
+  /** How to read the surrounding panels, behind the site's info control. */
+  infoOpen = false;
+
+  /** The genotype key, drawn in HTML so it can sit outside any one figure. */
+  readonly genotypeKey = [0, 1, 2].map(g => ({
+    label: GENOTYPE_LABEL[g], colour: GENOTYPE_COLOUR[g],
+  }));
+
   loading = false;
   error: string | null = null;
-  listError: string | null = null;
 
-  variants: any[] = [];
-  scanned = 0;
-  hasScan = true;
-  filter = '';
-  variant: string | null = null;
 
   data: any = null;
   anchors: string[] = [];
@@ -220,11 +238,18 @@ export class QtlPairingComponent implements OnChanges {
   constructor(private qtl: QtlService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['species'] || changes['locus']) {
-      this.variant = null;
+    if (changes['conditional']) {
+      // a different conditional is a different scan, and its anchors are the
+      // other side's genes, so nothing from the previous one carries over
+      this.chosen = [];
+    }
+    if (changes['species'] || changes['locus'] || changes['variant']
+        || changes['conditional']) {
       this.data = null;
       this.rows = [];
-      this.loadVariants();
+      if (this.variant) {
+        this.load();
+      }
     }
   }
 
@@ -236,33 +261,8 @@ export class QtlPairingComponent implements OnChanges {
     return this.conditional === 'P(J|D)' ? 'D' : 'J';
   }
 
-  get shownVariants(): any[] {
-    const q = this.filter.trim().toUpperCase();
-    if (!q) {
-      return this.variants.slice(0, 60);
-    }
-    return this.variants.filter(v =>
-      v.variant.toUpperCase().includes(q)
-      || (v.gene ?? '').toUpperCase().includes(q)).slice(0, 60);
-  }
 
-  onConditionalChange(): void {
-    // a different conditional is a different scan, and its anchors are the other
-    // side's genes, so nothing from the previous one carries over
-    this.chosen = [];
-    this.data = null;
-    this.rows = [];
-    this.loadVariants();
-    if (this.variant) {
-      this.load();
-    }
-  }
 
-  pickVariant(variant: string): void {
-    this.variant = variant;
-    this.chosen = [];
-    this.load();
-  }
 
   /** Anchors are a small multi-select: click to add, click again to drop. */
   toggleAnchor(anchor: string): void {
@@ -285,6 +285,20 @@ export class QtlPairingComponent implements OnChanges {
 
   toggleStrict(): void {
     this.strictOnly = !this.strictOnly;
+    this.draw();
+  }
+
+  toggleInfo(): void {
+    this.infoOpen = !this.infoOpen;
+  }
+
+  toggleAnchorMarginal(): void {
+    this.showAnchorMarginal = !this.showAnchorMarginal;
+    this.draw();
+  }
+
+  togglePartnerMarginal(): void {
+    this.showPartnerMarginal = !this.showPartnerMarginal;
     this.draw();
   }
 
@@ -323,29 +337,6 @@ export class QtlPairingComponent implements OnChanges {
       .sort((x, y) => y.o.neglog10_p - x.o.neglog10_p);
   }
 
-  private loadVariants(): void {
-    if (!this.species || !this.locus) {
-      this.variants = [];
-      return;
-    }
-    this.loadingVariants = true;
-    this.listError = null;
-
-    this.qtl.pairingVariants(this.species, this.locus, this.conditional, 400)
-      .pipe(catchError(err => {
-        this.listError = err?.error?.message
-          ?? `No partner-pairing scan is held for ${this.locus}`;
-        this.loadingVariants = false;
-        this.variants = [];
-        return EMPTY;
-      }))
-      .subscribe(result => {
-        this.loadingVariants = false;
-        this.variants = result.variants ?? [];
-        this.scanned = result.n_variants_scanned ?? 0;
-        this.hasScan = !!result.scanned;
-      });
-  }
 
   private load(): void {
     if (!this.species || !this.locus || !this.variant) {
@@ -466,16 +457,21 @@ export class QtlPairingComponent implements OnChanges {
         });
       }
 
+      // The partner names appear once, on whichever figure is bottom-most:
+      // normally the partner marginal, and the last grid when that is hidden.
+      // Repeating them on every row is noise; omitting them everywhere leaves
+      // the columns unlabelled.
       const isLast = anchor === this.chosen[this.chosen.length - 1];
+      const carriesAxis = isLast && !this.showPartnerMarginal;
       const gridLayout: Record<string, unknown> = {
-        height: ROW_HEIGHT,
-        margin: { ...GRID_MARGIN, b: 4 },
+        height: ROW_HEIGHT + (carriesAxis ? 70 : 0),
+        margin: { ...GRID_MARGIN, b: carriesAxis ? 78 : 4 },
         boxmode: 'group',
         showlegend: false,
-        // ticks only on the bottom-most grid: the partner marginal below carries
-        // the shared axis, and repeating it on every row is noise
         xaxis: { type: 'category', categoryorder: 'array', categoryarray: partnerLabels,
-                 showticklabels: false, ticks: '' },
+                 showticklabels: carriesAxis, ticks: '',
+                 ...(carriesAxis ? { title: { text: `${this.partnerSide} gene` },
+                                     tickangle: -60 } : {}) },
         yaxis: { title: { text: `${this.conditional} · ${label}` },
                  rangemode: 'tozero', automargin: false },
       };
@@ -537,8 +533,7 @@ export class QtlPairingComponent implements OnChanges {
       xaxis: { type: 'category', categoryorder: 'array', categoryarray: partnerLabels,
                title: { text: `${this.partnerSide} gene` }, tickangle: -60 },
       yaxis: { title: { text: `P(${this.partnerSide}) overall` }, rangemode: 'tozero' },
-      legend: { orientation: 'h', y: -0.55, x: 0 },
-      showlegend: true,
+      showlegend: false,
     };
   }
 }

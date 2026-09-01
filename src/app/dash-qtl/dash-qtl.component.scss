@@ -121,3 +121,27 @@
 
 .panel-of { font-weight: 400; color: #5f6368; }
 .panel-link.home { font-weight: 500; }
+
+.segment-chip.mono {
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace; font-size: 0.7rem;
+}
+.rail-note.warn { color: #b06000; }
+
+/* the pairing tab's variant list, in the rail with every other subject control */
+.variant-list {
+  list-style: none; margin: 0.4rem 0 0; padding: 0;
+  max-height: 22rem; overflow-y: auto;
+}
+.variant-link {
+  display: block; width: 100%; text-align: left; border: 0; background: none;
+  padding: 0.2rem 0.3rem; border-radius: 4px; cursor: pointer;
+}
+.variant-link:hover { background: var(--vdj-teal-wash); }
+.variant-link.on { background: var(--vdj-teal); color: #fff; }
+.variant-link.on .v-gene, .variant-link.on .v-meta { color: #e6f2f1; }
+.v-id {
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace; font-size: 0.74rem;
+  font-weight: 600;
+}
+.v-meta { float: right; font-size: 0.7rem; color: #80868b; }
+.v-gene { display: block; font-size: 0.68rem; color: #80868b; }
