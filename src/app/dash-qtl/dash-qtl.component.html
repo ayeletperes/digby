@@ -156,15 +156,8 @@
 
   <main class="qtl-canvas">
     <header class="canvas-head">
-      <div class="canvas-title">
-        <h2>Gene usage QTL@if (!atGallery) {<span class="panel-of">&nbsp;·
-          {{ openPanelLabel }}</span>}</h2>
-        @if (!atGallery) {
-          <button type="button" class="all-analyses" (click)="showGallery()">
-            All analyses
-          </button>
-        }
-      </div>
+      <h2>Gene usage QTL@if (!atGallery) {<span class="panel-of">&nbsp;·
+        {{ openPanelLabel }}</span>}</h2>
       <p class="canvas-sub">
         Where variation in the locus explains how much each gene is used.
         @if (selection.species && selection.locus) {

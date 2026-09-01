@@ -88,7 +88,7 @@ export class QtlSummaryComponent implements OnChanges {
     modeBarButtonsToAdd: exportButtons(() => ({
       name: `guqtl_significant_by_location_${this.allLoci ? 'all_loci' : this.locus}`,
       title: 'Significant gene-usage variants by locus, segment and where they sit'
-             + ' — distinct variants, so a variant significant for several genes of'
+             + '. Distinct variants, so a variant significant for several genes of'
              + ' one segment counts once',
       source: `/api/qtl/usage_summary/${this.species}`,
       table: this.exportTable,
@@ -249,7 +249,7 @@ export class QtlSummaryComponent implements OnChanges {
       // Plotly 3 drops a plain string title silently and draws nothing
       xaxis: grouped
         ? { type: 'multicategory', title: { text: 'Locus and segment' } }
-        : { type: 'category', title: { text: `Segment — ${loci[0] ?? ''}` } },
+        : { type: 'category', title: { text: loci[0] ?? 'Segment' } },
       // `rangemode: 'tozero'` only means something on a linear axis. On a log one
       // zero is at minus infinity, so asking the range to include it is asking
       // for a range with no bottom; Plotly currently ignores it and autoranges,

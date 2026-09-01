@@ -387,7 +387,7 @@ export class DashQtlComponent implements OnInit, OnDestroy {
     if (this.view === 'gene') {
       return asc
         ? `One scan: every variant tested against ${ascDisplayName(locus, asc)}.`
-        : `No single scan — each variant's best result across every gene in `
+        : `No single scan: each variant's best result across every gene in `
           + `${locus ?? 'the locus'}.`;
     }
     if (this.view === 'summary') {

@@ -77,7 +77,7 @@ export class QtlSearchComponent {
         ...(result.variants ?? []).map((v: any): SearchHit => ({
           kind: 'variant', locus: v.locus, label: v.variant, variant: v.variant, asc: v.asc,
           detail: v.significant
-            ? `QTL for ${v.asc} — -log10 p ${v.neglog10_p.toFixed(1)}`
+            ? `QTL for ${v.asc}, -log10 p ${v.neglog10_p.toFixed(1)}`
             : `tested, not significant (best -log10 p ${v.neglog10_p.toFixed(1)})`,
         })),
       ];

@@ -568,7 +568,7 @@ export class QtlRegionComponent implements OnChanges {
     return `Variants in ${this.contig}:${this.start}-${this.end}`
       + (this.plottedAsc ? ` tested against ${this.plottedAsc}`
                          : ', each at its strongest result across every gene')
-      + (this.annotationSource ? ` — annotated against ${this.annotationSource}` : '');
+      + (this.annotationSource ? `. Annotated against ${this.annotationSource}` : '');
   }
 
   get exportSource(): string {
