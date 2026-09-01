@@ -392,6 +392,15 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     this.writeToUrl();
   }
 
+  /**
+   * Set when the chosen locus has nothing here, which the shared dataset
+   * selector cannot know: it offers every dataset, and IGHC is one the Explorer
+   * does not carry.
+   */
+  get locusUnavailable(): string | null {
+    return this.ascError && !this.availableAscs.length ? this.ascError : null;
+  }
+
   /** Bound into the gallery, which asks per card rather than holding the rule. */
   readonly galleryBlocked = (panel: DashPanel): string | null => this.blockedReason(panel);
 
@@ -793,7 +802,21 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     this.refbookService.getAscsInLocusApi(species, locus)
       .pipe(
         catchError(err => {
-          this.ascError = err?.message ?? 'Failed to load genes';
+          // Clear the old locus's genes before reporting. Without this the
+          // canvas kept drawing the last locus under the new locus's name:
+          // switching Human IGH to IGHC left IGHV1-18's 18 alleles on screen
+          // with "Human · IGHC" above them, which is a mislabelled figure
+          // rather than a failed one.
+          // segment first: applyAscs writes the URL, and restoreFromUrl reads it
+          // straight back, so a stale segment= would put the chip back
+          this.segments = [];
+          this.segment = null;
+          this.allAscs = [];
+          this.availableAscs = [];
+          this.applyAscs([]);
+          this.ascError = err?.status === 404
+            ? `The Explorer has no data for ${locus}.`
+            : 'Could not load the genes for this locus.';
           this.ascLoading = false;
           return EMPTY;
         }),

@@ -217,7 +217,15 @@
 
     <!-- an empty allele list would ride the wire as "no filter" and show
          everything, which contradicts what the rail says is passing -->
-    @if (nothingPassesFilter) {
+    @if (locusUnavailable) {
+      <div class="panel-blocked">
+        <p class="reason">{{ locusUnavailable }}</p>
+        <p class="description">
+          The dataset list offers every dataset on the site, including ones the
+          Explorer does not carry. Choose another locus above.
+        </p>
+      </div>
+    } @else if (nothingPassesFilter) {
       <div class="panel-blocked">
         <p class="reason">No allele is seen in that many samples.</p>
         <p class="description">
