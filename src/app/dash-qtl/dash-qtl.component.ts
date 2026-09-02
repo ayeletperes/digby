@@ -167,6 +167,15 @@ export class DashQtlComponent implements OnInit, OnDestroy {
   loci: Record<string, string[]> = {};
   ascs: QtlAsc[] = [];
 
+  /**
+   * Every built database, as the catalogue reports it.
+   *
+   * Kept whole rather than as a loci map because a locus now belongs to a
+   * project: with two studies loaded, IGH exists twice and they are different
+   * scans over different cohorts.
+   */
+  datasets: { species: string; locus: string; project: string | null }[] = [];
+
   loading = false;
   error: string | null = null;
 
@@ -191,14 +200,23 @@ export class DashQtlComponent implements OnInit, OnDestroy {
       .subscribe(result => {
         this.species = result.species ?? [];
         this.loci = result.loci ?? {};
+        this.datasets = result.datasets ?? [];
 
         if (!this.selection.species || !this.species.includes(this.selection.species)) {
           this.selection = { ...this.selection, species: this.species[0] };
+        }
+        // The project is settled before the locus, because which loci exist
+        // depends on it. A run that scanned IGH says nothing about a study that
+        // only scanned the light chains.
+        const projects = this.projectsFor(this.selection.species);
+        if (!this.selection.project || !projects.includes(this.selection.project)) {
+          this.selection = { ...this.selection, project: projects[0] };
         }
         const available = this.lociFor(this.selection.species);
         if (!this.selection.locus || !available.includes(this.selection.locus)) {
           this.selection = { ...this.selection, locus: available[0] };
         }
+        this.sync();
         this.loadAscs();
         // a direct link to the pairing tab restores the view without going
         // through showView, so the list it needs has to be asked for here too
@@ -213,8 +231,67 @@ export class DashQtlComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  /**
+   * Projects with results for a species, newest naming first.
+   *
+   * A database built before projects were recorded reports none; it is offered
+   * as an unnamed entry rather than hidden, because a result with no project on
+   * it is still a result and dropping it would make the dashboard look empty.
+   */
+  projectsFor(species?: string): string[] {
+    if (!species) {
+      return [];
+    }
+    return [...new Set(this.datasets.filter(d => d.species === species)
+                                    .map(d => d.project ?? ''))].sort();
+  }
+
+  /** Whether there is a choice to offer. One project needs no picker. */
+  get hasProjectChoice(): boolean {
+    return this.projectsFor(this.selection.species).length > 1;
+  }
+
+  /** The project in words, for the places that name the cohort. */
+  get projectLabel(): string {
+    return this.selection.project || '';
+  }
+
   lociFor(species?: string): string[] {
-    return species ? (this.loci[species] ?? []) : [];
+    if (!species) {
+      return [];
+    }
+    const project = this.selection.project ?? '';
+    const held = this.datasets.filter(d => d.species === species
+                                           && (d.project ?? '') === project)
+                              .map(d => d.locus);
+    // the catalogue's own list while the datasets have not arrived, so the first
+    // paint is not empty
+    return held.length ? [...new Set(held)].sort() : (this.loci[species] ?? []);
+  }
+
+  /**
+   * A different project is a different cohort, so nothing chosen inside the old
+   * one survives it: its genes, its variants and its loci are all its own.
+   */
+  onProjectChange(): void {
+    this.ascSegment = '';
+    this.ascFilter = '';
+    this.pairingVariant = null;
+    this.pairingVariants = [];
+    this.pairingFilter = '';
+    this.pairingError = null;
+    this.plot = undefined;
+    this.pointAsc = undefined;
+
+    const available = this.lociFor(this.selection.species);
+    this.selection = { ...this.selection, asc: undefined, variant: undefined,
+                       locus: available.includes(this.selection.locus ?? '')
+                              ? this.selection.locus : available[0] };
+    this.sync();
+    if (this.view === 'pairing') {
+      this.loadPairingVariants();
+    }
+    this.loadAscs();
   }
 
   // ------------------------------------------------- the pairing tab's subject
@@ -333,8 +410,13 @@ export class DashQtlComponent implements OnInit, OnDestroy {
   }
 
   onSpeciesChange(): void {
+    // the project belongs to a species too: a study of one is not a study of
+    // another, so it is settled first and the locus follows from it
+    const project = this.projectsFor(this.selection.species)[0];
+    this.selection = { ...this.selection, project };
     this.selection = { ...this.selection, locus: this.lociFor(this.selection.species)[0],
                        asc: undefined, variant: undefined };
+    this.sync();
     this.pairingVariant = null;
     this.pairingVariants = [];
     this.pairingFilter = '';
@@ -520,6 +602,11 @@ export class DashQtlComponent implements OnInit, OnDestroy {
    * child an equal-but-new object and buy a second identical round trip.
    */
   private sync(): void {
+    // Set before any panel fetches. Every guQTL request carries it, and the
+    // backend refuses to guess once more than one project holds a locus, so a
+    // request issued before this is set would fail rather than answer wrongly.
+    this.qtl.project = this.selection.project || null;
+
     const next = this.view === 'gene'
       ? { ...this.selection, variant: this.plot }
       : { ...this.selection, asc: this.plot };
@@ -657,6 +744,7 @@ export class DashQtlComponent implements OnInit, OnDestroy {
       relativeTo: this.route,
       queryParams: {
         species: this.selection.species ?? null,
+        project: this.selection.project || null,
         locus: this.selection.locus ?? null,
         asc: this.selection.asc ?? null,
         variant: this.selection.variant ?? null,
@@ -685,6 +773,7 @@ export class DashQtlComponent implements OnInit, OnDestroy {
     this.pairingConditional = params.get('cond') === 'P(D|J)' ? 'P(D|J)' : 'P(J|D)';
     this.selection = {
       species: params.get('species') ?? undefined,
+      project: params.get('project') ?? undefined,
       locus: params.get('locus') ?? undefined,
       asc: params.get('asc') ?? undefined,
       variant: params.get('variant') ?? undefined,

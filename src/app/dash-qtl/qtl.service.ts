@@ -15,14 +15,37 @@ import { environment } from '../../environments/environment';
 export class QtlService {
   private readonly base = `${environment.apiBasePath}/qtl`;
 
+  /**
+   * The project every request is about.
+   *
+   * Held here rather than threaded through eleven signatures because it
+   * qualifies all of them identically and the dashboard chooses it once: these
+   * analyses are per project and are never pooled, so there is no view that
+   * wants two at a time. The backend refuses to guess when several projects
+   * hold a locus, so an unset value is safe while only one is loaded and fails
+   * loudly rather than silently once a second is.
+   */
+  project: string | null = null;
+
   constructor(private http: HttpClient) {}
 
-  speciesAndLoci(): Observable<{ species: string[]; loci: Record<string, string[]> }> {
+  /** Every request carries the chosen project. */
+  private p(params = new HttpParams()): HttpParams {
+    return this.project ? params.set('project', this.project) : params;
+  }
+
+  speciesAndLoci(): Observable<{
+    species: string[];
+    loci: Record<string, string[]>;
+    projects: Record<string, string[]>;
+    datasets: { species: string; locus: string; project: string | null }[];
+  }> {
     return this.http.get<any>(`${this.base}/species_and_loci`);
   }
 
   ascs(species: string, locus: string): Observable<any> {
-    return this.http.get<any>(`${this.base}/ascs/${enc(species)}/${enc(locus)}`);
+    return this.http.get<any>(`${this.base}/ascs/${enc(species)}/${enc(locus)}`,
+                              { params: this.p() });
   }
 
   manhattan(species: string, locus: string, asc?: string): Observable<any> {
@@ -30,12 +53,14 @@ export class QtlService {
     if (asc) {
       params = params.set('asc', asc);
     }
-    return this.http.get<any>(`${this.base}/manhattan/${enc(species)}/${enc(locus)}`, { params });
+    return this.http.get<any>(`${this.base}/manhattan/${enc(species)}/${enc(locus)}`,
+                              { params: this.p(params) });
   }
 
   variant(species: string, locus: string, variant: string): Observable<any> {
     return this.http.get<any>(
-      `${this.base}/variant/${enc(species)}/${enc(locus)}/${enc(variant)}`);
+      `${this.base}/variant/${enc(species)}/${enc(locus)}/${enc(variant)}`,
+      { params: this.p() });
   }
 
   /**
@@ -45,7 +70,8 @@ export class QtlService {
    * arriving from a GWAS hit does not know which locus holds it.
    */
   variantLookup(species: string, variant: string): Observable<any> {
-    return this.http.get<any>(`${this.base}/variant_lookup/${enc(species)}/${enc(variant)}`);
+    return this.http.get<any>(`${this.base}/variant_lookup/${enc(species)}/${enc(variant)}`,
+                              { params: this.p() });
   }
 
   /**
@@ -59,7 +85,8 @@ export class QtlService {
     if (kind) {
       params = params.set('kind', kind);
     }
-    return this.http.get<any>(`${this.base}/search/${enc(species)}`, { params });
+    return this.http.get<any>(`${this.base}/search/${enc(species)}`,
+                              { params: this.p(params) });
   }
 
   /**
@@ -81,7 +108,8 @@ export class QtlService {
       params = params.set('start', String(range.start)).set('end', String(range.end));
     }
     return this.http.get<any>(
-      `${this.base}/region/${enc(species)}/${enc(locus)}/${enc(variant)}`, { params });
+      `${this.base}/region/${enc(species)}/${enc(locus)}/${enc(variant)}`,
+      { params: this.p(params) });
   }
 
   /**
@@ -95,8 +123,8 @@ export class QtlService {
                   limit = 200): Observable<any> {
     return this.http.get<any>(
       `${this.base}/pairing_variants/${enc(species)}/${enc(locus)}`,
-      { params: new HttpParams().set('conditional', conditional)
-                                .set('limit', String(limit)) });
+      { params: this.p(new HttpParams().set('conditional', conditional)
+                                       .set('limit', String(limit))) });
   }
 
   /** One variant's partner distributions, by genotype. */
@@ -104,23 +132,25 @@ export class QtlService {
           conditional: string): Observable<any> {
     return this.http.get<any>(
       `${this.base}/pairing/${enc(species)}/${enc(locus)}/${enc(variant)}`,
-      { params: new HttpParams().set('conditional', conditional) });
+      { params: this.p(new HttpParams().set('conditional', conditional)) });
   }
 
   /** Significant variants by locus, segment and where they sit. */
   usageSummary(species: string): Observable<any> {
-    return this.http.get<any>(`${this.base}/usage_summary/${enc(species)}`);
+    return this.http.get<any>(`${this.base}/usage_summary/${enc(species)}`,
+                              { params: this.p() });
   }
 
   /** The same counts split per gene, for one locus. */
   geneSummary(species: string, locus: string): Observable<any> {
-    return this.http.get<any>(`${this.base}/gene_summary/${enc(species)}/${enc(locus)}`);
+    return this.http.get<any>(`${this.base}/gene_summary/${enc(species)}/${enc(locus)}`,
+                              { params: this.p() });
   }
 
   variantUsage(species: string, locus: string, variant: string, asc: string): Observable<any> {
     return this.http.get<any>(
       `${this.base}/variant_usage/${enc(species)}/${enc(locus)}/${enc(variant)}`,
-      { params: new HttpParams().set('asc', asc) });
+      { params: this.p(new HttpParams().set('asc', asc)) });
   }
 }
 

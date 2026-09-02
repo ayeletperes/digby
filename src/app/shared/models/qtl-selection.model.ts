@@ -11,6 +11,16 @@ export interface QtlSelection {
   species?: string;
   locus?: string;
 
+  /**
+   * The study whose cohort was scanned.
+   *
+   * One project at a time: a scan is computed within a cohort and never pooled
+   * across them, so this chooses which database answers rather than filtering
+   * inside one. Absent while only one project is loaded, which is the state the
+   * backend serves without being asked.
+   */
+  project?: string;
+
   /** The ASC whose usage is being explained. Absent means the whole-locus view. */
   asc?: string;
 

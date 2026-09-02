@@ -29,8 +29,18 @@
       either.
     </p>
     <p>
-      When more studies are loaded this section will have to say something else.
-      It is written to be wrong in an obvious way rather than to quietly go stale.
+      One project at a time, by construction. The project is recorded in the
+      database the results were built into, and the dashboard offers whichever
+      projects have been built: a second study is a second build, not a merge, so
+      a scan is never computed across cohorts. Where more than one project holds
+      a locus, the sidebar gains a project chooser and the API declines to answer
+      until one is named, rather than picking.
+    </p>
+    <p>
+      P28 is the VDJbase project of every subject in this cohort: all 176 rows of
+      the run's metadata carry a <code>P28_</code> sample name. It is recorded in
+      the database as a stated value, not derived from the name of the file it
+      was read from.
     </p>
   </section>
 

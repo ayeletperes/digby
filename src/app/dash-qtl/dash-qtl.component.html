@@ -31,6 +31,22 @@
               </select>
             </div>
           </div>
+          <!-- Only when there is a choice. One project is not a decision, and a
+               dropdown with a single entry reads as one. -->
+          @if (hasProjectChoice) {
+            <label class="rail-label" for="qtlProject">Project</label>
+            <select class="form-select form-select-sm" id="qtlProject"
+                    [(ngModel)]="selection.project" (ngModelChange)="onProjectChange()">
+              @for (p of projectsFor(selection.species); track p) {
+                <option [ngValue]="p">{{ p || 'unnamed run' }}</option>
+              }
+            </select>
+            <p class="rail-note">
+              One project at a time. These scans are computed within a cohort and
+              are not pooled across them, so every number on the page is this
+              project's.
+            </p>
+          }
           @if (ascs.length) {
             <p class="rail-note">
               {{ ascs.length }} genes scanned · {{ ascsWithSignal }} with a
@@ -218,7 +234,7 @@
       <p class="canvas-sub">
         Where variation in the locus explains how much each gene is used.
         @if (selection.species && selection.locus) {
-          {{ selection.species }} · {{ selection.locus }}
+          {{ selection.species }} · {{ selection.locus }}@if (projectLabel) { · {{ projectLabel }}}
         }
       </p>
     </header>
@@ -229,9 +245,13 @@
       <!-- One cohort, said once, where someone lands. Every number in every
            analysis here comes from it, and none of them says so on its own. -->
       <p class="cohort-note">
-        Every analysis here is one study: <strong>project P28</strong>, the
-        cohort the guQTL scan was run on. Nothing on these pages is pooled across
-        studies, and a count or a frequency is that project's, not a population's.
+        Every analysis here is one study@if (projectLabel) {:
+        <strong>project {{ projectLabel }}</strong>}, the cohort the guQTL scan
+        was run on. Nothing on these pages is pooled across studies, and a count
+        or a frequency is that project's, not a population's.
+        @if (hasProjectChoice) {
+          Choose which in the sidebar.
+        }
       </p>
       <app-panel-gallery [panels]="galleryPanels" [groups]="galleryGroups"
                          [species]="selection.species ?? ''"
