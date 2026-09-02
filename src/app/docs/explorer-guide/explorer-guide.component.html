@@ -347,15 +347,15 @@
         allele was not detected contributes no point, so a box describes the
         samples where the allele was seen and not the whole cohort.
       </p>
-      <p class="todo">
-        <strong>TODO(ayelet):</strong> the exact denominator. The endpoint
-        computes each point as the allele's <code>count</code> divided by the
-        sum of <code>total_count</code> over that sample's allele rows
-        (<code>api/refbook/refbook.py</code>, <code>AscUsage</code>). Is the
-        right description "the share of the sample's rearrangements assigned to
-        this allele", as the panel's own caption says, or is the denominator
-        narrower or wider than that? Please state it in one sentence and I will
-        not have guessed.
+      <p>
+        <strong>The denominator is the locus, not the gene.</strong> A point is
+        the allele's assigned count divided by the total assigned count of every
+        allele of every gene in that sample, so it is the share of the sample's
+        repertoire that this one allele accounts for. That is why the alleles of
+        a single gene do not sum to 1: across 361 samples, the alleles of
+        IGHV1-18 together account for a median of 1.2% of the repertoire, and
+        IGHV3-33 for 0.8%. Two alleles are therefore comparable across genes as
+        well as within one.
       </p>
       <p>
         <strong>How to read it.</strong> Individual sample points can be turned
