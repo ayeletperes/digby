@@ -242,6 +242,10 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
       if (!existing) {
         tick.appendChild(title);
       }
+      // Plotly sets pointer-events: none on its svg and axis layers, so without
+      // this the tick is not hoverable at all and the title can never fire.
+      // pointer-events is inherited, and a descendant may opt back in.
+      (tick as SVGElement).style.pointerEvents = 'all';
       (tick as SVGElement).style.cursor = 'help';
     });
   }

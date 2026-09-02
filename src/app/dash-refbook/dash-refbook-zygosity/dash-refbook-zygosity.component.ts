@@ -3,6 +3,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
 import * as UpSetJS from '@upsetjs/bundle';
@@ -26,6 +27,20 @@ const SET_CHART_SHARE = 0.18;
 /** Row height per allele. Below about 20 the 10px labels start to touch. */
 const ROW_PX = 24;
 
+/**
+ * How many alleles to draw, most carried first.
+ *
+ * A gene with 33 alleles gives an UpSet of a hundred-odd columns, most of them
+ * one subject wide, and the shape of the common combinations is lost in it.
+ * Null draws them all.
+ */
+export const TOP_CHOICES: { label: string; value: number | null }[] = [
+  { label: 'Top 5', value: 5 },
+  { label: 'Top 10', value: 10 },
+  { label: 'Top 20', value: 20 },
+  { label: 'All', value: null },
+];
+
 class ZygosityData {
   samples: {
     name: string;
@@ -37,6 +52,14 @@ class ZygosityData {
   selector: 'app-dash-refbook-zygosity',
   templateUrl: './dash-refbook-zygosity.component.html',
   styles: [`
+    .upset-toolbar {
+      display: flex; align-items: center; gap: 0.5rem;
+      margin: 0 0 0.5rem; font-size: 0.8rem; color: var(--vdj-body, #455857);
+    }
+    .upset-toolbar label { font-weight: 600; }
+    .upset-toolbar select { width: auto; min-width: 6rem; }
+    .upset-note { color: var(--vdj-muted, #7a8c8b); }
+
     /* Width comes from the column; height is set per render from the number of sets. */
     .upset-chart { width: 100%; min-width: 0; overflow-x: auto; }
 
@@ -44,7 +67,7 @@ class ZygosityData {
     .upset-status.error { color: #d62839; }
   `],
   standalone: true,
-  imports: [CommonModule, ScopeNoteComponent, PlotExportComponent],
+  imports: [CommonModule, FormsModule, ScopeNoteComponent, PlotExportComponent],
 })
 export class DashRefbookZygosityComponent
   implements OnInit, OnChanges, AfterViewInit, OnDestroy {
@@ -60,6 +83,17 @@ export class DashRefbookZygosityComponent
   private renderHandle?: ReturnType<typeof setTimeout>;
   /** The drawn combinations, in full allele names, for the downloads. */
   private drawnCombinations: { alleles: string[]; count: number }[] = [];
+
+  readonly topChoices = TOP_CHOICES;
+  /** Alleles drawn, most carried first. Null means every one. */
+  topN: number | null = 10;
+  /** How many the gene has, so the control can say what is being hidden. */
+  alleleCount = 0;
+
+  onTopChange(value: number | null): void {
+    this.topN = value;
+    this.scheduleRender();
+  }
 
   constructor(private refbookService: RefbookService, private host: ElementRef<HTMLElement>,
               private drill: DashDrillService) {}
@@ -214,8 +248,40 @@ plt.show()
 `;
   }
 
+  /**
+   * The samples, with each one's alleles cut to the most carried.
+   *
+   * Done before extraction, not after: a combination is the exact set a subject
+   * carries, so dropping a rare allele afterwards would leave combinations
+   * naming alleles that are no longer drawn. Cutting first re-forms them over
+   * what remains, and subjects left carrying none drop out.
+   */
+  private topSamples(): { name: string; sets: string[] }[] {
+    const samples = this.zygosityData.samples ?? [];
+    const carriers = new Map<string, number>();
+    for (const sample of samples) {
+      for (const allele of sample.sets) {
+        carriers.set(allele, (carriers.get(allele) ?? 0) + 1);
+      }
+    }
+    this.alleleCount = carriers.size;
+
+    if (!this.topN || this.topN >= carriers.size) {
+      return samples;
+    }
+
+    const keep = new Set([...carriers.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .slice(0, this.topN)
+      .map(([allele]) => allele));
+
+    return samples
+      .map(sample => ({ ...sample, sets: sample.sets.filter(a => keep.has(a)) }))
+      .filter(sample => sample.sets.length);
+  }
+
   private drawUpset(el: HTMLDivElement, width: number) {
-    const { sets, combinations } = UpSetJS.extractCombinations(this.zygosityData.samples);
+    const { sets, combinations } = UpSetJS.extractCombinations(this.topSamples());
 
     // Shorten the labels, but only after extraction: the set name is the set's
     // identity here, so shortening the input would merge two alleles that differ
