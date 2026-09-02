@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { EMPTY } from 'rxjs';
@@ -13,6 +13,7 @@ import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { ExportTable } from '../../shared/plot-export/plot-export';
 import { exportButtons } from '../../shared/plot-export/plot-export';
+import { attachTickTitles } from '../../shared/plotly-tick-titles';
 
 /** /refbook/asc_tree: scipy-style linkage over the alleles of one gene.
  *  Shown as "Group clustering": it groups by sequence similarity and makes
@@ -60,6 +61,7 @@ export class DashRefbookTreeComponent implements OnInit, OnChanges {
 
   /** Allele names shortened for the axis, with the original beside them. */
   legend: { short: string; full: string }[] = [];
+  private fullByLabel = new Map<string, string>();
   showLegend = false;
   showDuplicates = false;
 
@@ -74,7 +76,8 @@ export class DashRefbookTreeComponent implements OnInit, OnChanges {
     })),
   };
 
-  constructor(private http: HttpClient, private drill: DashDrillService) {}
+  constructor(private http: HttpClient, private drill: DashDrillService,
+              private host: ElementRef<HTMLElement>) {}
 
   ngOnInit() {
     this.fetchTree();
@@ -244,6 +247,11 @@ plt.show()
 `;
   }
 
+  /** Give each shortened allele tick its full name as a native tooltip. */
+  labelTitles(): void {
+    attachTickTitles(this.host.nativeElement, this.fullByLabel);
+  }
+
   private token(name: string, fallback: string): string {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
   }
@@ -280,6 +288,8 @@ plt.show()
 
     const teal = this.token('--vdj-teal', '#188080');
     const short = tree.labels.map(name => shortenAlleleName(name));
+    // what each leaf tick stands for, for the hover
+    this.fullByLabel = new Map(tree.labels.map((full, i) => [short[i], full]));
 
     this.plotData = [
       {

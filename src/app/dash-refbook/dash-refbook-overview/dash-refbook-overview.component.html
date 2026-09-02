@@ -113,7 +113,8 @@
       <div class="chart-scroll">
         <div class="chart-container" [style.height.px]="chartHeight">
           <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"
-                       (plotlyClick)="onPlotClick($event)"></plotly-plot>
+                       (plotlyClick)="onPlotClick($event)"
+                       (afterPlot)="labelTitles()"></plotly-plot>
         </div>
       </div>
     </div>

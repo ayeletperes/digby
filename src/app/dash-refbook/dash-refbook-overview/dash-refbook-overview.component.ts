@@ -12,6 +12,7 @@ import { shortenAlleleNames } from '../../shared/models/gene-naming';
 import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { exportButtons } from '../../shared/plot-export/plot-export';
+import { attachTickTitles } from '../../shared/plotly-tick-titles';
 
 
 export class OverviewData {
@@ -156,6 +157,7 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
    * states rather than alleles, and they draw as empty bars.
    */
   unobserved = 0;
+  private fullByLabel = new Map<string, string>();
   private lastOverview: (OverviewData & { genomic_counts?: number[]; vdjbase_counts?: number[] }) | null = null;
 
   /**
@@ -289,6 +291,9 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
 
       this.alleleByIndex = keep.map(i => names[i]);
       const display = shortenAlleleNames(keep.map(i => names[i]));
+      // what each tick stands for, for the hover
+      this.fullByLabel = new Map(keep.map(i =>
+        [display.get(names[i]) ?? names[i], names[i]]));
       const ticks = keep.map(i => display.get(names[i]) ?? names[i]);
       const rows = ticks.length;
       const mirrored = rows > DashRefbookOverviewComponent.SCROLLS_ABOVE;
@@ -351,6 +356,11 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
       // Silently handle any chart update errors
       this.error = 'Error updating chart';
     }
+  }
+
+  /** Give each shortened allele tick its full name as a native tooltip. */
+  labelTitles(): void {
+    attachTickTitles(this.host.nativeElement, this.fullByLabel);
   }
 
   onPlotClick(event: { points?: { customdata?: unknown }[] }): void {

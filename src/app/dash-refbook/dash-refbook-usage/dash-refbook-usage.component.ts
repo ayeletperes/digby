@@ -10,6 +10,7 @@ import { DashDrillService } from '../dash-drill.service';
 import { ScopeNoteComponent } from '../scope-note/scope-note.component';
 import { PlotlyModule } from 'angular-plotly.js';
 import { exportButtons } from '../../shared/plot-export/plot-export';
+import { attachTickTitles } from '../../shared/plotly-tick-titles';
 
 class UsageData {
   alleles: {
@@ -209,44 +210,8 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
     this.fullByLabel = new Map(nonEmpty.map(a => [display.get(a.name) ?? a.name, a.name]));
   }
 
-  /**
-   * Give each allele tick its full name as a native tooltip.
-   *
-   * Plotly has no hover for tick labels, so this hangs an SVG <title> on each
-   * one after the draw. The browser shows it; no library, no overlay, and it
-   * survives a re-render because it runs again on every afterPlot.
-   */
+  /** Give each shortened allele tick its full name as a native tooltip. */
   labelTitles(): void {
-    const ticks = this.host.nativeElement
-      .querySelectorAll('.yaxislayer-above .ytick text, .yaxislayer-above text');
-
-    ticks.forEach(tick => {
-      // the tick's own text, not textContent: once a <title> has been hung on
-      // it, textContent returns the label with the full name glued to the end,
-      // so the second render would fail the lookup and strip the title again
-      const label = Array.from(tick.childNodes)
-        .filter(node => node.nodeType === 3)
-        .map(node => node.nodeValue ?? '')
-        .join('')
-        .trim();
-
-      const full = this.fullByLabel.get(label);
-      const existing = tick.querySelector('title');
-      if (!full || full === label) {
-        existing?.remove();
-        return;
-      }
-      const title = existing
-        ?? tick.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'title');
-      title.textContent = full;
-      if (!existing) {
-        tick.appendChild(title);
-      }
-      // Plotly sets pointer-events: none on its svg and axis layers, so without
-      // this the tick is not hoverable at all and the title can never fire.
-      // pointer-events is inherited, and a descendant may opt back in.
-      (tick as SVGElement).style.pointerEvents = 'all';
-      (tick as SVGElement).style.cursor = 'help';
-    });
+    attachTickTitles(this.host.nativeElement, this.fullByLabel);
   }
 }
