@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 import { RefbookService } from '../../../../projects/digby-swagger-client/api/refbook.service';
 import { retryWithBackoff } from '../../shared/retry_with_backoff';
 import { catchError } from 'rxjs/operators';
@@ -36,6 +36,8 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
 
   /** Allele names shortened for the axis, with the original for reference. */
   legend: { short: string; full: string }[] = [];
+  /** Tick label to the allele it stands for. */
+  private fullByLabel = new Map<string, string>();
   showLegend = false;
 
   /** Points on or off, for reading the boxes alone. */
@@ -80,7 +82,8 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
     })),
   };
 
-  constructor(private refbookService: RefbookService, private drill: DashDrillService) {}
+  constructor(private refbookService: RefbookService, private drill: DashDrillService,
+              private host: ElementRef<HTMLElement>) {}
 
   ngOnInit() {
     this.fetchUsageData();
@@ -201,14 +204,45 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
       margin: { ...this.plotLayout.margin, t: mirrored ? 80 : 40 },
     };
 
-    // the bottom margin has to hold the rotated tick labels, so it follows the
-    // longest one rather than being fixed
-    const n = nonEmpty.length || 1;
-    const longest = traces.reduce((m, t) => Math.max(m, t.name.length), 0);
-    this.plotLayout = {
-      ...this.plotLayout,
-      height: Math.min(700, Math.max(320, 260 + n * 14)),
-      margin: { ...this.plotLayout.margin, b: Math.min(200, Math.max(80, longest * 7)) },
-    };
+    // What each tick stands for, for the hover: the axis can only carry the
+    // short form, and the tick is where a reader looks first.
+    this.fullByLabel = new Map(nonEmpty.map(a => [display.get(a.name) ?? a.name, a.name]));
+  }
+
+  /**
+   * Give each allele tick its full name as a native tooltip.
+   *
+   * Plotly has no hover for tick labels, so this hangs an SVG <title> on each
+   * one after the draw. The browser shows it; no library, no overlay, and it
+   * survives a re-render because it runs again on every afterPlot.
+   */
+  labelTitles(): void {
+    const ticks = this.host.nativeElement
+      .querySelectorAll('.yaxislayer-above .ytick text, .yaxislayer-above text');
+
+    ticks.forEach(tick => {
+      // the tick's own text, not textContent: once a <title> has been hung on
+      // it, textContent returns the label with the full name glued to the end,
+      // so the second render would fail the lookup and strip the title again
+      const label = Array.from(tick.childNodes)
+        .filter(node => node.nodeType === 3)
+        .map(node => node.nodeValue ?? '')
+        .join('')
+        .trim();
+
+      const full = this.fullByLabel.get(label);
+      const existing = tick.querySelector('title');
+      if (!full || full === label) {
+        existing?.remove();
+        return;
+      }
+      const title = existing
+        ?? tick.ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'title');
+      title.textContent = full;
+      if (!existing) {
+        tick.appendChild(title);
+      }
+      (tick as SVGElement).style.cursor = 'help';
+    });
   }
 }

@@ -25,4 +25,5 @@
   </label>
 </div>
 <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"
-             (plotlyClick)="onPlotClick($event)"></plotly-plot>
+             (plotlyClick)="onPlotClick($event)"
+             (afterPlot)="labelTitles()"></plotly-plot>
