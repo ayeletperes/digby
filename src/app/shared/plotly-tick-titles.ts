@@ -15,10 +15,8 @@
  *   attached, `textContent` returns the label with the full name glued to the
  *   end, so a second pass would miss the lookup and strip the title again.
  */
-export function attachTickTitles(host: Element,
-                                 fullByLabel: Map<string, string>,
-                                 axis: 'x' | 'y' = 'y'): void {
-  const ticks = host.querySelectorAll(`.${axis}axislayer-above text`);
+export function attachTickTitles(host: Element, fullByLabel: Map<string, string>): void {
+  const ticks = host.querySelectorAll('.yaxislayer-above text');
 
   ticks.forEach(tick => {
     const label = Array.from(tick.childNodes)

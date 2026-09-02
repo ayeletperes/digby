@@ -34,7 +34,7 @@ const ROW_PX = 24;
  * one subject wide, and the shape of the common combinations is lost in it.
  * Null draws them all.
  */
-export const TOP_CHOICES: { label: string; value: number | null }[] = [
+const TOP_CHOICES: { label: string; value: number | null }[] = [
   { label: 'Top 5', value: 5 },
   { label: 'Top 10', value: 10 },
   { label: 'Top 20', value: 20 },

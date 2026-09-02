@@ -56,9 +56,7 @@ export class PanelGalleryComponent {
   }
 
   open(panel: GalleryPanel): void {
-    if (!this.blocked(panel)) {
-      this.opened.emit(panel);
-    }
+    this.opened.emit(panel);      // a blocked card is disabled and cannot click
   }
 
   /**
