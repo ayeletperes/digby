@@ -178,11 +178,23 @@ export class QtlVariantComponent implements OnChanges {
     return this.selection?.asc ?? this.fallbackAsc;
   }
 
-  get counts(): { genotype: number; label: string; n: number }[] {
+  /**
+   * How many subjects carry each genotype, as a stored field.
+   *
+   * A getter here built a fresh array on every change-detection pass, which the
+   * counts component reads as a changed `@Input`: it redrew, the redraw brought
+   * the page back into the zone, and the next pass handed it another new array.
+   * The tab hung with no error. Same trap `plotSelection` in the dashboard
+   * documents; the rule is that anything crossing an `@Input` is recomputed when
+   * the data moves, not when Angular looks at it.
+   */
+  counts: { genotype: number; label: string; n: number }[] = [];
+
+  private countsOf(subjects: SubjectPoint[]): typeof this.counts {
     return [0, 1, 2].map(genotype => ({
       genotype,
       label: GENOTYPE_LABEL[genotype],
-      n: this.subjects.filter(s => s.genotype === genotype).length,
+      n: subjects.filter(s => s.genotype === genotype).length,
     })).filter(entry => entry.n > 0);
   }
 
@@ -225,6 +237,8 @@ export class QtlVariantComponent implements OnChanges {
   private build(): void {
     // one box per genotype class, points overlaid: with 29 subjects in a class a
     // box alone would imply more confidence than the data carries
+    this.counts = this.countsOf(this.subjects);
+
     this.plotData = this.counts.map(({ genotype, label }) => {
       const rows = this.subjects.filter(s => s.genotype === genotype);
       return {
