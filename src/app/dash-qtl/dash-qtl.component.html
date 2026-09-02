@@ -31,9 +31,11 @@
               </select>
             </div>
           </div>
-          <!-- Only when there is a choice. One project is not a decision, and a
-               dropdown with a single entry reads as one. -->
-          @if (hasProjectChoice) {
+          <!-- Always shown, not only when there is more than one. Which cohort
+               these numbers describe is part of reading them, and a control that
+               appears once a second study is loaded teaches nobody that the
+               first one was a study too. -->
+          @if (projectsFor(selection.species).length) {
             <label class="rail-label" for="qtlProject">Project</label>
             <select class="form-select form-select-sm" id="qtlProject"
                     [(ngModel)]="selection.project" (ngModelChange)="onProjectChange()">
@@ -44,7 +46,7 @@
             <p class="rail-note">
               One project at a time. These scans are computed within a cohort and
               are not pooled across them, so every number on the page is this
-              project's.
+              project's.@if (!hasProjectChoice) { It is the only one loaded.}
             </p>
           }
           @if (ascs.length) {
