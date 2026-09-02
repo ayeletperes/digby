@@ -171,7 +171,6 @@
             <select class="form-select form-select-sm" id="qtlAsc"
                     [(ngModel)]="selection.asc" (ngModelChange)="onAscChange()"
                     [disabled]="!ascs.length" [size]="filteredAscs.length > 8 ? 10 : 0">
-              <option [ngValue]="undefined">All genes, best per variant</option>
               @for (a of filteredAscs; track a.asc) {
                 <option [ngValue]="a.asc">
                   {{ ascName(selection.locus, a.asc) }}, {{ a.n_significant }} significant
@@ -276,10 +275,21 @@
                            (variantPicked)="onVariantMapPick($event)">
         </app-qtl-manhattan>
       }
-    } @else {
+    } @else if (selection.asc) {
       <app-qtl-manhattan [selection]="selection"
                          (variantPicked)="onVariantPicked($event)">
       </app-qtl-manhattan>
+    } @else {
+      <!-- No whole-locus scan here. It aggregated the strongest result per
+           variant across every gene, which on IGH is a pass over 658,140 rows
+           and took long enough that the tab read as broken. The variant tab
+           still offers it, where picking a variant without a gene in mind is
+           the actual question. -->
+      <p class="qtl-status">
+        Choose a gene in the sidebar to see every variant tested against its
+        usage. {{ ascs.length }} genes were scanned in {{ selection.locus }},
+        {{ ascsWithSignal }} of them with a significant variant.
+      </p>
     }
 
     <!-- Wherever a variant is on screen, what it actually is. Not a third tab:
