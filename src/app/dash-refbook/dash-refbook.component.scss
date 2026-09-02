@@ -141,14 +141,7 @@
 }
 /* the same pill the gene chips and filter chips use, so the rail has one
    button shape rather than a link among chips */
-.reset-pill {
-  border: 1px solid var(--vdj-rule); background: #fff; color: var(--vdj-body);
-  border-radius: 999px; padding: 0.1rem 0.6rem;
-  font-size: 0.7rem; font-weight: 500; letter-spacing: 0; text-transform: none;
-  cursor: pointer; transition: border-color 150ms ease, color 150ms ease;
-}
 .reset-pill:hover { border-color: var(--vdj-teal); color: var(--vdj-teal); }
-.reset-pill:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 2px; }
 
 /* a control that still works but does not reach the open panel: dimmed so the
    eye skips it, labelled so it is not a mystery */
@@ -167,19 +160,7 @@
 }
 
 /* the way back to the cards, quieter than the panel title beside it */
-.all-analyses {
-  margin-left: 0.6rem;
-  border: 1px solid var(--vdj-rule);
-  background: #fff;
-  color: var(--vdj-body);
-  border-radius: 999px;
-  padding: 0.05rem 0.65rem;
-  font-size: 0.75rem;
-  line-height: 1.6;
-  cursor: pointer;
-}
 
-.all-analyses:hover { border-color: var(--vdj-teal); color: var(--vdj-teal-dark); }
 .all-analyses:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 1px; }
 
 /* the filters read as one group with a shared scope, not four loose sections */

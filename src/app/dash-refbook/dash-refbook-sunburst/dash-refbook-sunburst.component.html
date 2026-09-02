@@ -21,10 +21,10 @@
                 (click)="drillTo(i)">{{ data.label[i] }}</button>
       }
       @if (isDrilled) {
-        <button type="button" class="reset" (click)="resetView()">Reset</button>
+        <button type="button" class="vdj-pill reset" (click)="resetView()">Reset</button>
       }
       @if (drilledGene) {
-        <button type="button" class="open-gene" (click)="openGene()">
+        <button type="button" class="vdj-pill vdj-pill--primary open-gene" (click)="openGene()">
           Explore {{ drilledGene }} →
         </button>
       }

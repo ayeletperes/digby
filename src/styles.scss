@@ -316,3 +316,49 @@ html { scroll-behavior: smooth; }
 }
 a { color: var(--vdj-teal-dark); }
 a:hover { color: var(--vdj-teal); }
+
+
+/* --------------------------------------------------------------- pill button
+
+   One shape for every "go there" and "go back" control in the dashboards. They
+   were declared separately in five components and had drifted: the locus map's
+   was filled teal at 0.8125rem, the names table's outlined at 0.75rem, and a
+   claim that they matched was simply untrue. Two weights, one definition.
+*/
+.vdj-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid var(--vdj-rule);
+  background: #fff;
+  color: var(--vdj-body);
+  border-radius: 999px;
+  padding: 0.1rem 0.7rem;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background-color 0.12s;
+}
+
+.vdj-pill:hover { border-color: var(--vdj-teal); color: var(--vdj-teal-dark); }
+.vdj-pill:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 1px; }
+.vdj-pill:disabled { opacity: 0.5; cursor: default; }
+
+/* the one action a panel wants read first, not one of several in a row */
+.vdj-pill--primary {
+  border-color: var(--vdj-teal);
+  background: var(--vdj-teal);
+  color: #fff;
+}
+
+.vdj-pill--primary:hover {
+  border-color: var(--vdj-teal-dark);
+  background: var(--vdj-teal-dark);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vdj-pill { transition: none; }
+}

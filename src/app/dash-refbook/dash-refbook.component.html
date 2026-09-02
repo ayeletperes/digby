@@ -116,7 +116,7 @@
               Seen in
               @if (railScoped) { <span class="scoped-tag">{{ scopedNote }}</span> }
               @if (countFilterActive) {
-                <button type="button" class="reset-pill" (click)="resetSeenIn()"
+                <button type="button" class="vdj-pill reset-pill" (click)="resetSeenIn()"
                         title="Clear both thresholds">reset</button>
               }
             </h3>
@@ -190,7 +190,7 @@
                 [attr.aria-expanded]="captionOpen[activePanel.id] === true"
                 title="About this plot"
                 (click)="toggleCaption(activePanel.id)">ⓘ</button>
-        <button type="button" class="all-analyses" (click)="openGallery()"
+        <button type="button" class="vdj-pill all-analyses" (click)="openGallery()"
                 title="See every analysis">All analyses</button>
       </div>
 
