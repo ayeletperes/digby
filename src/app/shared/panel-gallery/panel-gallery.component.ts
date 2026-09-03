@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 /**
@@ -28,7 +27,7 @@ export interface GalleryPanel {
 @Component({
   selector: 'app-panel-gallery',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './panel-gallery.component.html',
   styleUrls: ['./panel-gallery.component.scss'],
 })

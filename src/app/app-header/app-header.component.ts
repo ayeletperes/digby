@@ -30,11 +30,7 @@ export class AppHeaderComponent implements OnInit {
 
   ngOnInit() {
     this.authService.user.subscribe(user => {
-        // null when the config call has not answered - the backend being down
-        // threw here and took the whole page with it, so an unreachable API
-        // showed a blank screen rather than an empty site. AuthGuard already
-        // reads a null user as unprotected; this now agrees with it.
-        if (!user?.appProtected) {
+        if (!user.appProtected) {
           console.log("app is not protected");
           this.displayLogin = false;
           this.displayLogout = false;

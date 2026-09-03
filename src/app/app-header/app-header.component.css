@@ -6,26 +6,3 @@
 .dropdown-toggle::after {
 display: none;
 }
-
-/* One masthead for every page, including the landing page, so the header does
-   not change as you move around. Kept white with the larger wordmark, which
-   sits better against the page than the black bar did. */
-.vdj-masthead {
-  background: #fff;
-  border-bottom: 1px solid var(--vdj-rule);
-  padding: 0 48px;
-  min-height: var(--vdj-header-h);
-}
-.vdj-masthead .navbar-brand { height: 40px; width: auto; padding: 0; margin: 0; }
-.vdj-masthead .nav-link {
-  color: var(--vdj-body);
-  font-weight: 500;
-  transition: color 150ms ease;
-}
-.vdj-masthead .nav-link:hover,
-.vdj-masthead .nav-item.active > .nav-link { color: var(--vdj-teal); }
-.vdj-masthead .dropdown-menu { border-radius: 4px; border-color: var(--vdj-rule); }
-
-@media (max-width: 700px) {
-  .vdj-masthead { padding: 0 20px; }
-}

@@ -1,121 +1,139 @@
-<!-- Landing page, per the v4 design handoff (CELLxGENE-pattern).
-     Structure: sticky masthead > hero > sticky tool strip > alternating tool
-     sections > two link cards > footer. Hairline borders only, no shadows. -->
-<div class="lp">
+<div class="container-fluid">
 
-  <section class="lp-hero">
-    <div class="lp-hero-grid">
-      <div class="lp-hero-copy">
-        <h1>Explore immune receptor genotypes, haplotypes and repertoires</h1>
-        <p class="lp-sub">
-          Interactive dashboards over curated genotypes, haplotypes, expressed
-          repertoires and genomic data, for genes, allele similarity clusters
-          and alleles.
-        </p>
-        <div class="lp-buttons">
-          <a class="lp-btn-primary" routerLink="/dash_refbook">Start exploring</a>
-          <a class="lp-btn-secondary" routerLink="/reports">Get reports</a>
+  <div class="text-center py-1 bg-primary shadow-none"
+       style="background-image: url(./assets/img/virions.png);
+       background-position: center;
+       background-size: 100%;
+       background-repeat: repeat;
+       height: 200px;">
+    <div class="container-fluid" style="padding-top: 1vw; padding-bottom: 5vw;">
+      <div class="row mt-1 mb-5 ms-1 me-1">
+        <div class="col-lg-2 col-md-3  col-sm-4  bg-light" style="border-radius: 2vw">
+          <img class="img-fluid mt-2" src="./assets/img/logo_white_2.png" alt="VDJbase Logo">
+          <p style="font-size: 0.75rem;">Immune Receptor Genotypes and Haplotypes</p>
         </div>
+      </div>
+    </div>
+  </div>
 
-        <!-- hidden entirely on error rather than showing zeros -->
-        @if (!statsFailed) {
-          <div class="lp-stats">
-            @for (stat of statItems; track stat.label) {
-              <div class="lp-stat">
-                <span class="lp-stat-value">{{ stat.value }}</span>
-                <span class="lp-stat-label">{{ stat.label }}</span>
+  <div class="ps-1 pe-5 pt-5" style="background-color: #f5f5f5; color: #000000;">
+    <div class="container">
+      <div class="row">
+        <div class = "col-md-6">
+          <div class="row">
+            <div class="col-md-6">
+              <h1 class="mat-h1">Latest News (<a href="{{wpConfig.wp_news_url}}/index.php/vdjbase_news">more</a>)</h1>
+            </div>
+          </div>
+
+          @if (loadingNews) {
+            <div  class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          }
+
+          @if (errorNews) {
+            <div class="alert alert-danger">
+              <h4>Error loading news</h4>
+            </div>
+          }
+
+          <div>
+            @if (loadedNewsPosts.length < 1 && !loadingNews && !errorNews) {
+              <p>No posts available!</p>
+            }
+            @if (loadedNewsPosts.length >= 1 && !loadingNews) {
+              <div>
+                <ul class="list-unstyled">
+                  @for (post of loadedNewsPosts; track post) {
+                    <li>
+                      <a href="{{ post[1] }}">{{ post[0] }}</a>
+                    </li>
+                  }
+                </ul>
               </div>
             }
           </div>
-        }
+        </div>
+
+        <div class = "col-md-6">
+          <div class="row">
+            <div class="col-md-6">
+              <h1 class="mat-h1">Help topics (<a href="{{wpConfig.wp_help_url}}/index.php/vdjbase_help">more</a>)</h1>
+            </div>
+          </div>
+
+          @if (loadingHelp) {
+            <div  class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          }
+
+          @if (errorHelp) {
+            <div class="alert alert-danger">
+              <h4>Error loading help</h4>
+            </div>
+          }
+
+          <div>
+            @if (loadedHelpPosts.length < 1 && !loadingHelp && !errorHelp) {
+              <p>No posts available!</p>
+            }
+            @if (loadedHelpPosts.length >= 1 && !loadingHelp) {
+              <div>
+                <ul class="list-unstyled">
+                  @for (post of loadedHelpPosts; track post) {
+                    <li>
+                      <a href="{{ post[1] }}">{{ post[0] }}</a>
+                    </li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        </div>
       </div>
 
-      <div class="lp-hero-shot">
-        <span class="lp-shot-pending">Explorer</span>
-        <img src="assets/img/landing/hero-dashboard.png" (error)="hideShot($event)"
-             alt="The Repertoire and Genome Explorer showing allele counts and usage for a gene.">
+      <div class="row">
+        <div class="col-md-12">
+          <h1 class="mat-h1">About VDJbase</h1>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <p>
+            <span class="mat-typography" style="font-weight: 500;">VDJbase</span> is a public database of immunoglobulin and T cell receptor genes, genotypes, and haplotypes.
+            Initially developed using <span class="mat-typography" style="font-weight: 500;">adaptive immune receptor repertoire sequencing (AIRR-seq)</span> based inferences,
+            the database now also incorporates growing amounts of information derived from long-read <span class="mat-typography" style="font-weight: 500;">genomic sequencing</span> data.
+          </p>
+          <p>
+            Comprehensive knowledge of immunoglobulin and T cell receptor genes across human populations and model organisms is critical for understanding immune function and variability.
+            In VDJbase we curate data from hundreds of individuals, enabling the discovery of previously unreported alleles and supporting population-level analysis of immune receptor variation.
+          </p>
+          <p>
+            The platform offers customizable reports to explore gene and allele usage patterns, based on both AIRR-seq and genomic sources.
+            All data and tools are freely available under an open-source license. Through VDJbase, you can:
+          </p>
+          <span class="mat-typography" style="font-weight: 500;">
+            <ul>
+              <li>Explore the <a href="/datarep">AIRR-seq</a> and <a href="/datagen">genomic</a> data available in VDJbase today</li>
+              <li>Browse AIRR-seq-derived <a href="/samplerep/null">datasets</a> and <a href="/generep">alleles</a></li>
+              <li>Browse genomically derived <a href="/genesample/null">datasets</a> and <a href="/genetable">alleles</a></li>
+              <li>View <a href="/genebrowser/Human/IGH">alignments</a> in an integrated genome browser</li>
+              <li>Generate <a href="/reports">interactive reports</a> on gene and allele usage</li>
+              <li>Access documentation on <a href="/assets/doc/report_documentation.pdf">reports</a> and a <a href="/user-guide">user guide</a></li>
+            </ul>
+          </span>
+
+          <p>All features are available via the top menu.</p>
+
+          <p>If you use VDJbase in your work, please <a href="https://doi.org/10.1093/nar/gkaf1094">cite our paper.</a></p>
+
+          <p>
+            VDJbase is developed and maintained by the <a href="https://medicine.yale.edu/profile/gur-yaari/">Yaari Lab</a> at Yale University in collaboration with William Lees.
+            For more information, please contact <a href="mailto:gur.yaari@yale.edu">Gur Yaari</a> or
+            <a href="mailto:william@lees.org.uk">William Lees</a>.
+          </p>
+        </div>
       </div>
     </div>
-  </section>
-
-  <nav class="lp-toolstrip">
-    <div class="lp-toolstrip-inner">
-      @for (item of tools; track item.id) {
-        <a [href]="'#' + item.id" [class.active]="activeSection === item.id">{{ item.label }}</a>
-      }
-    </div>
-  </nav>
-
-  <section id="explorer" class="lp-tool lp-tool--text-left">
-    <div class="lp-tool-copy">
-      <h2>Repertoire &amp; Genome Explorer</h2>
-      <p>
-        Overview, sequence alignment, gene usage and zygosity, for any gene,
-        allele similarity cluster or allele, across genomic assemblies and
-        expressed repertoires.
-      </p>
-      <a class="lp-link lp-link--primary" routerLink="/dash_refbook">Explore the application →</a>
-      <a class="lp-link" routerLink="/dash_refbook" [queryParams]="{ panel: 'usage' }">
-        See an example: gene usage across projects →
-      </a>
-    </div>
-    <div class="lp-shot lp-shot--tall">
-      <span class="lp-shot-pending">Gene usage</span>
-      <img src="assets/img/landing/explorer.png" (error)="hideShot($event)"
-           alt="The Explorer's gene usage panel, one distribution per project.">
-    </div>
-  </section>
-
-  <section id="qtl" class="lp-tool lp-tool--text-right">
-    <div class="lp-shot">
-      <span class="lp-shot-pending">Manhattan plot</span>
-      <img src="assets/img/landing/qtl.png" (error)="hideShot($event)"
-           alt="A Manhattan plot of germline variants associated with gene usage.">
-    </div>
-    <div class="lp-tool-copy">
-      <h2>Gene Usage QTL</h2>
-      <p>Germline variants that explain how much a gene is used. Currently IGH, IGK and IGL.</p>
-      <a class="lp-link lp-link--primary" routerLink="/dash_qtl">Explore the application →</a>
-    </div>
-  </section>
-
-  <section id="reports" class="lp-tool lp-tool--text-left">
-    <div class="lp-tool-copy">
-      <h2>Genotype &amp; haplotype reports</h2>
-      <p>Per subject or per project, as PDF, HTML or Excel, ready to attach to an analysis.</p>
-      <a class="lp-link lp-link--primary" routerLink="/reports">Generate a report →</a>
-    </div>
-    <div class="lp-shot">
-      <span class="lp-shot-pending">Haplotype report</span>
-      <img src="assets/img/landing/reports.png" (error)="hideShot($event)"
-           alt="A haplotype report showing inferred haplotypes for one subject.">
-    </div>
-  </section>
-
-  <section class="lp-cards">
-    <a id="browser" class="lp-card" routerLink="/genebrowser/Human/IGH">
-      <span class="lp-card-title">Gene browser</span>
-      <span class="lp-card-body">Reference sets, locus by locus, for every species in VDJbase.</span>
-      <span class="lp-card-cta">Browse genes →</span>
-    </a>
-    <a id="api" class="lp-card" href="/api/">
-      <span class="lp-card-title">API and downloads</span>
-      <span class="lp-card-body">
-        Every genotype, haplotype and sequence is downloadable and reachable
-        programmatically.
-      </span>
-      <span class="lp-card-cta">Read the API docs →</span>
-    </a>
-  </section>
-
-  <footer class="lp-footer">
-    <span>VDJbase. Open data for immune receptor genetics.</span>
-    <nav class="lp-footer-nav">
-      <a href="./user-guide">Documentation</a>
-      <a href="/api/">API</a>
-      <a href="https://doi.org/10.1093/nar/gkaf1094" target="_blank" rel="noopener">How to cite</a>
-      <a href="mailto:vdjbase@gmail.com">Contact</a>
-      <a href="https://ogrdb.airr-community.org/" target="_blank" rel="noopener">OGRDB ↗</a>
-    </nav>
-  </footer>
-</div>
