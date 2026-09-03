@@ -1,14 +1,4 @@
-/**
- * Turning a drawn Plotly figure into the two things a reader asks for next:
- * the numbers behind it, and code that redraws it.
- *
- * Read off the traces rather than the panel's own state, so a panel gets both
- * by declaring the control - no per-panel export code, and no second path that
- * can disagree with the figure. What was filtered out was never in the traces,
- * so the download is what is on screen.
- *
- * Plain functions over plain objects: no Angular, no DOM (see plot-export.check.ts).
- */
+/** Turning a drawn Plotly figure into the two things a reader asks for next:. */
 
 export interface ExportTrace {
   type?: string;
@@ -36,21 +26,12 @@ function axisName(axis: { title?: { text?: string } }, fallback: string): string
   return text || fallback;
 }
 
-/**
- * The value axis is x on a horizontal chart and y on a vertical one, and the
- * category axis is the other. Every panel here is one or the other.
- */
+/** The value axis is x on a horizontal chart and y on a vertical one, and the category axis is the other. */
 function horizontal(traces: ExportTrace[]): boolean {
   return traces.some(t => t.orientation === 'h');
 }
 
-/**
- * One row per drawn point.
- *
- * A box trace carries every sample's value in one array against a repeated
- * category, which is already one row per point; a bar trace is one point per
- * category. Both flatten the same way.
- */
+/** One row per drawn point. */
 export function table(traces: ExportTrace[], layout: ExportLayout): ExportTable {
   const drawn = (traces ?? []).filter(t => t && (t.x?.length || t.y?.length));
   const flip = horizontal(drawn);
@@ -81,8 +62,6 @@ export function table(traces: ExportTrace[], layout: ExportLayout): ExportTable 
   return { columns, rows };
 }
 
-/** A tab-separated file. Tabs, not commas: allele names contain neither, but gene
- *  lists in a cell contain commas. */
 export function tsv(data: ExportTable): string {
   const clean = (cell: string | number) =>
     typeof cell === 'string' ? cell.replace(/[\t\r\n]/g, ' ') : String(cell);
@@ -93,14 +72,7 @@ function quote(text: string): string {
   return "'" + String(text).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 }
 
-/**
- * A runnable script that redraws the figure from the same numbers.
- *
- * The data is embedded rather than fetched. It is the figure the reader is
- * looking at, filters and all, and it keeps the script runnable on a machine
- * that cannot reach the server. The endpoint is named in a comment so the query
- * can be re-run.
- */
+/** A runnable script that redraws the figure from the same numbers. */
 export function python(data: ExportTable, opts: {
   title: string; source: string; kind: string; horizontal: boolean;
 }): string {
@@ -202,10 +174,7 @@ export interface ExportSpec {
   script?: string;
 }
 
-/**
- * Icons drawn here rather than taken from Plotly.Icons: the config is built
- * before Plotly has necessarily loaded, and these are two paths.
- */
+/** Icons drawn here rather than taken from Plotly.Icons: the config is built before Plotly has necessarily loaded, and these are two paths. */
 const DOWNLOAD_ICON = {
   width: 1000, height: 1000,
   path: 'M440 120 h120 v330 h170 L500 700 L270 450 h170 Z M180 760 h640 v120 H180 Z',
@@ -217,32 +186,9 @@ const CODE_ICON = {
       + 'M664 128 L580 200 L728 500 L580 800 L664 872 L872 500 Z',
 };
 
-/**
- * The two downloads as Plotly modebar buttons.
- *
- * They live beside "Download plot as a PNG" because they are the same act -
- * take this figure away - and a panel that already has a toolbar does not need
- * a second row of controls under it.
- *
- * The spec is read at click time, not at build time: the config object is made
- * once and the figure changes under it.
- */
+/** The two downloads as Plotly modebar buttons. */
 export function exportButtons(spec: () => ExportSpec): unknown[] {
-  /**
-   * Refuses to hand over an empty table.
-   *
-   * `table()` reads the traces, so a figure whose traces are not its data -
-   * server-side box summaries carrying no y, a multicategory axis held as two
-   * parallel arrays, an SVG track whose marks are viewBox geometry - flattens
-   * to nothing. Writing that out is a file the reader would trust and a wrong
-   * answer either way. Such a panel supplies `table` and `script` itself; this
-   * says so instead of saving a header with no rows.
-   *
-   * The throw lands in a Plotly modebar handler, so Angular catches it and the
-   * message goes to the console while the button appears to do nothing. That is
-   * the right trade for a reader, who must never get the misleading file, but a
-   * panel author testing by eye sees only a dead button: check the console.
-   */
+  /** Refuses to hand over an empty table. */
   const rows = (it: ExportSpec): ExportTable => {
     const data = it.table ?? table(it.data ?? [], it.layout ?? {});
     if (!data.rows.length) {

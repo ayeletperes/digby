@@ -17,13 +17,7 @@ interface OptionGroup {
   options: CheckOption[];
 }
 
-/**
- * A multi-select that reads as one form control.
- *
- * Bootstrap has no compact multi-select, and a native `select multiple` is several
- * rows tall, which is what the selector row cannot afford. This shows a summary
- * button and drops a checkbox list below it.
- */
+/** A multi-select that reads as one form control. */
 @Component({
   selector: 'app-check-dropdown',
   templateUrl: './check-dropdown.component.html',
@@ -45,13 +39,7 @@ export class CheckDropdownComponent {
 
   constructor(private host: ElementRef<HTMLElement>) {}
 
-  /**
-   * Options under their headings.
-   *
-   * Projects and samples belong to one database or the other, and a selection
-   * narrows only the database it came from. Grouping makes that structural rather
-   * than something to infer from a trailing label.
-   */
+  /** Options under their headings. */
   get groups(): OptionGroup[] {
     const byName = new Map<string, CheckOption[]>();
 

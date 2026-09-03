@@ -1,18 +1,4 @@
-/**
- * Turning /refbook/sunburst's parallel arrays into the arrays a Plotly sunburst
- * wants, and into colours.
- *
- * Kept apart from the component so it is plain functions over plain arrays: no
- * Angular, no DOM, and checkable on its own (see sunburst-layout.check.ts).
- *
- * Everything leans on one property of the payload: nodes are emitted in level
- * order, so `parent[i] < i`. A subtree total is therefore one backward pass, and
- * depths and drill membership are one forward pass each - no walking a parent
- * chain per node.
- *
- * Plotly draws the arcs. Doing it by hand cost the labels, the hover readout and
- * the click-the-middle-to-go-back that come with the trace for nothing.
- */
+/** Turning /refbook/sunburst's parallel arrays into the arrays a Plotly sunburst wants, and into colours. */
 
 /** The locus as depth-ordered parallel arrays, exactly as the API returns it. */
 export interface SunburstPayload {
@@ -60,26 +46,9 @@ export function lighten(hex: string, f: number): string {
   return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1);
 }
 
-/**
- * A merged gene group, short enough for an arc.
- *
- * Two conventions share the slash and only one of them needs collapsing. IMGT
- * already writes its merges compactly, eliding the shared part: TRBV12-3/4 in
- * Human TRB is six characters once the locus prefix is off, and shortening it
- * to TRBV12-3* would lose the 4 for nothing. A long-form merge repeats the
- * stem on both sides, IGHV1-69/IGHV1-69D, and that is the one worth
- * collapsing to its first member starred.
- *
- * The test is therefore whether the members share a prefix, not how long the
- * name is. Applied to the allele ring too, on the part before the *, so a
- * gene and its alleles do not disagree about what the gene is called.
- */
+/** A merged gene group, short enough for an arc. */
 export function collapseGroup(label: string): string {
   // An allele name already contains a *, so marking a group with one would give
-  // 1-69**01, and dropping to 1-69*01 would name a different gene. Gene ring
-  // only; the alleles of such a group keep their full name, which is longer but
-  // never ambiguous. Revisit if HUSA ships names that make it worth a marker of
-  // its own.
   const slash = label.indexOf('*') < 0 ? label.indexOf('/') : -1;
   if (slash < 0) {
     return label;
@@ -130,14 +99,7 @@ export function layout(payload: SunburstPayload): SunburstLayout {
   return { depth, value, ordinal, topOf, childCount };
 }
 
-/**
- * Colour is drill state, not data.
- *
- * With nothing drilled, each gene type takes a palette colour and its descendants
- * a lighter shade of it. Drilled, the node itself goes grey, its children take
- * fresh palette colours, and everything outside the subtree - ancestors included
- * - is washed out, so the subtree is what the eye lands on.
- */
+/** Colour is drill state, not data. */
 export function fills(payload: SunburstPayload, plan: SunburstLayout,
                       drilled: number | null): string[] {
   const { parent } = payload;
@@ -154,7 +116,6 @@ export function fills(payload: SunburstPayload, plan: SunburstLayout,
   }
 
   // one forward pass marks the subtree and records which child of the drilled
-  // node each descendant hangs from
   const branch = new Array<number>(n).fill(-1);
   const inside = new Array<boolean>(n).fill(false);
   inside[drilled] = true;

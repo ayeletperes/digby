@@ -9,14 +9,7 @@ interface GeneGroup {
   genes: string[];
 }
 
-/**
- * Multi-select over the genes of a locus.
- *
- * A flat list does not work here: Rhesus IGH has 524 genes, 311 of them V, and one
- * family (IGHV0) holds 140 on its own. The segment is chosen upstream, alongside
- * species and locus; this narrows further by a search term, groups by family, and
- * shows the current selection separately so it stays visible when the search hides it.
- */
+/** Multi-select over the genes of a locus. */
 @Component({
   selector: 'app-gene-picker',
   templateUrl: './gene-picker.component.html',

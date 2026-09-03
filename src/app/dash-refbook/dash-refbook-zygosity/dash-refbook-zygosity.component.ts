@@ -27,13 +27,7 @@ const SET_CHART_SHARE = 0.18;
 /** Row height per allele. Below about 20 the 10px labels start to touch. */
 const ROW_PX = 24;
 
-/**
- * How many alleles to draw, most carried first.
- *
- * A gene with 33 alleles gives an UpSet of a hundred-odd columns, most of them
- * one subject wide, and the shape of the common combinations is lost in it.
- * Null draws them all.
- */
+/** How many alleles to draw, most carried first. */
 const TOP_CHOICES: { label: string; value: number | null }[] = [
   { label: 'Top 5', value: 5 },
   { label: 'Top 10', value: 10 },
@@ -98,13 +92,7 @@ export class DashRefbookZygosityComponent
   constructor(private refbookService: RefbookService, private host: ElementRef<HTMLElement>,
               private drill: DashDrillService) {}
 
-  /**
-   * The chart container.
-   *
-   * Found from the host rather than with @ViewChild: this component is created
-   * through NgComponentOutlet, where the view query was not resolving, leaving
-   * every render a no-op against an undefined element.
-   */
+  /** The chart container. */
   private get container(): HTMLDivElement | null {
     return this.host.nativeElement.querySelector('.upset-chart');
   }
@@ -123,7 +111,6 @@ export class DashRefbookZygosityComponent
     const el = this.container;
     if (el && 'ResizeObserver' in window) {
       // UpSet is redrawn imperatively, so resizing during layout can paint the
-      // new chart before the old one is cleared; coalesce into one frame
       this.resizeObs = new ResizeObserver(() => this.scheduleRender());
       this.resizeObs.observe(el);
     }
@@ -167,8 +154,6 @@ export class DashRefbookZygosityComponent
 
   private scheduleRender() {
     // Coalesced with a timer rather than requestAnimationFrame: rAF does not fire
-    // while the page is not compositing (a background tab, or a hidden pane), which
-    // left the chart permanently blank instead of merely late.
     clearTimeout(this.renderHandle);
     this.renderHandle = setTimeout(() => this.renderUpset(), 0);
   }
@@ -188,7 +173,6 @@ export class DashRefbookZygosityComponent
       this.drawUpset(el, width);
     } catch (e) {
       // a render that throws inside the scheduled callback leaves an empty box and
-      // no clue why, so surface it rather than failing silently
       this.error = `Could not draw the plot: ${(e as Error)?.message ?? e}`;
       el.innerHTML = '';
     }
@@ -197,11 +181,7 @@ export class DashRefbookZygosityComponent
   /** Shortened set label back to the allele it stands for, for the drill. */
   private fullNameOf = new Map<string, string>();
 
-  /**
-   * The figure's numbers: which alleles a subject carries, and how many subjects
-   * carry exactly that set. One row per combination, the alleles in full - the
-   * shortened labels are for the chart, not for a file someone will join on.
-   */
+  /** The figure's numbers: which alleles a subject carries, and how many subjects carry exactly that set. */
   get exportTable(): ExportTable {
     const combos = this.drawnCombinations ?? [];
     return {
@@ -248,14 +228,7 @@ plt.show()
 `;
   }
 
-  /**
-   * The samples, with each one's alleles cut to the most carried.
-   *
-   * Done before extraction, not after: a combination is the exact set a subject
-   * carries, so dropping a rare allele afterwards would leave combinations
-   * naming alleles that are no longer drawn. Cutting first re-forms them over
-   * what remains, and subjects left carrying none drop out.
-   */
+  /** The samples, with each one's alleles cut to the most carried. */
   private topSamples(): { name: string; sets: string[] }[] {
     const samples = this.zygosityData.samples ?? [];
     const carriers = new Map<string, number>();
@@ -284,8 +257,6 @@ plt.show()
     const { sets, combinations } = UpSetJS.extractCombinations(this.topSamples());
 
     // Shorten the labels, but only after extraction: the set name is the set's
-    // identity here, so shortening the input would merge two alleles that differ
-    // only in which substitutions they carry. Collisions keep their full name.
     const display = shortenAlleleNames(sets.map(set => set.name ?? ''));
     this.fullNameOf = new Map();
     for (const set of sets) {
@@ -296,14 +267,9 @@ plt.show()
     }
 
     // The set list is drawn down the left, so height follows it. There is no upper
-    // bound: capping it does not fit more rows in, it overlaps them - at 720px a
-    // gene with 34 alleles had 24 of them sharing 12 rows. The container scrolls.
     const height = Math.max(280, 180 + sets.length * ROW_PX);
 
     // Allele names are long (IGHV1-2*02_c135t and worse), and the default label
-    // column is 19% of the width, which truncates them. Size it from the longest
-    // name instead, and widen the chart rather than squeezing the matrix when that
-    // leaves too little for it - the container scrolls.
     const longest = sets.reduce((n, set) => Math.max(n, (set.name ?? '').length), 0);
     const labelPx = Math.min(320, Math.max(90, longest * LABEL_CHAR_PX));
     const drawWidth = Math.max(width, Math.round(labelPx / MAX_LABEL_SHARE));
@@ -312,7 +278,6 @@ plt.show()
     el.style.height = `${height}px`;
 
     // keep what was drawn, under the alleles' real names: `sets` has been
-    // rewritten to the shortened labels by this point
     this.drawnCombinations = (combinations as readonly {
       elems?: readonly unknown[]; sets?: ReadonlySet<{ name?: string }>;
     }[]).map(c => ({

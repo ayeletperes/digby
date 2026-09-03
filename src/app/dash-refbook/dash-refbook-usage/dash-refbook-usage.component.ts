@@ -54,14 +54,10 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
   plotLayout: any = {
     title: { text: '' },
     // horizontal, as the overview is: the allele names sit on the category axis
-    // and read without rotation, and the list grows downwards rather than
-    // running out of width
     xaxis: { title: { text: 'Relative usage (fraction of rearrangements)' }, rangemode: 'tozero',
              zeroline: true, automargin: true },
     yaxis: { title: { text: 'Allele' }, automargin: true },
     // A copy of the value axis along the top, for when the list is long enough
-    // to scroll and the bottom one is off screen. `matches` keeps the two ranges
-    // locked without any bookkeeping.
     xaxis2: {
       matches: 'x', overlaying: 'x', side: 'top',
       title: { text: 'Relative usage (fraction of rearrangements)' },
@@ -129,11 +125,7 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
       });
   }
 
-  /**
-   * A click on a jittered point identifies one sample; a click on the box itself
-   * identifies the allele. Plotly reports both through the same event, so the
-   * point's customdata is what tells them apart.
-   */
+  /** A click on a jittered point identifies one sample; a click on the box itself identifies the allele. */
   onPlotClick(event: { points?: { curveNumber: number; customdata?: string }[] }): void {
     const point = event?.points?.[0];
     if (!point) {
@@ -160,8 +152,6 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
     const nonEmpty = alleles.filter(a => Array.isArray(a.usage) && a.usage.length > 0);
 
     // Axis ticks cannot carry a name like IGHV1-2*02_t211c_t213c_g225a, so the
-    // tick is shortened and the full name is kept for the hover box.
-    // beyond this the plot is taller than its box, so the bottom axis scrolls away
     const mirrored = nonEmpty.length > 12;
     const display = shortenAlleleNames(nonEmpty.map(a => a.name));
     const traces = nonEmpty.map(a => ({
@@ -171,7 +161,6 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
       customdata: a.samples,      // sample name behind each point
       orientation: 'h',
       // without this a box is a hairline: plotly sizes it from the category slot,
-      // which shrinks as alleles are added
       width: 0.65,
       boxpoints: this.showPoints ? 'all' : false,
       jitter: 0.35,
@@ -182,8 +171,6 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
     }));
 
     // Plotly does not draw an overlaying axis that no trace is assigned to, so
-    // the mirrored axis needs an anchor. One invisible point, excluded from
-    // hover and the legend, is enough to bring it into existence.
     this.plotData = mirrored
       ? [...traces, {
           type: 'scatter', mode: 'markers', xaxis: 'x2',
@@ -206,7 +193,6 @@ export class DashRefbookUsageComponent implements OnInit, OnChanges {
     };
 
     // What each tick stands for, for the hover: the axis can only carry the
-    // short form, and the tick is where a reader looks first.
     this.fullByLabel = new Map(nonEmpty.map(a => [display.get(a.name) ?? a.name, a.name]));
   }
 

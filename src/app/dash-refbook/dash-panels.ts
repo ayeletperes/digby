@@ -1,13 +1,7 @@
 import { Type } from '@angular/core';
 import { DataSource, SourceAvailability } from '../shared/models/species-gene-selection.model';
 
-/**
- * One tab of the reference dashboard.
- *
- * Adding a panel is a component plus an entry in DASH_PANELS below. The tab list,
- * its ordering and its enabled state are all derived from this, so nothing else
- * needs editing.
- */
+/** One tab of the reference dashboard. */
 export interface DashPanel {
   /** Stable identifier. Appears in the URL, so do not rename casually. */
   id: string;
@@ -18,10 +12,7 @@ export interface DashPanel {
   description: string;
   /** What the plot actually shows, revealed by the info control above it. */
   caption: string;
-  /**
-   * Databases this panel needs. A panel requiring 'airrseq' cannot run on a
-   * genomic-only selection. Empty means it works from whatever is available.
-   */
+  /** Databases this panel needs. */
   requires: DataSource[];
   /** True if the panel plots several genes at once. */
   multi: boolean;
@@ -142,7 +133,6 @@ export const DASH_PANELS: DashPanel[] = [
     label: 'Allele Usage',
     description: 'Usage of each allele across samples. Needs AIRR-seq data.',
     // describes what is plotted, and stops there - what a narrow box means is
-    // the reader's call, not the caption's
     caption: 'Relative usage of each allele: the fraction of a sample\'s rearrangements ' +
              'assigned to it. Each box is one allele, each point one sample. A sample in ' +
              'which the allele was not detected contributes no point.',
@@ -161,7 +151,6 @@ export const DASH_PANELS: DashPanel[] = [
              'dots below show which alleles are in it. The bars on the left are how often each ' +
              'allele appears overall, regardless of what it appears with.',
     // Zygosity is which alleles a subject carries, which genomic reports too.
-    // Only *usage* needs AIRR-seq.
     requires: [],
     multi: false,
     load: () => import('./dash-refbook-zygosity/dash-refbook-zygosity.component')
@@ -169,12 +158,7 @@ export const DASH_PANELS: DashPanel[] = [
   },
 ];
 
-/**
- * Why a panel cannot run, or null when it can.
- *
- * Distinguishes "this locus has no such data" from "you chose not to include it",
- * because the two need different things from the user.
- */
+/** Why a panel cannot run, or null when it can. */
 export function panelBlockedReason(
   panel: DashPanel,
   selected: DataSource[],

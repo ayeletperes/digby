@@ -22,17 +22,10 @@ import { RefbookService } from '../../../projects/digby-swagger-client/api/refbo
 import { DashDrillService, DrillEvent } from './dash-drill.service';
 import { PanelGalleryComponent } from '../shared/panel-gallery/panel-gallery.component';
 
-/**
- * Genes pre-selected when a locus is opened, so the first panel has something to
- * show. One, not a full set: the landing view should be a single gene read at
- * full size, and comparing two or three is a thing you go on to ask for.
- */
+/** Genes pre-selected when a locus is opened, so the first panel has something to show. */
 const DEFAULT_GENE_COUNT = 1;
 
-/**
- * Most panels draw one chart per gene, so the selection is capped: beyond a few
- * genes the faceted view stops being readable and the request count grows with it.
- */
+/** Most panels draw one chart per gene, so the selection is capped: beyond a few genes the faceted view stops being readable and the request count grows with it. */
 const MAX_GENES = 3;
 
 @Component({
@@ -78,26 +71,12 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
 
   // ---------------------------------------------------------- seen-in filter
 
-  /**
-   * Per-allele sample counts for the genes on screen, and the thresholds set
-   * against them.
-   *
-   * The maxima come from the data rather than being fixed, so the slider spans
-   * exactly what this gene actually reaches - IGHV1-18*01 is in 336 AIRR-seq
-   * samples while most of its alleles are in one.
-   */
+  /** Per-allele sample counts for the genes on screen, and the thresholds set against them. */
   alleleCounts: { name: string; genomic: number; airrseq: number }[] = [];
   minGenomic = 0;
   minAirrseq = 0;
 
-  /**
-   * The slider moves between stops, not over the raw range.
-   *
-   * Counts are heavily skewed - most alleles sit in one or two samples while a
-   * couple reach 336 - so a linear 0..145 track gives 1, 2 and 3 about two
-   * pixels each, which is where the useful thresholds are. These stops give
-   * every small value its own detent and compress the long tail.
-   */
+  /** The slider moves between stops, not over the raw range. */
   genomicStops: number[] = [0];
   airrseqStops: number[] = [0];
   genomicIndex = 0;
@@ -166,12 +145,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     return this.passingAlleles()?.length ?? this.alleleCounts.length;
   }
 
-  /**
-   * Fired on the range input's `change`, not its `input`, so the panels rebuild
-   * once when the handle is released rather than on every pixel of the drag.
-   * The readout beside the label still follows the drag, because ngModel is
-   * bound to `input`.
-   */
+  /** Fired on the range input's `change`, not its `input`, so the panels rebuild once when the handle is released rather than on every pixel of the drag. */
   onSeenInChange(): void {
     this.applySampleFilters();
   }
@@ -197,23 +171,9 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
 
   ascLoading = false;
   ascError: string | null = null;
-  /**
-   * The segment of each gene, as the databases record it.
-   *
-   * Not derived from the name any more. IGHA1 and IGHG1 do not carry theirs,
-   * and IGHD is the delta constant gene as well as the prefix every D gene
-   * shares, so a name cannot tell them apart. It also had IGKC and the IGLC
-   * genes filed under V, because the old rule defaulted there.
-   */
+  /** The segment of each gene, as the databases record it. */
   segmentByGene: Record<string, string> = {};
-  /**
-   * The panel to land on.
-   *
-   * The first panel that stands on its own, rather than `DASH_PANELS[0]` - that
-   * is the Allele detail, which needs an allele to have been clicked, so a cold
-   * load opened on "Click an allele in any plot to open it here" and had nothing
-   * to offer until you left it.
-   */
+  /** The panel to land on. */
   activePanelId = (DASH_PANELS.find(panel => !panel.needsAllele) ?? DASH_PANELS[0]).id;
 
   /** Loaded panel components, keyed by panel id. */
@@ -224,37 +184,16 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
   /** Which panels have their explanatory caption expanded. */
   captionOpen: Record<string, boolean> = {};
 
-  /**
-   * The selection controls collapse once genes are chosen: expanded they take most
-   * of the viewport, which leaves no room for the plots they configure.
-   */
+  /** The selection controls collapse once genes are chosen: expanded they take most of the viewport, which leaves no room for the plots they configure. */
   pickerOpen = false;
 
-  /**
-   * The card gallery, shown in place of a panel.
-   *
-   * Only on a cold arrival: a deep link, a drill and the back button all name a
-   * panel in the URL, so this never stands between a reader and the analysis
-   * they asked for. Opening a card writes the panel to the URL, which is what
-   * takes the gallery down and keeps it down.
-   */
+  /** The card gallery, shown in place of a panel. */
   showGallery = false;
 
-  /**
-   * One selection object per gene, reused between change detection runs.
-   *
-   * Faceted panels take a single-gene selection as an @Input, and a fresh object
-   * each time would retrigger their ngOnChanges and refetch on every cycle.
-   */
+  /** One selection object per gene, reused between change detection runs. */
   private facetCache = new Map<string, SpeciesGeneSelection>();
 
-  /**
-   * Genes named in the URL, held until the gene list for the locus arrives.
-   *
-   * The dataset selector emits before that list is known, and the resulting
-   * default selection would otherwise overwrite the query string that asked for
-   * these, losing the selection on every shared link.
-   */
+  /** Genes named in the URL, held until the gene list for the locus arrives. */
   private pendingAscs: string[] = [];
 
   private destroy$ = new Subject<void>();
@@ -296,13 +235,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
 
   // ---------------------------------------------------------------- panels
 
-  /**
-   * Act on a click inside a panel.
-   *
-   * Clicking something already filtered removes it, so the same click both drills
-   * in and backs out, and none of these are destructive: every one lands in the
-   * URL and can be undone with the chip or the browser's back button.
-   */
+  /** Act on a click inside a panel. */
   private applyDrill(event: DrillEvent): void {
     // a drill is a request for a particular view, so it leaves the cards behind
     this.showGallery = false;
@@ -311,11 +244,9 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
       const alreadyOpen = this.selectedAlleles.includes(event.value);
 
       // one allele at a time: this opens a view of that allele rather than
-      // narrowing the gene-level plots to a set
       this.selectedAlleles = alreadyOpen ? [] : [event.value];
 
       // clicking an allele means "show me this allele", so go to the panel that
-      // answers that; clicking it again steps back up to where the gene is shown
       if (!alreadyOpen) {
         this.activePanelId = 'allele';
       } else if (this.activePanelId === 'allele') {
@@ -331,8 +262,6 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
 
     } else if (event.kind === 'gene') {
       // a locus-wide panel has no gene scope of its own, so a gene arriving from
-      // one means "take me to this gene" - select it and open a panel that
-      // shows a gene. From a gene-level panel it only narrows the selection.
       const fromLocusWide = this.activePanel?.multi;
       this.applyAscs([event.value], true);
       if (fromLocusWide) {
@@ -352,14 +281,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     this.captionOpen = { ...this.captionOpen, [id]: !this.captionOpen[id] };
   }
 
-  /**
-   * True when the open panel is drawn from the whole locus, so the gene and
-   * sample controls in the rail do not reach it.
-   *
-   * They stay live rather than disabled: setting up a gene while looking at the
-   * map is reasonable, and the other panels will use it. Dimmed and labelled is
-   * the honest state - a control that works but does not apply here.
-   */
+  /** True when the open panel is drawn from the whole locus, so the gene and sample controls in the rail do not reach it. */
   get railScoped(): boolean {
     return !!this.activePanel?.multi;
   }
@@ -381,10 +303,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     return this.panels.find(panel => panel.id === this.activePanelId) ?? this.panels[0];
   }
 
-  /**
-   * From the gallery, which speaks its own minimal panel shape so a second
-   * dashboard can use it without adopting DashPanel. Resolve by id.
-   */
+  /** From the gallery, which speaks its own minimal panel shape so a second dashboard can use it without adopting DashPanel. */
   openFromGallery(panel: { id: string }): void {
     const found = this.panels.find(p => p.id === panel.id);
     if (found) {
@@ -401,11 +320,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     this.writeToUrl();
   }
 
-  /**
-   * Set when the chosen locus has nothing here, which the shared dataset
-   * selector cannot know: it offers every dataset, and IGHC is one the Explorer
-   * does not carry.
-   */
+  /** Set when the chosen locus has nothing here, which the shared dataset selector cannot know: it offers every dataset, and IGHC is one the Explorer. */
   get locusUnavailable(): string | null {
     return this.ascError && !this.availableAscs.length ? this.ascError : null;
   }
@@ -420,12 +335,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     this.writeToUrl();
   }
 
-  /**
-   * The filters currently narrowing the view, as removable chips.
-   *
-   * Species and locus are omitted: they are not narrowing anything, they are the
-   * dataset being looked at, and removing them would leave nothing to show.
-   */
+  /** The filters currently narrowing the view, as removable chips. */
   get activeChips(): { key: string; label: string; value: string }[] {
     const chips: { key: string; label: string; value: string }[] = [];
 
@@ -516,24 +426,12 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Sample filters mean something for whichever database is being read.
-   *
-   * This used to require AIRR-seq, from when only AIRR-seq carried projects and
-   * samples. Genomic carries both now - IGH holds 2 genomic projects and 328
-   * genomic samples, and the backend filters on them - so a genomic-only view
-   * had the two dropdowns greyed out over data that was there all along.
-   */
+  /** Sample filters mean something for whichever database is being read. */
   get sampleFiltersEnabled(): boolean {
     return (this.selection.sources ?? []).some(source => this.isSourceAvailable(source));
   }
 
-  /**
-   * The database an entry belongs to, used as its heading.
-   *
-   * A selection narrows only the database that holds it, so grouping by source is
-   * what makes a project or sample list honest about what picking it will do.
-   */
+  /** The database an entry belongs to, used as its heading. */
   private sourceGroup(sources?: string[]): string {
     const named = (sources ?? []).map(s => this.sourceLabels[s] ?? s);
     return named.length ? named.join(' + ') : 'Unknown';
@@ -560,7 +458,6 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
   onProjectsChange(projects: string[]): void {
     this.selectedProjects = projects;
     // samples are listed per project, so a narrowed project set can strand a
-    // sample that is no longer offered; loadSamples drops those
     this.loadSamples();
     this.applySampleFilters();
   }
@@ -570,12 +467,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     this.applySampleFilters();
   }
 
-  /**
-   * Split the selected projects by the database that holds them.
-   *
-   * A project belongs to one database or the other, so a selection narrows only
-   * the database it came from; panels need this to describe their own scope.
-   */
+  /** Split the selected projects by the database that holds them. */
   private projectScope(): { genomic: string[]; airrseq: string[] } {
     const scope = { genomic: [] as string[], airrseq: [] as string[] };
 
@@ -590,13 +482,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     return scope;
   }
 
-  /**
-   * Per-allele counts for the genes on screen, which is what the sliders span.
-   *
-   * One request per gene, capped at MAX_GENES, and the thresholds are clamped
-   * to the new maxima rather than silently filtering everything out when the
-   * gene changes to one with fewer carriers.
-   */
+  /** Per-allele counts for the genes on screen, which is what the sliders span. */
   private loadAlleleCounts(): void {
     const { species, chain } = this.selection;
     const genes = this.selection.ascs ?? [];
@@ -656,14 +542,12 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
         this.projects = rec.projects ?? [];
 
         // the databases hold different studies, so switching source can strand a
-        // project that no longer exists; drop it and tell the panels
         const known = new Set(this.projects.map(p => p.name));
         const kept = this.selectedProjects.filter(name => known.has(name));
         const changed = kept.length !== this.selectedProjects.length;
         this.selectedProjects = kept;
 
         // the scope is derived from this list, so refresh it even when the
-        // selection itself did not change
         this.applySampleFilters();
         this.loadSamples();
       });
@@ -705,12 +589,7 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
       : [...this.allAscs];
   }
 
-  /**
-   * @param clearAlleles pass true when the user chose different genes. An allele
-   *   belongs to a gene, so it cannot survive that - but this method also runs
-   *   from startup and from the dataset selector reporting no locus yet, and
-   *   clearing on those discarded any allele restored from the URL.
-   */
+  /** @param clearAlleles pass true when the user chose different genes. */
   private applyAscs(ascs: string[], clearAlleles = false): void {
     const capped = ascs.slice(0, MAX_GENES);
 
@@ -727,30 +606,12 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     this.loadAlleleCounts();
   }
 
-  /**
-   * The genes a panel should be drawn for: all of them for a panel that compares
-   * genes itself, otherwise one facet each.
-   */
+  /** The genes a panel should be drawn for: all of them for a panel that compares genes itself, otherwise one facet each. */
   facetsFor(panel: DashPanel): string[] {
     return panel.multi ? [] : (this.selection.ascs ?? []);
   }
 
-  /**
-   * The selection a panel reads, stable across change detection.
-   *
-   * A drilled allele belongs to the panel that asked for it. Every gene-level
-   * panel passes `alleles` to the backend, so opening one while an allele was
-   * drilled narrowed it to that allele - the Overview of IGHV1-18 came back with
-   * 1 allele instead of 18, which is not an overview of anything. The Allele
-   * panel's own description already promises the opposite: "the gene-level
-   * panels stay as they were, so stepping back up is one click".
-   *
-   * The allele stays selected, so returning to the Allele panel still has it,
-   * and the chip in the filter bar is still the way to drop it entirely.
-   *
-   * Cached, and keyed on whether the allele is included: handing a child a new
-   * object on every change-detection pass makes it refetch forever.
-   */
+  /** The selection a panel reads, stable across change detection. */
   private selectionSeenBy(panel: DashPanel, gene?: string): SpeciesGeneSelection {
     const key = `${gene ?? '*'}|${panel.needsAllele ? 'allele' : 'gene'}`;
     let cached = this.facetCache.get(key);
@@ -807,17 +668,10 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     this.availableAscs = [];
 
     // deliberately unfiltered: this asks what the locus holds, which is what the
-    // source toggle and the panel gating are described against
     this.refbookService.getAscsInLocusApi(species, locus)
       .pipe(
         catchError(err => {
           // Clear the old locus's genes before reporting. Without this the
-          // canvas kept drawing the last locus under the new locus's name:
-          // switching Human IGH to IGHC left IGHV1-18's 18 alleles on screen
-          // with "Human · IGHC" above them, which is a mislabelled figure
-          // rather than a failed one.
-          // segment first: applyAscs writes the URL, and restoreFromUrl reads it
-          // straight back, so a stale segment= would put the chip back
           this.segments = [];
           this.segment = null;
           this.segmentByGene = {};
@@ -883,9 +737,6 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
       relativeTo: this.route,
       queryParams: {
         // no panel while the cards are up, so the URL says what is on screen.
-        // writeToUrl re-enters restoreFromUrl through the queryParamMap
-        // subscription, and naming a panel here would take the gallery straight
-        // back down again.
         panel: this.showGallery ? null : this.activePanelId,
         segment: this.segment,
         projects: this.selectedProjects.join(',') || null,
@@ -896,7 +747,6 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
       },
       queryParamsHandling: 'merge',
       // a real navigation, not a replacement, so browser back steps through the
-      // exploration rather than leaving the dashboard
       replaceUrl: false,
     });
   }
@@ -928,10 +778,6 @@ export class DashRefbookComponent implements OnInit, OnDestroy {
     }
 
     // Last, because it depends on what the rest of the URL restored. A link may
-    // name the Allele detail without naming an allele - restoring that literally
-    // lands on "click an allele in any plot", the dead end the cold-start
-    // default already avoids. Reading `selectedAlleles` before it is filled in
-    // would bounce every legitimate allele link too.
     const wanted = this.panels.find(panel => panel.id === params.get('panel'));
     if (wanted && !(wanted.needsAllele && !this.selectedAlleles.length)) {
       this.activePanelId = wanted.id;

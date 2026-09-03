@@ -8,14 +8,7 @@ export interface DrillEvent {
   value: string;
 }
 
-/**
- * Clicks in a panel, on their way back to the dashboard shell.
- *
- * Panels are created through NgComponentOutlet, which binds inputs but not
- * outputs, so a panel cannot raise an @Output the shell would hear. They push
- * onto this instead; the shell provides it, so the stream is scoped to one
- * dashboard rather than shared application-wide.
- */
+/** Clicks in a panel, on their way back to the dashboard shell. */
 @Injectable()
 export class DashDrillService {
   private readonly drills = new Subject<DrillEvent>();

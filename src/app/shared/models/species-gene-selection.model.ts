@@ -1,13 +1,4 @@
-/**
- * What the refbook dashboards are currently looking at.
- *
- * `species` and `locus` come from the dataset selector; `sources` is the user's
- * genomic / AIRR-seq choice; `ascs` is the (possibly multiple) gene selection.
- *
- * `chain` and `asc` are the single-selection projection of `locus` and `ascs[0]`.
- * They are kept because every existing panel and its template reads them, and
- * because most panels only ever look at one gene.
- */
+/** What the refbook dashboards are currently looking at. */
 export type DataSource = 'genomic' | 'airrseq';
 
 export const DATA_SOURCES: DataSource[] = ['genomic', 'airrseq'];
@@ -37,24 +28,10 @@ export class SpeciesGeneSelection {
   /** Alleles to narrow to, set by drilling into a plot. Empty means all. */
   alleles?: string[];
 
-  /**
-   * Alleles passing the rail's "seen in N samples" thresholds, or undefined when
-   * no threshold is set.
-   *
-   * Kept apart from `alleles`, which is the drill-down: one is a filter the user
-   * set on the left, the other is the allele they clicked. `allelesParam` sends
-   * their intersection, so every panel - including the alignment, which is
-   * rendered server-side - honours the restriction without new plumbing.
-   */
+  /** Alleles passing the rail's "seen in N samples" thresholds, or undefined when no threshold is set. */
   countFilter?: string[];
 
-  /**
-   * Selected projects split by the database they belong to.
-   *
-   * The two databases name entirely different studies, so a selection made from
-   * one narrows only that one. Panels need this to say what their figures cover
-   * rather than implying the whole selection applied.
-   */
+  /** Selected projects split by the database they belong to. */
   projectScope?: { genomic: string[]; airrseq: string[] };
 }
 
@@ -101,11 +78,7 @@ export function countFilterExcludesAll(selection: SpeciesGeneSelection): boolean
   return !!selection?.countFilter && selection.countFilter.length === 0;
 }
 
-/**
- * One line describing which samples a figure covers, for a panel reading `sources`.
- *
- * Returns null when nothing is narrowed, so a panel showing everything says nothing.
- */
+/** One line describing which samples a figure covers, for a panel reading `sources`. */
 export function scopeNote(selection: SpeciesGeneSelection,
                           sources: DataSource[]): string | null {
   const scope = selection?.projectScope;

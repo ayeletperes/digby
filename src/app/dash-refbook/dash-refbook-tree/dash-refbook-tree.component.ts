@@ -15,9 +15,7 @@ import { ExportTable } from '../../shared/plot-export/plot-export';
 import { exportButtons } from '../../shared/plot-export/plot-export';
 import { attachTickTitles } from '../../shared/plotly-tick-titles';
 
-/** /refbook/asc_tree: scipy-style linkage over the alleles of one gene.
- *  Shown as "Group clustering": it groups by sequence similarity and makes
- *  no claim about ancestry. */
+/** Shown as "Group clustering": it groups by sequence similarity and makes. */
 interface TreeData {
   labels: string[];
   /** [left, right, height, size]; leaves are 0..n-1, merge k creates node n+k. */
@@ -94,16 +92,7 @@ export class DashRefbookTreeComponent implements OnInit, OnChanges {
   }
 
   /** One line of context under the plot: what the distances were measured over. */
-  /**
-   * What was compared, which is not the same question for V as for D and J.
-   *
-   * V is stored IMGT-gapped, so the columns correspond and the distance is a
-   * count of positions that differ. D and J have no gapped form and differ in
-   * length, so each pair is aligned on the fly and the distance is an edit
-   * distance - it can count a gap as well as a substitution. Reporting
-   * "0 of 31 aligned positions vary" for a D gene, which is what the gapped
-   * wording did, contradicts the figure beside it.
-   */
+  /** What was compared, which is not the same question for V as for D and J. */
   get columnsNote(): string {
     if (!this.tree) {
       return '';
@@ -162,10 +151,7 @@ export class DashRefbookTreeComponent implements OnInit, OnChanges {
       });
   }
 
-  /**
-   * A click on a leaf marker opens that allele. The merge trace carries no
-   * customdata, so clicking a branch does nothing.
-   */
+  /** A click on a leaf marker opens that allele. */
   onPlotClick(event: { points?: { customdata?: string }[] }): void {
     const name = event?.points?.[0]?.customdata;
     if (name) {
@@ -173,14 +159,7 @@ export class DashRefbookTreeComponent implements OnInit, OnChanges {
     }
   }
 
-  /**
-   * The dendrogram's own numbers, which its traces are not.
-   *
-   * The traces are line vertices - handing those over gives the drawing, not the
-   * data. What a reader wants is the linkage: which two clusters joined, at what
-   * distance, and how many alleles that left. This is scipy's own Z format, so
-   * the script below is four lines.
-   */
+  /** The dendrogram's own numbers, which its traces are not. */
   /** How the distances were measured, for the script's header. */
   private get metricNote(): string {
     const tree = this.tree;
@@ -267,13 +246,11 @@ plt.show()
     const n = tree.labels.length;
 
     // A node's y is its position in the leaf order, or the midpoint of its children;
-    // its x is the height it was created at, and 0 for a leaf.
     const y = new Array<number>(n + tree.merges.length).fill(0);
     const x = new Array<number>(n + tree.merges.length).fill(0);
     tree.order.forEach((leaf, position) => { y[leaf] = position; });
 
     // one trace, with a null breaking the line between one merge and the next: a
-    // trace per branch would be 2n-1 traces for what is a single drawing
     const branchX: (number | null)[] = [];
     const branchY: (number | null)[] = [];
 

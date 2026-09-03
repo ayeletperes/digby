@@ -2,11 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
-/**
- * All a card needs. GalleryPanel satisfies it structurally, and so does whatever
- * the guQTL shell calls its panels, so neither dashboard has to adopt the
- * other's type to get the same landing.
- */
+/** All a card needs. */
 export interface GalleryPanel {
   id: string;
   label: string;
@@ -14,16 +10,7 @@ export interface GalleryPanel {
   description: string;
 }
 
-/**
- * What the dashboard can do, as cards, for someone who has not been here before.
- *
- * Shown only when the URL names no panel. A deep link, a drill from another
- * panel and the browser's back button all name one, so this never stands between
- * a reader and the analysis they asked for - which is what makes a gallery
- * landing tolerable rather than a click to dismiss on every visit.
- *
- * The cards are drawn from DASH_PANELS, so a new panel appears here by existing.
- */
+/** What the dashboard can do, as cards, for someone who has not been here before. */
 @Component({
   selector: 'app-panel-gallery',
   standalone: true,
@@ -39,11 +26,7 @@ export class PanelGalleryComponent {
   @Input() locus = '';
   /** Null when the panel can be opened, otherwise why it cannot. */
   @Input() blocked: (panel: GalleryPanel) => string | null = () => null;
-  /**
-   * Thumbnails by panel id, merged over the ones below. A second dashboard
-   * brings its own rather than editing a shared map, which is one fewer file
-   * for two people to collide in.
-   */
+  /** Thumbnails by panel id, merged over the ones below. */
   @Input() art: Record<string, string> = {};
 
   @Output() opened = new EventEmitter<GalleryPanel>();
@@ -58,12 +41,7 @@ export class PanelGalleryComponent {
     this.opened.emit(panel);      // a blocked card is disabled and cannot click
   }
 
-  /**
-   * A drawing of the figure's shape, not a screenshot.
-   *
-   * Screenshots of these panels went stale within a week the last time, and a
-   * thumbnail only has to say "bars", "circle", "tree" from across the page.
-   */
+  /** A drawing of the figure's shape, not a screenshot. */
   thumbnail(id: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(
       this.art[id] ?? THUMBNAILS[id] ?? THUMBNAILS['default']);

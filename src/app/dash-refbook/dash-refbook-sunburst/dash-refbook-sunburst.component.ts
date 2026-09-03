@@ -13,17 +13,7 @@ import { DashDrillService } from '../dash-drill.service';
 import { collapseGroup, fills, layout, SunburstLayout, SunburstPayload }
   from './sunburst-layout';
 
-/**
- * The locus as a sunburst: chain, gene type, subgroup, ASC, allele.
- *
- * One request per species and locus, and nothing after that - drilling recolours
- * arcs that are already drawn.
- *
- * Plotly's sunburst trace draws it. The arcs were hand-rolled at first, to skip
- * the cost of a chart library measuring label text for a few thousand alleles,
- * and that bought a figure with no labels, no hover and no way back to the top.
- * The trace gives all three, and the ring cap below is what keeps it quick.
- */
+/** The locus as a sunburst: chain, gene type, subgroup, ASC, allele. */
 @Component({
   selector: 'app-dash-refbook-sunburst',
   templateUrl: './dash-refbook-sunburst.component.html',
@@ -40,11 +30,7 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
   data: SunburstPayload = null;
   private plan: SunburstLayout = null;
 
-  /**
-   * Rings drawn at once. All five means a thousand-odd allele arcs a pixel wide,
-   * which is where the labels go: Plotly only writes a label that fits its arc.
-   * Four stops at the ASC, and drilling in reveals its alleles.
-   */
+  /** Rings drawn at once. */
   static readonly RINGS = 4;
 
   plotData: unknown[] = [];
@@ -72,8 +58,6 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     // the hierarchy depends on species, locus and sources only; refetching when a
-    // sibling panel changes the selected allele would throw the drill state away
-    // for a payload that is byte for byte the same
     if (changes['selection'] && !changes['selection'].firstChange
         && this.key(changes['selection'].previousValue) !== this.key(this.selection)) {
       this.fetch();
@@ -82,7 +66,6 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
 
   private key(selection: SpeciesGeneSelection): string {
     // no sources: the map draws every allele the locus has in either database,
-    // so the Data toggle does not change it
     return [selection?.species, selection?.chain].join('|');
   }
 
@@ -141,21 +124,12 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
     this.draw();
   }
 
-  /**
-   * Arc labels: short enough to fit, with the full name kept for the hover.
-   *
-   * Two things are dropped. The locus and segment prefix, because every arc
-   * inside V of IGH repeats `IGHV` and the rings above already say it. And the
-   * substitution suffix of a novel allele, which reaches 250 characters here - the
-   * same rule the rest of the dashboard labels alleles by, so a label means the
-   * same thing in the locus map as it does on an axis.
-   */
+  /** Arc labels: short enough to fit, with the full name kept for the hover. */
   private labelArcs(): void {
     const { label, levels } = this.data;
     const alleleDepth = levels.length - 1;
 
     // shortened over the whole locus at once, so a label still names exactly one
-    // allele - two alleles of a gene can share a stem and a difference count
     const short = shortenAlleleNames(label.filter((_, i) => this.plan.depth[i] === alleleDepth));
 
     this.display = label.map((name, i) => {
@@ -170,13 +144,7 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
     });
   }
 
-  /**
-   * Hover text, written out rather than templated.
-   *
-   * A leaf and a branch mean different things by the same numbers: on an allele
-   * `genomic 1` means it is recorded there, on a gene it is a count of alleles.
-   * One template cannot say both, so each node carries its own sentence.
-   */
+  /** Hover text, written out rather than templated. */
   private describe(): void {
     const { label, parent, levels, novel, nG, nA } = this.data;
     const alleleDepth = levels.length - 1;
@@ -194,7 +162,6 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
                             : 'In the baseline reference set');
       } else {
         // every number here counts alleles, never samples or subjects, so each
-        // line says so: "in the genomic database: 1,023" reads as 1,023 people
         lines.push(this.levelOf(i), '');
         lines.push(`${count(this.plan.value[i], 'allele')} in total`);
         lines.push(`${novel[i].toLocaleString()} of them not in the baseline reference set`);
@@ -214,7 +181,6 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
       values: this.plan.value,
       branchvalues: 'total',
       // the payload is already in segment then natural-name order; Plotly's
-      // default would re-sort it by size and scatter the subgroups
       sort: false,
       level: this.ids[this.centre],
       maxdepth: DashRefbookSunburstComponent.RINGS,
@@ -234,30 +200,11 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
       paper_bgcolor: 'rgba(0,0,0,0)',
       font: { size: 12 },
       // left to itself Plotly shrinks each label to fit its own arc, so with arcs
-      // this uneven the labels come out at a dozen different sizes. One size for
-      // all of them, and an arc too narrow for it shows nothing rather than a
-      // label too small to read - the hover still names it.
       uniformtext: { mode: 'hide', minsize: 9 },
     };
   }
 
-  /**
-   * Put every label in the middle of its own arc.
-   *
-   * Plotly centres sunburst text on the largest rectangle that fits inside the
-   * arc, which for an arc this uneven is nowhere near its middle: the labels
-   * drift outward and to one side, differently for every arc. There is no
-   * setting for it, so this moves them afterwards.
-   *
-   * It uses Plotly's own geometry rather than recomputing any: each slice
-   * carries `pxmid`, the offset from the centre to its outer edge along its mid
-   * angle, and `rpx0`/`rpx1`, its radii. Scaling that offset to the mid radius
-   * lands on the middle of the arc, and it stays right through a drill because
-   * Plotly rewrites those values when it re-roots. Only the translate is
-   * touched; the rotation and the uniform scale are Plotly's.
-   *
-   * If the shape it reads is ever not there, it leaves every label alone.
-   */
+  /** Put every label in the middle of its own arc. */
   centreLabels(): void {
     const slices = this.host.nativeElement.querySelectorAll('.sunburstlayer .slice');
     let centre: { x: number; y: number } = null;
@@ -310,18 +257,12 @@ export class DashRefbookSunburstComponent implements OnInit, OnChanges {
     }
 
     // clicking the drilled node again steps back out, which is also what Plotly
-    // does to the zoom, so the two stay in step
     this.drilled = i === this.drilled ? (this.data.parent[i] || null) : i;
     this.centre = this.drilled ?? 0;
     this.draw();
   }
 
-  /**
-   * The gene the map is drilled to, if it is drilled to one.
-   *
-   * Only the gene ring: a subgroup is not something the other panels take, and
-   * an allele already opens its own panel on click.
-   */
+  /** The gene the map is drilled to, if it is drilled to one. */
   get drilledGene(): string {
     if (this.drilled === null || !this.data) {
       return null;

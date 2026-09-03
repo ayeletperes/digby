@@ -42,14 +42,7 @@ const MAX_LABEL_SHARE = 0.34;
 /** Share given to the per-set bar chart, left of the labels. */
 const SET_CHART_SHARE = 0.18;
 
-/**
- * One allele, end to end.
- *
- * The gene-level panels answer "what alleles does this gene have"; filtering one of
- * them to a single allele just leaves a chart with one bar. This is the level below:
- * everything known about a single allele, assembled from the same endpoints the
- * other panels use, each narrowed to it.
- */
+/** One allele, end to end. */
 @Component({
   selector: 'app-dash-refbook-allele',
   templateUrl: './dash-refbook-allele.component.html',
@@ -115,12 +108,7 @@ export class DashRefbookAlleleComponent
   private projectTotals: Record<DataSource, Map<string, number>> =
     { genomic: new Map(), airrseq: new Map() };
 
-  /**
-   * UpSet input: one carrier, and the OTHER alleles of this gene it carries.
-   *
-   * The allele itself is dropped: every carrier has it by definition, so keeping it
-   * would add one set covering the whole chart and tell nobody anything.
-   */
+  /** UpSet input: one carrier, and the OTHER alleles of this gene it carries. */
   coOccurrence: ZygSample[] = [];
 
   private resizeObs?: ResizeObserver;
@@ -139,7 +127,6 @@ export class DashRefbookAlleleComponent
 
   ngAfterViewInit() {
     // the card is only in the DOM once an allele has loaded, so observe the host:
-    // it is there from the start and its width is the card's width
     const el = this.host.nativeElement;
     if ('ResizeObserver' in window) {
       this.resizeObs = new ResizeObserver(() => this.scheduleRender());
@@ -180,8 +167,6 @@ export class DashRefbookAlleleComponent
 
     const wanted = this.selection?.sources?.length ? this.selection.sources : DATA_SOURCES;
     // one call per database rather than one combined call: the combined response
-    // carries no source marker, so a merged cohort (rhesus: the same 106 subjects
-    // in both) cannot be split back apart afterwards
     const zygosity = (source: DataSource) => (wanted.includes(source)
       ? this.refbookService.getAscZygosity(species, chain, asc, projects, samples,
                                            undefined, source)
@@ -194,7 +179,6 @@ export class DashRefbookAlleleComponent
       usage: this.refbookService.getAscUsage(species, chain, asc, projects, samples, alleles)
         .pipe(soften({ alleles: [] })),
       // deliberately unfiltered by allele: the point is what this allele's carriers
-      // also carry, which an allele-filtered response would hide
       genomic: zygosity('genomic'),
       airrseq: zygosity('airrseq'),
       // per-project sample counts, the denominator behind the carrier percentages
@@ -227,7 +211,6 @@ export class DashRefbookAlleleComponent
     const at = (values?: number[]) => (index >= 0 ? values?.[index] ?? 0 : 0);
 
     // the stacked-bar series cannot give these: `both` is a minimum of the two,
-    // so reconstructing from them reported the smaller figure for both databases
     this.genomicAppearances = at(overview.genomic_counts);
     this.airrseqAppearances = at(overview.vdjbase_counts);
     this.isNovel = (overview.novel ?? 0) > 0;
@@ -268,7 +251,6 @@ export class DashRefbookAlleleComponent
 
   private readCarriers(bySource: Record<DataSource, { samples?: ZygSample[] }>) {
     // the same subject can be in both databases (rhesus) or in neither's cohort
-    // (human, where the two are disjoint), so the totals are a union by name
     const union = new Map<string, Set<string>>();
     this.carrierCounts = { genomic: new Map(), airrseq: new Map() };
 
@@ -280,7 +262,6 @@ export class DashRefbookAlleleComponent
 
         if ((sample.sets ?? []).includes(this.allele)) {
           // sample names are project-prefixed (P11_I10_S1), which is the only
-          // project marker the zygosity response carries
           const project = this.projectOf(sample.name);
           const counts = this.carrierCounts[source];
           counts.set(project, (counts.get(project) ?? 0) + 1);
@@ -308,10 +289,6 @@ export class DashRefbookAlleleComponent
       .slice(0, 12);
 
     // The focal allele stays in the set. Stripping it dropped every carrier whose
-    // only allele of this gene is this one - they were left with an empty set and
-    // no column - and made each column read as a genotype while actually being a
-    // genotype minus one. Kept in, a column is the combination actually observed,
-    // and the carried-alone case is a column of its own.
     this.coOccurrence = carrying.map(([name, sets]) => ({
       name,
       sets: [...sets].sort(),
@@ -352,7 +329,6 @@ export class DashRefbookAlleleComponent
         name: label,
         x: this.carrierProjects,
         // null, not 0: a database that does not hold the project has no bar to
-        // draw there, and a zero bar would read as "nobody carries it"
         y: counts,
         customdata: this.carrierProjects.map(project =>
           this.carrierText(project, this.carrierCounts[source].get(project) ?? 0,
@@ -362,8 +338,6 @@ export class DashRefbookAlleleComponent
         hovertemplate: `%{customdata}<extra>${label}</extra>`,
       };
     // A database that holds none of these projects has no bar anywhere, and
-    // Plotly still lists an all-null trace in the legend. On a genomic-only
-    // locus that named AIRR-seq beside a colour the reader would never find.
     }).filter(trace => trace.y.some(count => count !== null));
     this.carrierLayout = {
       ...base,
@@ -372,7 +346,6 @@ export class DashRefbookAlleleComponent
       margin: { ...base.margin, t: 30 },
       showlegend: true,
       // anchored to the figure, not to the plotting area: "just above the plot"
-      // is a normalised offset, and on a chart this short it landed inside it
       legend: { orientation: 'h', x: 0, xanchor: 'left', font: { size: 10 },
                 yref: 'container', y: 1, yanchor: 'top' },
       xaxis: { title: { text: 'Project' }, type: 'category', automargin: true },
@@ -380,7 +353,6 @@ export class DashRefbookAlleleComponent
     };
 
     // one box per project: a project whose usage sits apart is the thing worth
-    // seeing, and a single pooled distribution hides it
     const projects = [...new Set(this.usageByProject.map(u => u.project))].sort();
     this.usagePlot = projects.map(project => ({
       type: 'box',
@@ -414,8 +386,6 @@ export class DashRefbookAlleleComponent
 
   private scheduleRender() {
     // Coalesced with a timer rather than requestAnimationFrame: rAF does not fire
-    // while the page is not compositing (a background tab, or a hidden pane), which
-    // leaves the chart permanently blank instead of merely late.
     clearTimeout(this.renderHandle);
     this.renderHandle = setTimeout(() => this.renderUpset(), 0);
   }
@@ -435,27 +405,17 @@ export class DashRefbookAlleleComponent
 
     try {
       // distinct, not plain, intersections: with the focal allele back in the
-      // sets a column is a genotype, so each carrier must fall in exactly one
-      // column and the bars must sum to the carrier count. Plain intersections
-      // count a sample in every column it is a superset of, and would not.
       const { sets, combinations } = UpSetJS.extractCombinations(withPartners, {
         type: 'distinctIntersection',
       } as never);
 
       // Height is split between the combination chart on top and the matrix
-      // below, so a single figure starved both: with two sets the whole plot got
-      // 150px and the bars were drawn past their own axis. Give the combination
-      // chart a fixed slice, size the matrix from the set count, and hand
-      // UpSetJS the split explicitly rather than letting it default to 60/40.
       const COMBO_PX = 150;
       const matrixPx = Math.max(56, sets.length * 24 + 28);
       const height = Math.min(520, COMBO_PX + matrixPx);
       const comboShare = COMBO_PX / height;
 
       // Allele names are long (IGHV1-2*02_c135t and worse) and the default label
-      // column is 19% of the width, which truncates them. Size it from the longest
-      // name, and widen the chart rather than squeezing the matrix - the container
-      // scrolls.
       const longest = sets.reduce((n, set) => Math.max(n, (set.name ?? '').length), 0);
       const labelPx = Math.min(300, Math.max(80, longest * LABEL_CHAR_PX));
       const drawWidth = Math.max(width, Math.round(labelPx / MAX_LABEL_SHARE));
@@ -476,7 +436,6 @@ export class DashRefbookAlleleComponent
       });
     } catch (e) {
       // a render that throws inside the scheduled callback leaves an empty box and
-      // no clue why, so surface it rather than failing silently
       this.error = `Could not draw the co-occurrence plot: ${(e as Error)?.message ?? e}`;
       el.innerHTML = '';
     }

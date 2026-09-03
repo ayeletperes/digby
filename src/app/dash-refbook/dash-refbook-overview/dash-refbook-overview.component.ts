@@ -25,16 +25,7 @@ export class OverviewData {
   both_counts: number[];
   genomic_counts?: number[];
   vdjbase_counts?: number[];
-  /**
-   * How many samples the figures are drawn from, and how many are the same
-   * sample in both databases.
-   *
-   * `shared` is what makes Both meaningful: the rhesus macaque data is one
-   * cohort sequenced both ways (106 of 106 names match), so an allele can be
-   * seen in the same animal by both. The human databases hold disjoint cohorts,
-   * where Both is necessarily zero and the chart should say so rather than draw
-   * an empty series.
-   */
+  /** How many samples the figures are drawn from, and how many are the same sample in both databases. */
   cohort?: { genomic: number; airrseq: number; shared: number };
 }
 
@@ -96,12 +87,7 @@ export class DashRefbookOverviewComponent implements OnInit, OnChanges {
 constructor(private refbookService: RefbookService, private drill: DashDrillService,
               private host: ElementRef<HTMLElement>) { }
 
-  /**
-   * The canvas keeps whatever height it was given on first paint, so a chart
-   * built before the alleles arrived stays at the 320px floor while its
-   * container grows to 1,338. `@ViewChild` does not resolve here - the panel is
-   * instantiated through NgComponentOutlet - so the canvas is found on the host.
-   */
+  /** The canvas keeps whatever height it was given on first paint, so a chart built before the alleles arrived stays at the 320px floor while its. */
   ngOnInit() {
     this.fetchData();
   }
@@ -149,21 +135,12 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
   /** Samples behind the figures, and how many are the same sample in both. */
   cohort: { genomic: number; airrseq: number; shared: number } | null = null;
 
-  /**
-   * Hide alleles no sample carries.
-   *
-   * On by default: the unobserved rows are dominated by `*Del` deletion markers
-   * (96 of Human IGH's 106, 524 of rhesus IGH's 1,893), which are genotype
-   * states rather than alleles, and they draw as empty bars.
-   */
+  /** Hide alleles no sample carries. */
   unobserved = 0;
   private fullByLabel = new Map<string, string>();
   private lastOverview: (OverviewData & { genomic_counts?: number[]; vdjbase_counts?: number[] }) | null = null;
 
-  /**
-   * Row order. Count first, because at 384 alleles (IGHV1-69 in the full HUSA
-   * set) the handful anyone carries is what you came for; name is for lookup.
-   */
+  /** Row order. */
   sortBy: 'count' | 'name' = 'count';
 
   setSort(order: 'count' | 'name'): void {
@@ -211,7 +188,6 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
           // one bar per database, matching the colours the panel above uses
           this.projectData = [
             // null rather than 0, as above: a project the database does not
-            // hold must draw nothing, not a floor-height bar
             { type: 'bar', name: 'Genomic', x: projects.map(p => p.name),
               y: projects.map(p => p.by_source?.['genomic'] || null),
               marker: { color: '#a9e1d4', line: { color: '#8DD3C7', width: 1 } },
@@ -246,10 +222,6 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
       };
 
       // The previous three series were exclusive buckets with `Both` set to
-      // min(genomic, airrseq), so they summed to nothing meaningful and an allele
-      // present in both databases reported the smaller figure. These are the true
-      // per-database counts; an allele in both simply has two bars.
-      // A series whose database is not selected is dropped rather than drawn empty.
       const series = [
         {
           label: 'Genomic', show: hasGenomic,
@@ -263,8 +235,6 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
         },
         {
           // A true intersection now, not min(genomic, airrseq): these are the
-          // samples that carry the allele in both databases, which only exists
-          // where the same sample was sequenced both ways.
           label: 'Both', show: bothPossible,
           data: data.both_counts,
           backgroundColor: '#ce93d8', borderColor: '#ba68c8', borderWidth: 1,
@@ -278,14 +248,10 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
       const total = (i: number) =>
         (data.genomic_counts?.[i] ?? 0) + (data.vdjbase_counts?.[i] ?? 0);
       // Nothing is dropped here. The rail's "seen in" thresholds are the one
-      // control for this, and a panel-local toggle saying the same thing was a
-      // second answer to one question - with the toggle defaulting to "hide"
-      // and the sliders defaulting to "keep", they disagreed on arrival.
       const keep = names.map((_, i) => i)
         .sort((a, b) => this.sortBy === 'name'
           ? names[a].localeCompare(names[b])
           // most-carried at the top: Chart.js draws the first category at the
-          // top of a horizontal axis
           : total(b) - total(a) || names[a].localeCompare(names[b]));
       this.unobserved = names.length - names.filter((_, i) => seen(i)).length;
 
@@ -299,7 +265,6 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
       const mirrored = rows > DashRefbookOverviewComponent.SCROLLS_ABOVE;
 
       // Plotly draws categories bottom-up, so reverse to put the most-carried
-      // allele at the top where a Chart.js horizontal axis put it.
       const order = [...keep].reverse();
       const tickText = [...ticks].reverse();
 
@@ -309,7 +274,6 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
           name: entry.label,
           y: tickText,
           // null, not 0: a genuine zero must draw nothing, or an allele absent
-          // from a database reads as if a sample carried it
           x: order.map(i => (entry.data?.[i] ?? 0) || null),
           customdata: order.map(i => names[i]),
           marker: { color: entry.backgroundColor,
@@ -319,7 +283,6 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
                          ' samples<extra></extra>',
         })),
         // Plotly will not draw an overlaying axis that no trace is assigned to,
-        // so the mirrored copy needs an anchor
         ...(mirrored ? [{ type: 'scatter', mode: 'markers', xaxis: 'x2',
                           x: [null], y: [null], marker: { opacity: 0 },
                           showlegend: false, hoverinfo: 'skip' }] : []),
@@ -329,12 +292,10 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
         barmode: 'group',
         height: Math.max(320, 26 * rows + (mirrored ? 155 : 100)),
         // the top band holds the legend, then the mirrored axis title, then its
-        // ticks; 70 was only enough for the axis and the legend landed on it
         margin: { l: 200, r: 20, t: mirrored ? 95 : 40, b: 50 },
         xaxis: {
           title: { text: 'Samples carrying the allele' }, rangemode: 'tozero',
           // vertical rules run across horizontal bars, not along them, and are
-          // what lets a value be read halfway down a long scroll
           showgrid: true, gridcolor: 'rgba(0,0,0,0.06)', zeroline: false,
           ticks: 'outside', automargin: true,
         },
@@ -345,9 +306,6 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
         yaxis: { title: { text: 'Allele' }, type: 'category', automargin: true,
                  ticks: 'outside', showgrid: false },
         // anchored to the figure rather than the plotting area: a legend placed
-        // just above the plot sits exactly where the mirrored axis draws, and
-        // "just above" moves with the chart's height, which varies with the
-        // number of alleles. The top of the container does not move.
         legend: { orientation: 'h', x: 0.5, xanchor: 'center',
                   yref: 'container', y: 1, yanchor: 'top' },
         hovermode: 'closest',
@@ -390,7 +348,6 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
     }
 
     // which projects each database is narrowed to is stated by the scope note,
-    // because a selection narrows only the database that holds those projects
     return parts.join(' ') + '.';
   }
 }

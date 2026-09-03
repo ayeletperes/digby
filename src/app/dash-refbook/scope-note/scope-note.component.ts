@@ -5,13 +5,7 @@ import {
   DataSource, SpeciesGeneSelection, scopeNote,
 } from '../../shared/models/species-gene-selection.model';
 
-/**
- * States which samples the figures beside it are counted over.
- *
- * Every panel makes claims about repertoires, and those claims hold only for the
- * selected projects. Saying so next to the numbers is the difference between a
- * figure the reader can trust and one they have to reconstruct the filters for.
- */
+/** States which samples the figures beside it are counted over. */
 @Component({
   selector: 'app-scope-note',
   standalone: true,

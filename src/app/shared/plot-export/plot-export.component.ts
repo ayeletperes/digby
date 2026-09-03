@@ -4,14 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ExportLayout, ExportTable, ExportTrace, python, safeStem, saveText, table, tsv }
   from './plot-export';
 
-/**
- * Two downloads as buttons under the figure, for a panel that has no Plotly
- * modebar to put them in.
- *
- * Plotly panels use `exportButtons` instead, which puts the same two actions
- * beside "Download plot as a PNG" where they belong. This is for the UpSet
- * plot, which draws its own SVG and has no toolbar.
- */
+/** Two downloads as buttons under the figure, for a panel that has no Plotly modebar to put them in. */
 @Component({
   selector: 'app-plot-export',
   standalone: true,
@@ -53,11 +46,7 @@ export class PlotExportComponent {
   @Input() title = '';
   /** The endpoint the panel read, named in the script so the query can be re-run. */
   @Input() source = '';
-  /**
-   * For a figure whose traces are not its data. A dendrogram's traces are line
-   * vertices - exporting those would hand over the drawing instead of the
-   * numbers - so it supplies its own table and script.
-   */
+  /** For a figure whose traces are not its data. */
   @Input() overrideTable: ExportTable = null;
   @Input() overrideScript: string = null;
 
