@@ -1,3 +1,33 @@
+
+/* ============================================================================
+   VDJbase design tokens — one palette for every page.
+   Teal is the brand: #188080 is sampled from the wordmark. The dashboards used
+   a Material blue accent while the landing page used the brand, so the accent
+   changed as you moved between pages. Everything now reads these.
+   ========================================================================= */
+:root {
+  --vdj-teal:        #188080;  /* primary accent, active state, focus ring */
+  --vdj-teal-dark:   #0e5757;  /* hover on filled, link text */
+  --vdj-teal-light:  #a9dcd9;  /* hover underline */
+  --vdj-teal-border: #a9c3c1;  /* outlined control border */
+  --vdj-teal-wash:   #e6f2f1;  /* selected row / chip fill */
+  --vdj-rule:        #e7eeed;  /* every hairline */
+  --vdj-ink:         #0f1a19;
+  --vdj-body:        #455857;
+  --vdj-muted:       #647675;
+
+  /* the two data sources, used by every chart that splits by database */
+  --vdj-genomic:     #a9e1d4;
+  --vdj-genomic-ink: #8dd3c7;
+  --vdj-airrseq:     #ffa07a;
+  --vdj-airrseq-ink: #fa946b;
+
+  --vdj-header-h:    56px;  /* the masthead; the landing tool strip sticks to it */
+
+  --vdj-display: 'Inter Tight', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --vdj-text:    'Public Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
 /* ==================== GLOBAL STYLES ==================== */
 /* You can add global styles to this file, and also import other style files */
 @import '../node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css';
@@ -262,4 +292,71 @@ th.large-col {
   border-color: rgb(206,212, 255);
   border-width: 1px;
   border-style: solid;
+}
+
+/* in-page anchors on the landing page; sections carry their own scroll-margin */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+
+/* Bootstrap's default primary is a blue that predates the brand. Two legacy
+   pages still use .btn-primary (auth, report params dialog); this keeps them
+   on the same teal as everything else rather than leaving two blue buttons. */
+.btn-primary {
+  --bs-btn-bg: var(--vdj-teal);
+  --bs-btn-border-color: var(--vdj-teal);
+  --bs-btn-hover-bg: var(--vdj-teal-dark);
+  --bs-btn-hover-border-color: var(--vdj-teal-dark);
+  --bs-btn-active-bg: var(--vdj-teal-dark);
+  --bs-btn-active-border-color: var(--vdj-teal-dark);
+  --bs-btn-disabled-bg: var(--vdj-teal-border);
+  --bs-btn-disabled-border-color: var(--vdj-teal-border);
+}
+a { color: var(--vdj-teal-dark); }
+a:hover { color: var(--vdj-teal); }
+
+
+/* --------------------------------------------------------------- pill button
+
+   One shape for every "go there" and "go back" control in the dashboards. They
+   were declared separately in five components and had drifted: the locus map's
+   was filled teal at 0.8125rem, the names table's outlined at 0.75rem, and a
+   claim that they matched was simply untrue. Two weights, one definition.
+*/
+.vdj-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border: 1px solid var(--vdj-rule);
+  background: #fff;
+  color: var(--vdj-body);
+  border-radius: 999px;
+  padding: 0.1rem 0.7rem;
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background-color 0.12s;
+}
+
+.vdj-pill:hover { border-color: var(--vdj-teal); color: var(--vdj-teal-dark); }
+.vdj-pill:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 1px; }
+.vdj-pill:disabled { opacity: 0.5; cursor: default; }
+
+/* the one action a panel wants read first, not one of several in a row */
+.vdj-pill--primary {
+  border-color: var(--vdj-teal);
+  background: var(--vdj-teal);
+  color: #fff;
+}
+
+.vdj-pill--primary:hover {
+  border-color: var(--vdj-teal-dark);
+  background: var(--vdj-teal-dark);
+  color: #fff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vdj-pill { transition: none; }
 }

@@ -64,6 +64,89 @@ export class RefbookService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
+    /**
+     * Formatted alignment of every allele in an ASC, rendered server-side by
+     * receptor_utils.sequence_alignment and memoised per dataset build.
+     */
+    /** AIRR-seq projects held for a species and locus. */
+    public getProjects(species: string, locus: string, sources?: string, observe: any = 'body', reportProgress: boolean = false): Observable<any> {
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (sources !== undefined && sources !== null) {
+            queryParameters = queryParameters.set('sources', <any>sources);
+        }
+        let headers = this.defaultHeaders;
+        const accept = this.configuration.selectHeaderAccept(['application/json']);
+        if (accept != undefined) { headers = headers.set('Accept', accept); }
+
+        return this.httpClient.get<any>(`${this.basePath}/refbook/projects/${encodeURIComponent(String(species))}/${encodeURIComponent(String(locus))}`,
+            { params: queryParameters, withCredentials: this.configuration.withCredentials, headers, observe, reportProgress });
+    }
+
+    /** AIRR-seq samples held for a species and locus, optionally within given projects. */
+    public getSamples(species: string, locus: string, projects?: string, sources?: string, observe: any = 'body', reportProgress: boolean = false): Observable<any> {
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (projects !== undefined && projects !== null) {
+            queryParameters = queryParameters.set('projects', <any>projects);
+        }
+        if (sources !== undefined && sources !== null) {
+            queryParameters = queryParameters.set('sources', <any>sources);
+        }
+        let headers = this.defaultHeaders;
+        const accept = this.configuration.selectHeaderAccept(['application/json']);
+        if (accept != undefined) { headers = headers.set('Accept', accept); }
+
+        return this.httpClient.get<any>(`${this.basePath}/refbook/samples/${encodeURIComponent(String(species))}/${encodeURIComponent(String(locus))}`,
+            { params: queryParameters, withCredentials: this.configuration.withCredentials, headers, observe, reportProgress });
+    }
+
+    public getAscAlignment(species: string, locus: string, asc: string, wrap?: number, sources?: string, alleles?: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public getAscAlignment(species: string, locus: string, asc: string, wrap?: number, sources?: string, alleles?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public getAscAlignment(species: string, locus: string, asc: string, wrap?: number, sources?: string, alleles?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public getAscAlignment(species: string, locus: string, asc: string, wrap?: number, sources?: string, alleles?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+
+        if (species === null || species === undefined) {
+            throw new Error('Required parameter species was null or undefined when calling getAscAlignment.');
+        }
+
+        if (locus === null || locus === undefined) {
+            throw new Error('Required parameter locus was null or undefined when calling getAscAlignment.');
+        }
+
+        if (asc === null || asc === undefined) {
+            throw new Error('Required parameter asc was null or undefined when calling getAscAlignment.');
+        }
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (wrap !== undefined && wrap !== null) {
+            queryParameters = queryParameters.set('wrap', <any>wrap);
+        }
+        if (sources !== undefined && sources !== null) {
+            queryParameters = queryParameters.set('sources', <any>sources);
+        }
+
+                if (alleles !== undefined && alleles !== null) {
+            queryParameters = queryParameters.set('alleles', <any>alleles);
+        }
+
+        let headers = this.defaultHeaders;
+
+        const httpHeaderAccepts: string[] = ['application/json'];
+        const httpHeaderAcceptSelected: string | undefined = this.configuration.selectHeaderAccept(httpHeaderAccepts);
+        if (httpHeaderAcceptSelected != undefined) {
+            headers = headers.set('Accept', httpHeaderAcceptSelected);
+        }
+
+        return this.httpClient.get<any>(`${this.basePath}/refbook/asc_alignment/${encodeURIComponent(String(species))}/${encodeURIComponent(String(locus))}/${encodeURIComponent(String(asc))}`,
+            {
+                params: queryParameters,
+                withCredentials: this.configuration.withCredentials,
+                headers: headers,
+                observe: observe,
+                reportProgress: reportProgress
+            }
+        );
+    }
+
     public getAscSeqs(species: string, locus: string, asc: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
     public getAscSeqs(species: string, locus: string, asc: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
     public getAscSeqs(species: string, locus: string, asc: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
@@ -116,10 +199,10 @@ export class RefbookService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public getAscUsage(species: string, locus: string, asc: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
-    public getAscUsage(species: string, locus: string, asc: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
-    public getAscUsage(species: string, locus: string, asc: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
-    public getAscUsage(species: string, locus: string, asc: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+    public getAscUsage(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public getAscUsage(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public getAscUsage(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public getAscUsage(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
         if (species === null || species === undefined) {
             throw new Error('Required parameter species was null or undefined when calling getAscUsage.');
@@ -131,6 +214,18 @@ export class RefbookService {
 
         if (asc === null || asc === undefined) {
             throw new Error('Required parameter asc was null or undefined when calling getAscUsage.');
+        }
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (projects !== undefined && projects !== null) {
+            queryParameters = queryParameters.set('projects', <any>projects);
+        }
+        if (samples !== undefined && samples !== null) {
+            queryParameters = queryParameters.set('samples', <any>samples);
+        }
+
+                if (alleles !== undefined && alleles !== null) {
+            queryParameters = queryParameters.set('alleles', <any>alleles);
         }
 
         let headers = this.defaultHeaders;
@@ -151,6 +246,7 @@ export class RefbookService {
 
         return this.httpClient.get<any>(`${this.basePath}/refbook/asc_usage/${encodeURIComponent(String(species))}/${encodeURIComponent(String(locus))}/${encodeURIComponent(String(asc))}`,
             {
+                params: queryParameters,
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,
                 observe: observe,
@@ -168,10 +264,10 @@ export class RefbookService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public getAscZygosity(species: string, locus: string, asc: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
-    public getAscZygosity(species: string, locus: string, asc: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
-    public getAscZygosity(species: string, locus: string, asc: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
-    public getAscZygosity(species: string, locus: string, asc: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, sources?: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, sources?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, sources?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public getAscZygosity(species: string, locus: string, asc: string, projects?: string, samples?: string, alleles?: string, sources?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
         if (species === null || species === undefined) {
             throw new Error('Required parameter species was null or undefined when calling getAscZygosity.');
@@ -183,6 +279,24 @@ export class RefbookService {
 
         if (asc === null || asc === undefined) {
             throw new Error('Required parameter asc was null or undefined when calling getAscZygosity.');
+        }
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (projects !== undefined && projects !== null) {
+            queryParameters = queryParameters.set('projects', <any>projects);
+        }
+        if (samples !== undefined && samples !== null) {
+            queryParameters = queryParameters.set('samples', <any>samples);
+        }
+
+                if (alleles !== undefined && alleles !== null) {
+            queryParameters = queryParameters.set('alleles', <any>alleles);
+        }
+
+        // zygosity is reported by both databases, so which of them to read has
+        // to travel with the request; without it the panel silently read both
+        if (sources !== undefined && sources !== null) {
+            queryParameters = queryParameters.set('sources', <any>sources);
         }
 
         let headers = this.defaultHeaders;
@@ -203,6 +317,7 @@ export class RefbookService {
 
         return this.httpClient.get<any>(`${this.basePath}/refbook/asc_zygousity/${encodeURIComponent(String(species))}/${encodeURIComponent(String(locus))}/${encodeURIComponent(String(asc))}`,
             {
+                params: queryParameters,
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,
                 observe: observe,
@@ -267,10 +382,10 @@ export class RefbookService {
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public getAscsOverview(species: string, chain: string, asc: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
-    public getAscsOverview(species: string, chain: string, asc: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
-    public getAscsOverview(species: string, chain: string, asc: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
-    public getAscsOverview(species: string, chain: string, asc: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
+    public getAscsOverview(species: string, chain: string, asc: string, sources?: string, alleles?: string, projects?: string, samples?: string, observe?: 'body', reportProgress?: boolean): Observable<any>;
+    public getAscsOverview(species: string, chain: string, asc: string, sources?: string, alleles?: string, projects?: string, samples?: string, observe?: 'response', reportProgress?: boolean): Observable<HttpResponse<any>>;
+    public getAscsOverview(species: string, chain: string, asc: string, sources?: string, alleles?: string, projects?: string, samples?: string, observe?: 'events', reportProgress?: boolean): Observable<HttpEvent<any>>;
+    public getAscsOverview(species: string, chain: string, asc: string, sources?: string, alleles?: string, projects?: string, samples?: string, observe: any = 'body', reportProgress: boolean = false ): Observable<any> {
 
         if (species === null || species === undefined) {
             throw new Error('Required parameter species was null or undefined when calling getAscsOverview.');
@@ -282,6 +397,21 @@ export class RefbookService {
 
         if (asc === null || asc === undefined) {
             throw new Error('Required parameter asc was null or undefined when calling getAscsOverview.');
+        }
+
+        let queryParameters = new HttpParams({encoder: new CustomHttpUrlEncodingCodec()});
+        if (sources !== undefined && sources !== null) {
+            queryParameters = queryParameters.set('sources', <any>sources);
+        }
+
+                if (alleles !== undefined && alleles !== null) {
+            queryParameters = queryParameters.set('alleles', <any>alleles);
+        }
+        if (projects !== undefined && projects !== null) {
+            queryParameters = queryParameters.set('projects', <any>projects);
+        }
+        if (samples !== undefined && samples !== null) {
+            queryParameters = queryParameters.set('samples', <any>samples);
         }
 
         let headers = this.defaultHeaders;
@@ -302,6 +432,7 @@ export class RefbookService {
 
         return this.httpClient.get<any>(`${this.basePath}/refbook/ascs_overview/${encodeURIComponent(String(species))}/${encodeURIComponent(String(chain))}/${encodeURIComponent(String(asc))}`,
             {
+                params: queryParameters,
                 withCredentials: this.configuration.withCredentials,
                 headers: headers,
                 observe: observe,

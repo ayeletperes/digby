@@ -1,0 +1,56 @@
+<div class="gene-picker">
+
+  <div class="picker-head">
+    <input type="search" class="picker-search" [(ngModel)]="search"
+           (ngModelChange)="onSearchChange()"
+           [disabled]="loading || !genes.length"
+           placeholder="Search genes…" aria-label="Search genes">
+
+  </div>
+
+  @if (selected.length) {
+    <div class="picker-selected">
+      @for (gene of selected; track gene) {
+        <button type="button" class="chosen" (click)="toggle(gene)"
+                [title]="'Remove ' + gene">{{ gene }} <span class="x">×</span></button>
+      }
+      <button type="button" class="link-button" (click)="clear()">Clear all</button>
+      @if (isFull) {
+        <span class="cap-note">Up to {{ max }} genes. Deselect one to change it.</span>
+      }
+    </div>
+  }
+
+  @if (loading) {
+    <p class="picker-note">Loading genes…</p>
+  } @else if (error) {
+    <p class="picker-note error">{{ error }}</p>
+  } @else if (!genes.length) {
+    <p class="picker-note">Choose a species and locus above.</p>
+  } @else if (!shown) {
+    <p class="picker-note">No genes match “{{ search }}”.</p>
+  } @else {
+    <p class="picker-count">{{ shown }} of {{ genes.length }} genes</p>
+    <div class="picker-list">
+      @for (group of groups; track group.family) {
+        <div class="family">
+          <p class="family-head">
+            {{ group.family }}
+            <span class="n">{{ group.genes.length }}</span>
+          </p>
+          <div class="family-genes">
+            @for (gene of group.genes; track gene) {
+              <button type="button" class="gene"
+                      [class.on]="isSelected(gene)"
+                      [disabled]="isBlocked(gene)"
+                      [title]="isBlocked(gene) ? 'Deselect a gene first' : gene"
+                      (click)="toggle(gene)">
+                {{ gene }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

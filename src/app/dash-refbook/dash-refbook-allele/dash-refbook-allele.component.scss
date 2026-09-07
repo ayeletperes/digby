@@ -1,0 +1,74 @@
+.allele-status { margin: 1rem 0; font-size: 0.9rem; color: #5f6368; }
+.allele-status.error { color: #d62839; }
+
+.allele-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 1rem; margin-bottom: 0.9rem;
+}
+.allele-name {
+  margin: 0; font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+  font-size: 1.1rem; color: #202124; word-break: break-all;
+}
+.allele-sub { margin: 0.2rem 0 0; font-size: 0.85rem; color: #5f6368; }
+.tag {
+  margin-left: 0.4rem; padding: 0.05rem 0.4rem; border-radius: 999px;
+  font-size: 0.72rem; background: #fce8e6; color: #c5221f;
+}
+
+.allele-cards {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.9rem;
+}
+.card {
+  border: 1px solid #e8eaed; border-radius: 8px; padding: 0.8rem 0.9rem; background: #fff;
+  min-width: 0;
+}
+.card.wide { grid-column: 1 / -1; }
+/* plots need more room than a fact list, but not the full width */
+.card.wide-half { grid-column: span 2; min-width: 320px; }
+@media (max-width: 900px) { .card.wide-half { grid-column: 1 / -1; } }
+
+.headline { margin: 0 0 0.3rem; font-size: 0.88rem; color: #3c4043; }
+.card h4 {
+  margin: 0 0 0.5rem; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: #5f6368;
+}
+
+.facts { list-style: none; margin: 0; padding: 0; font-size: 0.88rem; color: #3c4043; }
+.facts li + li { margin-top: 0.25rem; }
+.n { font-weight: 600; color: #202124; }
+
+.note { margin: 0.4rem 0 0; font-size: 0.8rem; color: #5f6368; }
+
+.sub-head {
+  margin: 0.9rem 0 0; padding-top: 0.7rem; border-top: 1px solid var(--vdj-rule, #e8eaed);
+  font-size: 0.74rem; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: #5f6368;
+}
+
+/* Width comes from the card; height is set per render from the number of sets. */
+.co-upset { width: 100%; min-width: 0; margin-top: 0.4rem; overflow-x: auto; }
+
+.mini { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.82rem; }
+.mini td { padding: 0.15rem 0.3rem 0.15rem 0; }
+.mini td.n { text-align: right; width: 3rem; }
+
+.partners .bar-cell { width: 60%; }
+.bar { display: block; height: 8px; border-radius: 4px; background: var(--vdj-teal); min-width: 2px; }
+
+.link-button {
+  background: none; border: 0; padding: 0; color: var(--vdj-teal);
+  font-size: 0.85rem; cursor: pointer; text-align: left;
+}
+.link-button:hover { text-decoration: underline; }
+
+/* the alignment is column-aligned, so it must not wrap or re-space */
+.allele-alignment {
+  margin: 0.5rem 0 0; padding: 0.7rem;
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+  font-size: 12px; line-height: 1.35;
+  white-space: pre; overflow-x: auto; max-height: 40vh; overflow-y: auto;
+  background: #fafafa; border: 1px solid #e8eaed; border-radius: 4px;
+}
+
+/* which projects a figure covers, when the two databases are scoped differently */
+.scope { display: block; font-size: 0.72rem; color: #80868b; }

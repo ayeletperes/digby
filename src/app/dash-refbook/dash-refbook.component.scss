@@ -1,11 +1,193 @@
-h2 {
-  margin-bottom: 20px;
+/* Filters left, one large canvas right: vertical space is what the plots are
+   short of, and horizontal space is what a wide screen has spare. */
+.dash-shell {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 0;
+  min-height: calc(100vh - 90px);
+}
+.dash-shell.rail-closed { grid-template-columns: 26px minmax(0, 1fr); }
+
+/* ---------------------------------------------------------------- the rail */
+.dash-rail {
+  position: relative;
+  border-right: 1px solid #e8eaed;
+  background: #fafafa;
+  min-width: 0;
+}
+.rail-handle {
+  position: absolute; top: 0.5rem; right: -1px; z-index: 2;
+  width: 22px; height: 26px; padding: 0;
+  border: 1px solid #e8eaed; border-radius: 4px 0 0 4px;
+  background: #fff; color: #5f6368; cursor: pointer; line-height: 1;
+}
+.rail-body {
+  padding: 0.75rem 0.85rem 2rem;
+  max-height: calc(100vh - 100px); overflow-y: auto;
 }
 
-.asc-selector {
-  margin-bottom: 20px;
+.rail-section + .rail-section {
+  margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid #e8eaed;
+}
+.rail-heading {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #5f6368;
+}
+.heading-note { font-weight: 400; letter-spacing: 0; text-transform: none; color: #80868b; }
+
+.rail-label {
+  display: block; margin: 0.6rem 0 0.2rem;
+  font-size: 0.75rem; color: #5f6368;
 }
 
-.refbook-tabs {
-  min-height: 400px;
+/* the dataset selector renders its own Bootstrap row; stack it in the rail */
+.dash-rail ::ng-deep app-gene-table-selector .row { display: block; }
+.dash-rail ::ng-deep app-gene-table-selector .col-auto { width: 100%; margin: 0 0 0.4rem !important; }
+.dash-rail ::ng-deep .input-group { width: 100%; }
+.dash-rail ::ng-deep .input-group-text { font-size: 0.75rem; padding: 0.2rem 0.5rem; }
+.dash-rail ::ng-deep .form-select { font-size: 0.8rem; }
+.dash-rail ::ng-deep app-check-dropdown { display: block; margin-bottom: 0.4rem; }
+.dash-rail ::ng-deep app-check-dropdown .check-dropdown { width: 100%; }
+
+.source-toggle { display: flex; border: 1px solid #dadce0; border-radius: 6px; overflow: hidden; }
+.source-button {
+  flex: 1 1 0; border: 0; background: #fff; padding: 0.3rem 0.4rem;
+  font-size: 0.78rem; color: #3c4043; cursor: pointer;
 }
+.source-button + .source-button { border-left: 1px solid #dadce0; }
+.source-button.on { background: var(--vdj-teal); color: #fff; }
+.source-button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.group-name {
+  margin: 0.4rem 0 0.25rem; font-size: 0.72rem; color: #80868b;
+}
+.panel-list { list-style: none; margin: 0; padding: 0; }
+.panel-link {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; border: 0; background: none; text-align: left;
+  padding: 0.3rem 0.5rem; border-radius: 4px;
+  font-size: 0.85rem; color: #3c4043; cursor: pointer;
+}
+.panel-link:hover:not(:disabled) { background: var(--vdj-teal-wash); }
+.panel-link.on { background: var(--vdj-teal); color: #fff; font-weight: 500; }
+.panel-link:disabled { color: #9aa0a6; cursor: not-allowed; }
+.panel-lock { opacity: 0.6; }
+
+/* -------------------------------------------------------------- the canvas */
+.dash-canvas { padding: 0.75rem 1rem 2rem; min-width: 0; }
+
+.canvas-head { border-bottom: 1px solid #e8eaed; padding-bottom: 0.6rem; margin-bottom: 0.75rem; }
+.canvas-title { display: flex; align-items: center; gap: 0.4rem; }
+.canvas-title h2 { margin: 0; font-size: 1.15rem; font-weight: 600; color: #202124; }
+
+.info-button {
+  border: 0; background: none; padding: 0;
+  color: var(--vdj-teal); font-size: 1rem; line-height: 1; cursor: pointer;
+}
+.info-button:hover { color: var(--vdj-teal-dark); }
+
+.caption-body {
+  margin: 0.6rem 0 0; padding: 0.6rem 0.8rem;
+  background: #f8f9fa; border-left: 3px solid var(--vdj-teal); border-radius: 0 4px 4px 0;
+  font-size: 0.85rem; color: #3c4043; max-width: 80ch;
+}
+
+/* Every filter in force, in one place, each one removable. */
+.filter-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; margin-top: 0.5rem; }
+.chips-label { font-size: 0.8rem; color: #5f6368; margin-right: 0.2rem; }
+.chips-note { font-size: 0.8rem; color: #5f6368; font-style: italic; }
+.chip {
+  display: inline-flex; align-items: baseline; gap: 0.25rem;
+  border: 1px solid #dadce0; background: #fff; border-radius: 999px;
+  padding: 0.1rem 0.55rem; font-size: 0.78rem; color: #3c4043; cursor: pointer;
+}
+.chip:hover { border-color: #d62839; color: #d62839; }
+.chip-key { color: #80868b; font-size: 0.72rem; }
+.chip .x { opacity: 0.5; }
+
+/* One panel instance per selected gene, stacked so wide plots keep their width. */
+.facets { display: flex; flex-direction: column; gap: 1.5rem; }
+.facet { min-width: 0; }
+.facet-title {
+  margin: 0 0 0.5rem; font-size: 0.95rem; font-weight: 600; color: #202124;
+  padding-bottom: 0.3rem; border-bottom: 2px solid var(--vdj-teal-wash);
+}
+.facets.single .facet-title { display: none; }
+.focus-gene {
+  margin-left: 0.6rem; border: 0; background: none; padding: 0;
+  color: var(--vdj-teal); font-size: 0.78rem; font-weight: 400; cursor: pointer;
+}
+.focus-gene:hover { text-decoration: underline; }
+
+.panel-blocked { padding: 3rem 1rem; text-align: center; }
+.panel-blocked .reason { margin: 0 0 0.35rem; color: #3c4043; font-weight: 500; }
+.panel-blocked .description { margin: 0; color: #5f6368; font-size: 0.9rem; }
+
+@media (max-width: 900px) {
+  .dash-shell, .dash-shell.rail-closed { grid-template-columns: minmax(0, 1fr); }
+  .dash-rail { border-right: 0; border-bottom: 1px solid #e8eaed; }
+  .rail-body { max-height: none; }
+}
+
+/* ------------------------------------------------------- the seen-in filter */
+.range-value { float: right; font-variant-numeric: tabular-nums; color: var(--vdj-teal); font-weight: 600; }
+.rail-section input[type="range"] { width: 100%; accent-color: var(--vdj-teal); margin: 0.1rem 0 0; }
+.range-ends {
+  display: flex; justify-content: space-between;
+  font-size: 0.68rem; color: var(--vdj-muted); font-variant-numeric: tabular-nums;
+  margin-top: -0.15rem;
+}
+/* the same pill the gene chips and filter chips use, so the rail has one
+   button shape rather than a link among chips */
+.reset-pill:hover { border-color: var(--vdj-teal); color: var(--vdj-teal); }
+
+/* a control that still works but does not reach the open panel: dimmed so the
+   eye skips it, labelled so it is not a mystery */
+.rail-section.not-applied,
+.source-toggle.not-applied,
+.rail-label.not-applied { opacity: 0.55; }
+
+.scoped-tag {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 400;
+  font-style: italic;
+  color: #5f6368;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* the way back to the cards, quieter than the panel title beside it */
+
+.all-analyses:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 1px; }
+
+/* the filters read as one group with a shared scope, not four loose sections */
+.rail-filters {
+  border-top: 1px solid var(--vdj-rule);
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+}
+
+.filters-banner { margin: 0 0 0.4rem; }
+
+.filters-title {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--vdj-ink);
+  font-weight: 600;
+}
+
+.filters-note {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--vdj-muted, #7a8c8b);
+}
+
+/* Home sits above the groups, so it needs the separation the group names give */
+.home-link { margin-bottom: 0.35rem; }

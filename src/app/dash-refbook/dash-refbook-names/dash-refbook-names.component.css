@@ -1,0 +1,44 @@
+.status { margin: 1rem 0; font-size: 0.9rem; color: var(--vdj-muted); }
+.status.error { color: #d62839; }
+
+.lede { margin: 0.6rem 0 0.9rem; font-size: 0.88rem; color: var(--vdj-body); max-width: 80ch; }
+.lede .rule { display: block; margin-top: 0.3rem; font-size: 0.8rem; color: var(--vdj-muted); }
+
+/* fixed layout so the long full names take the slack and the short label, which
+   is the thing being looked up, never wraps mid-name */
+.names {
+  border-collapse: collapse; font-size: 0.85rem; width: 100%; table-layout: fixed;
+}
+.names col.c-shown { width: 9.5rem; }
+.names col.c-mut { width: 6rem; }
+.names th {
+  text-align: left; font-weight: 600; color: var(--vdj-muted);
+  border-bottom: 1px solid var(--vdj-rule); padding: 0.25rem 0.8rem 0.25rem 0;
+  white-space: nowrap;
+}
+.names td { padding: 0.22rem 0.8rem 0.22rem 0; border-bottom: 1px solid #f1f3f4; }
+.names .n { text-align: right; }
+.names .muted { color: var(--vdj-muted); }
+.names tr.is-short { background: #f6fbfa; }
+.names .full { font-family: 'Roboto Mono', Menlo, Consolas, monospace; word-break: break-all; }
+.names .shown code {
+  display: inline-block; white-space: nowrap;
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace; font-size: 0.82rem;
+  background: var(--vdj-teal-wash); color: var(--vdj-teal-dark);
+  padding: 0.05rem 0.35rem; border-radius: 3px;
+}
+.names .same { color: #c3ccca; }
+
+.link-button {
+  background: none; border: 0; padding: 0; color: var(--vdj-teal-dark);
+  font: inherit; cursor: pointer; text-align: left;
+}
+.link-button:hover { text-decoration: underline; color: var(--vdj-teal); }
+
+.c-go { width: 6.5rem; }
+.go { text-align: right; }
+
+/* the same pill the locus map uses to leave for a gene, so the way out of a
+   table and the way out of a figure look like one thing */
+
+.explore:focus-visible { outline: 2px solid var(--vdj-teal, #188080); outline-offset: 1px; }

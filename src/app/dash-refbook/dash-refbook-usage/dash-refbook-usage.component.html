@@ -1,1 +1,29 @@
-<plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"></plotly-plot>
+<app-scope-note [selection]="selection" [sources]="['airrseq']"></app-scope-note>
+@if (legend.length) {
+  <div class="usage-legend">
+    <button type="button" class="legend-toggle" (click)="showLegend = !showLegend">
+      {{ showLegend ? '▾' : '▸' }}
+      {{ legend.length }} name{{ legend.length === 1 ? '' : 's' }} shortened
+    </button>
+    @if (showLegend) {
+      <table>
+        @for (entry of legend; track entry.full) {
+          <tr><td class="legend-short">{{ entry.short }}</td><td>{{ entry.full }}</td></tr>
+        }
+      </table>
+    }
+  </div>
+}
+@if (!isFetching && !plotData.length) {
+  <p class="usage-status">No usage data for the current selection. Remove a filter above to widen it.</p>
+}
+<div class="usage-toolbar">
+  <label class="points-toggle">
+    <input type="checkbox" [checked]="showPoints" (change)="togglePoints()">
+    <span class="switch" aria-hidden="true"></span>
+    <span class="switch-label">Show individual samples</span>
+  </label>
+</div>
+<plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"
+             (plotlyClick)="onPlotClick($event)"
+             (afterPlot)="labelTitles()"></plotly-plot>

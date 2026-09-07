@@ -1,1 +1,34 @@
+<app-scope-note [selection]="selection" [sources]="['airrseq']"></app-scope-note>
+@if (error) {
+  <p class="upset-status error">{{ error }}</p>
+} @else if (isFetching) {
+  <p class="upset-status">Loading zygosity…</p>
+} @else if (!zygosityData.samples.length) {
+  <p class="upset-status">No samples match the current selection. Remove a filter above to widen it.</p>
+}
+@if (alleleCount > 1) {
+  <div class="upset-toolbar">
+    <label for="upsetTop">Show</label>
+    <select id="upsetTop" class="form-select form-select-sm"
+            [ngModel]="topN" (ngModelChange)="onTopChange($event)">
+      @for (choice of topChoices; track choice.label) {
+        <option [ngValue]="choice.value">{{ choice.label }}</option>
+      }
+    </select>
+    <span class="upset-note">
+      @if (topN && topN < alleleCount) {
+        of {{ alleleCount }} alleles, the ones most subjects carry. Combinations are
+        formed over these, so a subject carrying only the rest is not counted.
+      } @else {
+        all {{ alleleCount }} alleles of this gene.
+      }
+    </span>
+  </div>
+}
+
 <div #upsetContainer class="upset-chart"></div>
+<!-- UpSet draws its own SVG and has no Plotly toolbar, so the two downloads
+     sit under the figure rather than beside the camera -->
+<app-plot-export [overrideTable]="exportTable" [overrideScript]="exportScript"
+                 [name]="selection.asc + '_zygosity'"
+                 [title]="selection.asc + ' - alleles carried together'"></app-plot-export>

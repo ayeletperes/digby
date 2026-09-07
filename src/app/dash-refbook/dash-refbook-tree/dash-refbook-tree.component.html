@@ -1,0 +1,52 @@
+<app-scope-note [selection]="selection"></app-scope-note>
+
+@if (error) {
+  <p class="tree-status">{{ error }}</p>
+} @else if (!isFetching && tree && tree.labels.length < 2) {
+  <p class="tree-status">
+    {{ tree.labels.length === 1 ? 'One allele in this selection: there is nothing to cluster.'
+                                : 'No sequences for the current selection.' }}
+  </p>
+}
+
+@if (duplicateGroups.length) {
+  <div class="tree-note">
+    <button type="button" class="note-toggle" (click)="showDuplicates = !showDuplicates">
+      {{ showDuplicates ? '▾' : '▸' }}
+      {{ duplicateGroups.length }}
+      group{{ duplicateGroups.length === 1 ? '' : 's' }} of alleles share an identical sequence
+    </button>
+    @if (showDuplicates) {
+      <ul>
+        @for (group of duplicateGroups; track group[0]) {
+          <li>{{ group.join(' = ') }}</li>
+        }
+      </ul>
+    }
+  </div>
+}
+
+@if (plotData.length) {
+  <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"
+               (plotlyClick)="onPlotClick($event)"
+               (afterPlot)="labelTitles()"></plotly-plot>
+  <p class="tree-caption">{{ columnsNote }} Alleles join at the distance of their furthest
+    pair (complete linkage), so a join sits at that distance, not at each allele's distance
+    to the others.</p>
+}
+
+@if (legend.length) {
+  <div class="tree-note">
+    <button type="button" class="note-toggle" (click)="showLegend = !showLegend">
+      {{ showLegend ? '▾' : '▸' }}
+      {{ legend.length }} name{{ legend.length === 1 ? '' : 's' }} shortened
+    </button>
+    @if (showLegend) {
+      <table>
+        @for (entry of legend; track entry.full) {
+          <tr><td class="legend-short">{{ entry.short }}</td><td>{{ entry.full }}</td></tr>
+        }
+      </table>
+    }
+  </div>
+}

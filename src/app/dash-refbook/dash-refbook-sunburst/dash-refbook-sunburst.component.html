@@ -1,0 +1,38 @@
+@if (isFetching) {
+  <div class="spinner-border" role="status">
+    <span class="sr-only">Loading…</span>
+  </div>
+}
+
+@if (error) {
+  <div class="alert alert-danger">
+    <h4>Error loading data: {{ error }}</h4>
+  </div>
+}
+
+@if (plotData.length) {
+  <div class="sunburst">
+    <nav class="trail" aria-label="Drill position">
+      <button type="button" class="crumb" [class.current]="!isDrilled"
+              (click)="resetView()">{{ data.label[0] }}</button>
+      @for (i of trail; track i) {
+        <span class="sep" aria-hidden="true">›</span>
+        <button type="button" class="crumb" [class.current]="i === drilled"
+                (click)="drillTo(i)">{{ data.label[i] }}</button>
+      }
+      @if (isDrilled) {
+        <button type="button" class="vdj-pill reset" (click)="resetView()">Reset</button>
+      }
+      @if (drilledGene) {
+        <button type="button" class="vdj-pill vdj-pill--primary open-gene" (click)="openGene()">
+          Explore {{ drilledGene }} →
+        </button>
+      }
+    </nav>
+
+    <!-- a sunburst arc raises sunburstclick, not click: plotlyClick never fires here -->
+    <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"
+                 (sunburstclick)="onPlotClick($event)"
+                 (afterPlot)="centreLabels()"></plotly-plot>
+  </div>
+}

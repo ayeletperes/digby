@@ -1,0 +1,140 @@
+@if (!allele) {
+  <p class="allele-status">Select an allele from any plot to see it here.</p>
+} @else {
+  <div class="allele-head">
+    <div>
+      <h3 class="allele-name">{{ allele }}</h3>
+      <p class="allele-sub">
+        allele of <strong>{{ gene }}</strong> in {{ selection.species }}
+        @if (isNovel) { <span class="tag novel">novel</span> }
+      </p>
+    </div>
+    <button type="button" class="link-button" (click)="clearAllele()">← back to {{ gene }}</button>
+  </div>
+
+  <app-scope-note [selection]="selection"></app-scope-note>
+
+  @if (error) {
+    <p class="allele-status error">{{ error }}</p>
+  } @else if (isFetching) {
+    <p class="allele-status">Loading…</p>
+  } @else {
+    <div class="allele-cards">
+
+      <section class="card">
+        <h4>Where it was seen</h4>
+        <ul class="facts">
+          <li>
+            <span class="n">{{ genomicAppearances }}</span> genomic samples
+            @if (isFiltered) {
+              <span class="scope">{{ genomicScoped ? 'in the selection' : 'all genomic projects' }}</span>
+            }
+          </li>
+          <li>
+            <span class="n">{{ airrseqAppearances }}</span> AIRR-seq samples
+            @if (isFiltered) {
+              <span class="scope">{{ airrseqScoped ? 'in the selection' : 'all AIRR-seq projects' }}</span>
+            }
+          </li>
+        </ul>
+        <p class="note">
+          @if (genomicAppearances && airrseqAppearances) {
+            Seen in both databases.
+          } @else if (genomicAppearances) {
+            Genomic data only.
+          } @else if (airrseqAppearances) {
+            AIRR-seq data only.
+          } @else {
+            Not seen in the selected samples.
+          }
+          @if (isFiltered && !(genomicScoped && airrseqScoped)) {
+            <br>The two databases hold different projects, so a selection from one
+            leaves the other unnarrowed.
+          }
+        </p>
+      </section>
+
+      <section class="card wide-half">
+        <h4>Usage</h4>
+        @if (usageCount) {
+          <p class="headline">
+            <span class="n">{{ percent(usageMedian) }}</span> median share,
+            in <span class="n">{{ usageCount }}</span> samples
+          </p>
+          <plotly-plot [data]="usagePlot" [layout]="usageLayout" [config]="plotConfig"></plotly-plot>
+          <app-plot-export [data]="usagePlot" [layout]="usageLayout"
+                           [name]="allele + '_usage_by_project'"
+                           [title]="'Relative usage of ' + allele + ' by project'"
+                           [source]="'/api/refbook/asc_usage/' + selection.species + '/'
+                                     + selection.chain + '/' + selection.asc"></app-plot-export>
+          <p class="note">Share of repertoire per sample, split by project.</p>
+        } @else {
+          <p class="note">No AIRR-seq usage for this allele under the current filters.</p>
+        }
+      </section>
+
+      <section class="card wide-half">
+        <h4>Carriers</h4>
+        @if (carriers) {
+          <ul class="facts">
+            <li><span class="n">{{ carriers }}</span> subjects carry it</li>
+            <li><span class="n">{{ aloneCount }}</span> carry it as their only allele of this gene</li>
+          </ul>
+          @if (carrierProjects.length) {
+            <plotly-plot [data]="carrierPlot" [layout]="carrierLayout" [config]="plotConfig"></plotly-plot>
+            <app-plot-export [data]="carrierPlot" [layout]="carrierLayout"
+                             [name]="allele + '_carriers_by_project'"
+                             [title]="'Samples carrying ' + allele + ', by project'"
+                             [source]="'/api/refbook/ascs_overview/' + selection.species + '/'
+                                       + selection.chain + '/' + selection.asc"></app-plot-export>
+            <p class="note">
+              Samples carrying it, by project and database. Hover for the share of the
+              project. A database with no bar for a project does not hold that project.
+            </p>
+          }
+        } @else {
+          <p class="note">No carriers under the current filters.</p>
+        }
+      </section>
+
+      <section class="card wide">
+        <h4>Occurs alongside</h4>
+        @if (partners.length) {
+          <p class="note">Other alleles of {{ gene }} found in the same subjects. Click one to open it.</p>
+          <table class="mini partners">
+            @for (partner of partners; track partner.name) {
+              <tr>
+                <td><button type="button" class="link-button" (click)="openPartner(partner.name)">{{ partner.name }}</button></td>
+                <td class="bar-cell">
+                  <span class="bar" [style.width.%]="partner.share * 100"></span>
+                </td>
+                <td class="n">{{ partner.samples }}</td>
+              </tr>
+            }
+          </table>
+
+          <h5 class="sub-head">In which combinations</h5>
+          <p class="note">
+            Each column is a combination of {{ gene }} alleles, and its bar counts how
+            many of the {{ carriers }} carriers of this allele carry exactly that
+            combination. This allele is in every column, since only its carriers are
+            shown. Click an allele name to open it.
+          </p>
+          <div class="co-upset"></div>
+        } @else {
+          <p class="note">Always seen on its own, or no carrier data under the current filters.</p>
+        }
+      </section>
+
+      <section class="card wide">
+        <h4>Sequence</h4>
+        <p class="note">Against the gene's reference allele. Dashes match, lower case marks a substitution.</p>
+        @if (alignment) {
+          <pre class="allele-alignment">{{ alignment }}</pre>
+        } @else {
+          <p class="note">No sequence available.</p>
+        }
+      </section>
+    </div>
+  }
+}

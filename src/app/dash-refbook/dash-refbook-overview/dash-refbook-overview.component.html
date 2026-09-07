@@ -13,13 +13,13 @@
 }
 
 @if (overviewData) {
-  <h2 class="title">Overview</h2>
   <div class="row">
     <div class="col-12">
       <div class="card">
         <div class="card-body">
           <h4>Allele Overview</h4>
-          <p>Number of alleles in the selected species and gene.</p>
+          <app-scope-note [selection]="selection"></app-scope-note>
+          <p>Number of {{ scopeDescription }}</p>
         </div>
       </div>
     </div>
@@ -45,19 +45,77 @@
             <span class="title">Novel Alleles</span>
           </div>
         </div>
+
+        <!-- What the bars are a share of. Without it a count of 54 says nothing
+             about whether that is most of the cohort or a handful of it. -->
+        @if (cohort) {
+          <button type="button" class="info-box samples-box"
+                  [class.open]="showProjects"
+                  [attr.aria-expanded]="showProjects"
+                  title="Show samples per project"
+                  (click)="toggleProjects()">
+            <div class="box-content">
+              <span class="big">
+                {{ cohort.genomic | number }}<span class="sep">/</span>{{ cohort.airrseq | number }}
+              </span>
+              <span class="title">Samples, genomic / AIRR-seq</span>
+              <span class="sub" [class.muted]="!cohort.shared">
+                @if (cohort.shared) {
+                  {{ cohort.shared | number }} sequenced both ways
+                } @else {
+                  Separate cohorts, no overlap
+                }
+                <span class="drill">{{ showProjects ? '▴' : '▾' }} by project</span>
+              </span>
+            </div>
+          </button>
+        }
       </div>
+
+      @if (showProjects) {
+        <div class="projects-drill">
+          @if (projectsLoading) {
+            <p class="drill-note">Loading projects…</p>
+          } @else if (!projectData.length) {
+            <p class="drill-note">No projects under the current filters.</p>
+          } @else {
+            <div class="drill-chart">
+              <plotly-plot [data]="projectData" [layout]="projectLayout"
+                           [config]="projectConfig"></plotly-plot>
+            </div>
+            <p class="drill-note">
+              Samples per project, split by the database they came from. A project
+              present in both is two bars.
+            </p>
+          }
+        </div>
+      }
     </div>
   </div>
   <div class="row">
     <div class="col-12">
-      <div class="chart-container">
-        <canvas
-          baseChart
-          [data]="chartData"
-          [options]="chartOptions"
-          [type]="chartType"
-        >
-        </canvas>
+      @if (unobserved) {
+        <div class="chart-toolbar">
+          <span class="sort-group" role="group" aria-label="Sort alleles">
+            <button type="button" [class.on]="sortBy === 'count'" (click)="setSort('count')">
+              Most carried
+            </button>
+            <button type="button" [class.on]="sortBy === 'name'" (click)="setSort('name')">
+              Name
+            </button>
+          </span>
+          <span class="toolbar-note">
+            {{ unobserved }} of {{ overviewData.total }} carried by no sample ·
+            raise "seen in" on the left to drop them
+          </span>
+        </div>
+      }
+      <div class="chart-scroll">
+        <div class="chart-container" [style.height.px]="chartHeight">
+          <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"
+                       (plotlyClick)="onPlotClick($event)"
+                       (afterPlot)="labelTitles()"></plotly-plot>
+        </div>
       </div>
     </div>
   </div>

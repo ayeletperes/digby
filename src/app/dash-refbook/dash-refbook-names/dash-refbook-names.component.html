@@ -1,0 +1,60 @@
+<div class="names-panel">
+  <app-scope-note [selection]="selection"></app-scope-note>
+
+  @if (error) {
+    <p class="status error">{{ error }}</p>
+  } @else if (isFetching) {
+    <p class="status">Loading the allele names…</p>
+  } @else if (!rows.length) {
+    <p class="status">Select a gene to see its alleles.</p>
+  } @else {
+    <p class="lede">
+      @if (shortenedRows.length) {
+        <strong>{{ shortenedRows.length }}</strong> of {{ rows.length }} alleles of
+        {{ selection.asc }} are shown under a shortened label in the plots.
+        <span class="rule">
+          A label like <code>IGHV1-18*04+8~i93</code> means that allele differs from
+          <code>IGHV1-18*04</code> at 8 positions; the three characters after the
+          <code>~</code> are derived from those positions, so the label stays the
+          same as more alleles are loaded. Where two alleles would still shorten
+          alike, the second is marked <code>#2</code> and this table is what
+          resolves it.
+        </span>
+      } @else {
+        No allele of {{ selection.asc }} needs shortening. Every name is shown in
+        full in the plots.
+      }
+    </p>
+
+    <table class="names">
+      <colgroup>
+        <col>
+        <col class="c-shown">
+        <col class="c-mut">
+        <col class="c-go">
+      </colgroup>
+      <tr>
+        <th>Allele</th>
+        <th>Shown as</th>
+        <th class="n">Differences</th>
+        <th></th>
+      </tr>
+      @for (row of rows; track row.full) {
+        <tr [class.is-short]="row.shortened">
+          <td class="full">
+            <button type="button" class="link-button" (click)="open(row)">{{ row.full }}</button>
+          </td>
+          <td class="shown">
+            @if (row.shortened) { <code>{{ row.shown }}</code> } @else { <span class="same">—</span> }
+          </td>
+          <td class="n muted">{{ row.differences || '' }}</td>
+          <td class="go">
+            <!-- the name is clickable too, but nothing said so -->
+            <button type="button" class="vdj-pill explore" (click)="open(row)"
+                    [title]="'Open ' + row.full">Explore →</button>
+          </td>
+        </tr>
+      }
+    </table>
+  }
+</div>

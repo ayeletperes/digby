@@ -1,82 +1,270 @@
-<div class="container-fluid">
-  <div class="d-flex align-items-center">
-    <app-gene-table-selector [showGenomic]="false" [showAssembly]="false" [showRepseq]="false" [showCommon]="true"></app-gene-table-selector>
+<div class="dash-shell" [class.rail-closed]="!railOpen">
 
-    <!-- Data presence indicators -->
-    <div class="d-flex gap-2 ms-3">
-      <span class="badge"
-           [class.bg-success]="genomic_present"
-           [class.bg-secondary]="!genomic_present"
-           [class.text-white]="true">
-        🧬 Genomic Data
-        <span class="ms-1">
-          {{genomic_present ? '✓' : '✗'}}
-        </span>
-      </span>
+  <!-- Filters and the analysis list stay put while the canvas changes, so moving
+       between analyses keeps the same context rather than resetting it. -->
+  <aside class="dash-rail">
+    <button type="button" class="rail-handle" (click)="railOpen = !railOpen"
+            [title]="railOpen ? 'Collapse filters' : 'Show filters'">
+      {{ railOpen ? '‹' : '›' }}
+    </button>
 
-      <span class="badge"
-           [class.bg-success]="airrseq_present"
-           [class.bg-secondary]="!airrseq_present"
-           [class.text-white]="true">
-        📊 AIRR-seq Data
-        <span class="ms-1">
-          {{airrseq_present ? '✓' : '✗'}}
-        </span>
-      </span>
-    </div>
-  </div>
-
-  <div class="row mt-3">
-    <div class="col-auto">
-      <div class="input-group">
-        <div class="input-group-prepend">
-          <label class="input-group-text" for="selectAsc">ASC</label>
-        </div>
-        <select class="custom-select" id="selectAsc" [(ngModel)]="selection.asc" [disabled]="ascDisabled" (ngModelChange)="onAscChange()">
-          @if (ascLoading) {
-            <option value="">Loading...</option>
-          } @else {
-            <option value="">Select ASC</option>
-            @for (asc of availableAscs; track asc) {
-              <option [value]="asc">{{asc}}</option>
-            }
+    @if (railOpen) {
+      <div class="rail-body">
+        <!-- first, not last: the analyses are what the rail is for and the filters
+             refine them. Below the four filter sections they started 1550px down,
+             which is off the bottom of a laptop screen on arrival. -->
+        <section class="rail-section">
+          <h3 class="rail-heading">Analyses</h3>
+          <ul class="panel-list">
+            <li>
+              <button type="button" class="panel-link home-link"
+                      [class.on]="showGallery" (click)="openGallery()"
+                      title="Every analysis, with a line on what each one shows">
+                <span class="panel-name">Home</span>
+              </button>
+            </li>
+          </ul>
+          @for (group of panelGroups; track group) {
+            <p class="group-name">{{ group }}</p>
+            <ul class="panel-list">
+              @for (panel of panelsIn(group); track panel.id) {
+                <li>
+                  <button type="button" class="panel-link"
+                          [class.on]="!showGallery && panel.id === activePanelId"
+                          [disabled]="!!blockedReason(panel)"
+                          [title]="blockedReason(panel) ?? panel.description"
+                          (click)="selectPanel(panel)">
+                    <span class="panel-name">{{ panel.label }}</span>
+                    @if (blockedReason(panel)) { <span class="panel-lock">·</span> }
+                  </button>
+                </li>
+              }
+            </ul>
           }
-        </select>
-        @if (ascLoading) {
-          <div class="input-group-append">
-            <span class="input-group-text">
-              <div class="spinner-border spinner-border-sm" role="status"></div>
-            </span>
+        </section>
+
+        <!-- The four filter sections share one banner. Analyses first reads well,
+             but on its own it invites "these filters belong to the open analysis",
+             which is backwards: one selection feeds all of them. The banner says
+             so, and the dimming below marks the exceptions. -->
+        <div class="rail-filters">
+          <p class="filters-banner">
+            <span class="filters-title">Filters</span>
+            <span class="filters-note">One selection, shared by every analysis. A dimmed
+              control does not reach the one that is open.</span>
+          </p>
+
+        <section class="rail-section">
+          <h3 class="rail-heading">Dataset</h3>
+          <app-gene-table-selector [showGenomic]="false" [showAssembly]="false"
+                                   [showRepseq]="false" [showCommon]="true">
+          </app-gene-table-selector>
+
+          <label class="rail-label" for="selectSegment" [class.not-applied]="railScoped">
+            Segment
+            @if (railScoped) { <span class="scoped-tag">{{ scopedNote }}</span> }
+          </label>
+          <select class="form-select form-select-sm" id="selectSegment"
+                  [(ngModel)]="segment" (ngModelChange)="onSegmentChange()"
+                  [disabled]="!segments.length">
+            <option [ngValue]="null">All ({{ allAscs.length }})</option>
+            @for (seg of segments; track seg.code) {
+              <option [ngValue]="seg.code">{{ segmentLabel(seg.code) }} ({{ seg.count }})</option>
+            }
+          </select>
+
+          <label class="rail-label" [class.not-applied]="railScoped">
+            Data
+            @if (railScoped) { <span class="scoped-tag">{{ scopedNote }}</span> }
+          </label>
+          <div class="source-toggle" role="group" [class.not-applied]="railScoped">
+            @for (source of dataSources; track source) {
+              <button type="button" class="source-button"
+                      [class.on]="isSourceOn(source)"
+                      [disabled]="!isSourceAvailable(source)"
+                      [title]="isSourceAvailable(source)
+                                ? 'Include ' + sourceLabels[source] + ' data'
+                                : 'This locus has no ' + sourceLabels[source] + ' data'"
+                      (click)="toggleSource(source)">
+                {{ sourceLabels[source] }}
+              </button>
+            }
           </div>
+        </section>
+
+        <section class="rail-section" [class.not-applied]="railScoped">
+          <h3 class="rail-heading">
+            Samples
+            @if (railScoped) { <span class="scoped-tag">{{ scopedNote }}</span> }
+          </h3>
+          <app-check-dropdown label="Project" [options]="projectOptions"
+                              [selected]="selectedProjects" [disabled]="!sampleFiltersEnabled"
+                              (selectedChange)="onProjectsChange($event)">
+          </app-check-dropdown>
+          <app-check-dropdown label="Sample" [options]="sampleOptions"
+                              [selected]="selectedSamples" [disabled]="!sampleFiltersEnabled"
+                              (selectedChange)="onSamplesChange($event)">
+          </app-check-dropdown>
+        </section>
+
+        <!-- Restricts every panel, by resolving to an allele list that rides the
+             existing `alleles` parameter. A slider only appears for a database
+             actually being read. -->
+        @if (showGenomicRange || showAirrseqRange) {
+          <section class="rail-section" [class.not-applied]="railScoped">
+            <h3 class="rail-heading">
+              Seen in
+              @if (railScoped) { <span class="scoped-tag">{{ scopedNote }}</span> }
+              @if (countFilterActive) {
+                <button type="button" class="vdj-pill reset-pill" (click)="resetSeenIn()"
+                        title="Clear both thresholds">reset</button>
+              }
+            </h3>
+
+            @if (showAirrseqRange) {
+              <label class="rail-label" for="minAirrseq">
+                AIRR-seq samples
+                <span class="range-value">{{ minAirrseq }}+</span>
+              </label>
+              <input type="range" class="form-range" id="minAirrseq"
+                     min="0" [max]="airrseqStops.length - 1" step="1"
+                     [(ngModel)]="airrseqIndex"
+                     (ngModelChange)="onStopInput('airrseq')" (change)="onSeenInChange()">
+              <div class="range-ends"><span>0</span><span>{{ maxAirrseq }}</span></div>
+            }
+
+            @if (showGenomicRange) {
+              <label class="rail-label" for="minGenomic">
+                Genomic samples
+                <span class="range-value">{{ minGenomic }}+</span>
+              </label>
+              <input type="range" class="form-range" id="minGenomic"
+                     min="0" [max]="genomicStops.length - 1" step="1"
+                     [(ngModel)]="genomicIndex"
+                     (ngModelChange)="onStopInput('genomic')" (change)="onSeenInChange()">
+              <div class="range-ends"><span>0</span><span>{{ maxGenomic }}</span></div>
+            }
+
+            <p class="rail-note">
+              @if (countFilterActive) {
+                <strong>{{ passingCount }}</strong> of {{ alleleCounts.length }} alleles
+                pass, across every panel.
+              } @else {
+                All {{ alleleCounts.length }} alleles. Drag to hide the rare ones.
+              }
+            </p>
+          </section>
+        }
+
+        <section class="rail-section" [class.not-applied]="railScoped">
+          <h3 class="rail-heading">
+            Genes
+            @if (railScoped) {
+              <span class="scoped-tag">{{ scopedNote }}</span>
+            } @else {
+              <span class="heading-note">{{ selection.ascs?.length ?? 0 }} of {{ maxGenes }}</span>
+            }
+          </h3>
+          <app-gene-picker [genes]="availableAscs" [selected]="selection.ascs ?? []"
+                           [loading]="ascLoading" [error]="ascError" [max]="maxGenes"
+                           (selectedChange)="onGenesChange($event)">
+          </app-gene-picker>
+        </section>
+        </div>
+
+      </div>
+    }
+  </aside>
+
+  <main class="dash-canvas">
+    @if (showGallery) {
+      <app-panel-gallery [panels]="panels" [groups]="panelGroups"
+                         [species]="selection.species" [locus]="selection.chain"
+                         [blocked]="galleryBlocked"
+                         (opened)="openFromGallery($event)"></app-panel-gallery>
+    } @else {
+    <header class="canvas-head">
+      <div class="canvas-title">
+        <h2>{{ activePanel.label }}</h2>
+        <button type="button" class="info-button"
+                [attr.aria-expanded]="captionOpen[activePanel.id] === true"
+                title="About this plot"
+                (click)="toggleCaption(activePanel.id)">ⓘ</button>
+        <button type="button" class="vdj-pill all-analyses" (click)="openGallery()"
+                title="See every analysis">All analyses</button>
+      </div>
+
+      <div class="filter-chips">
+        <span class="chips-label">{{ selection.species }} · {{ selection.chain }}</span>
+        <!-- a locus-wide panel is drawn from the whole locus, so the gene and
+             sample chips would sit above a figure none of them narrows -->
+        @if (activePanel.multi) {
+          <span class="chips-note">whole locus: the gene and sample filters do not apply</span>
+        } @else {
+          @for (chip of activeChips; track chip.key) {
+            <button type="button" class="chip" (click)="removeChip(chip.key)"
+                    [title]="'Remove ' + chip.label + ' ' + chip.value">
+              <span class="chip-key">{{ chip.label }}</span>{{ chip.value }}<span class="x">×</span>
+            </button>
+          }
         }
       </div>
-      @if (ascError) {
-        <small class="text-danger">Error loading ASCs: {{ascError}}</small>
+
+      @if (captionOpen[activePanel.id]) {
+        <p class="caption-body">{{ activePanel.caption }}</p>
       }
-    </div>
-  </div>
+    </header>
 
-  <mat-tab-group animationDuration="0ms" mat-stretch-tabs (selectedTabChange)="onTabChange($event)">
-    <mat-tab label="Overview">
-      <ng-template matTabContent>
-        <app-dash-refbook-overview [selection]="selection"></app-dash-refbook-overview>
-      </ng-template>
-    </mat-tab>
-    <mat-tab label="Alignment">
-      <ng-template matTabContent>
-        <app-dash-refbook-alignment [selection]="selection"></app-dash-refbook-alignment>
-      </ng-template>
-    </mat-tab>
-    <mat-tab label="Allele Usage">
-      <ng-template matTabContent>
-        <app-dash-refbook-usage [selection]="selection"></app-dash-refbook-usage>
-      </ng-template>
-    </mat-tab>
-    <mat-tab label="Zygosity">
-      <ng-template matTabContent>
-        <app-dash-refbook-zygosity [selection]="selection"></app-dash-refbook-zygosity>
-      </ng-template>
-    </mat-tab>
-  </mat-tab-group>
-
+    <!-- an empty allele list would ride the wire as "no filter" and show
+         everything, which contradicts what the rail says is passing -->
+    @if (locusUnavailable) {
+      <div class="panel-blocked">
+        <p class="reason">{{ locusUnavailable }}</p>
+        <p class="description">
+          The dataset list offers every dataset on the site, including ones the
+          Explorer does not carry. Choose another locus above.
+        </p>
+      </div>
+    } @else if (nothingPassesFilter) {
+      <div class="panel-blocked">
+        <p class="reason">No allele is seen in that many samples.</p>
+        <p class="description">
+          Nothing clears the thresholds in the sidebar, so there is nothing to draw.
+          Lower them, or <button type="button" class="link-button" (click)="resetSeenIn()">reset
+          the filter</button>.
+        </p>
+      </div>
+    } @else {
+    @if (blockedReason(activePanel); as reason) {
+      <div class="panel-blocked">
+        <p class="reason">{{ reason }}</p>
+        <p class="description">{{ activePanel.description }}</p>
+      </div>
+    } @else if (loaded[activePanel.id]) {
+      @if (activePanel.multi) {
+        <ng-container *ngComponentOutlet="$any(loaded[activePanel.id]);
+                                          inputs: { selection: selectionForPanel(activePanel) }">
+        </ng-container>
+      } @else {
+        <div class="facets" [class.single]="facetsFor(activePanel).length < 2">
+          @for (gene of facetsFor(activePanel); track gene) {
+            <section class="facet">
+              <h3 class="facet-title">
+                {{ gene }}
+                <button type="button" class="focus-gene" (click)="focusGene(gene)"
+                        title="Show only this gene">focus</button>
+              </h3>
+              <ng-container *ngComponentOutlet="$any(loaded[activePanel.id]);
+                                                inputs: { selection: selectionFor(gene) }">
+              </ng-container>
+            </section>
+          }
+        </div>
+      }
+    } @else {
+      <div class="panel-blocked"><p class="description">Loading…</p></div>
+    }
+    }
+    }
+  </main>
 </div>

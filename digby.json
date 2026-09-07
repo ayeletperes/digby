@@ -1,889 +1,1287 @@
 {
-    "swagger": "2.0",
-    "basePath": "/api",
-    "paths": {
-        "/genomic/all_samples_info/{species}/{dataset}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "dataset",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns information on all samples",
-                "operationId": "get_all_samples_info_api",
-                "tags": [
-                    "genomic"
-                ]
-            }
+  "basePath": "/api",
+  "consumes": [
+    "application/json"
+  ],
+  "info": {
+    "description": "API for Ig Receptor gene data",
+    "title": "DIgServer API",
+    "version": "1.0"
+  },
+  "paths": {
+    "/genomic/all_samples_info/{species}/{dataset}": {
+      "get": {
+        "operationId": "get_all_samples_info_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
         },
-        "/genomic/all_subjects_genotype/{species}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Return genotypes for all subjects of the specified species in the specified data type",
-                "operationId": "get_all_subjects_genotype_api",
-                "tags": [
-                    "genomic"
-                ]
-            }
+        "summary": "Returns information on all samples",
+        "tags": [
+          "genomic"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
         },
-        "/genomic/assemblies/{species}/{data_sets}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "data_sets",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns the list of annotated assemblies for the selected species and datasets",
-                "operationId": "get_assembly_api",
-                "tags": [
-                    "genomic"
-                ]
-            }
-        },
-        "/genomic/data_sets/{species}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "404": {
-                        "description": "No data sets available for that species."
-                    }
-                },
-                "summary": "Returns the list of data sets for the selected species",
-                "operationId": "get_data_set_api",
-                "tags": [
-                    "genomic"
-                ]
-            }
-        },
-        "/genomic/dataset_info/{species}/{dataset}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "dataset",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns information and statistics on the dataset",
-                "operationId": "get_data_set_info_api",
-                "tags": [
-                    "genomic"
-                ]
-            }
-        },
-        "/genomic/feature_pos/{species}/{dataset}/{ref_seq_name}/{feature_string}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "dataset",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "ref_seq_name",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "feature_string",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "404": {
-                        "description": "Reference sequence not found."
-                    }
-                },
-                "summary": "Returns the position of the first feature matching the specified string",
-                "operationId": "get_feature_pos_api",
-                "tags": [
-                    "genomic"
-                ]
-            }
-        },
-        "/genomic/genotype/{species}/{patient_name}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "patient_name",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns the inferred genotype (in MiAIRR format) of the specified patient",
-                "operationId": "get_genotype_api",
-                "tags": [
-                    "genomic"
-                ]
-            }
-        },
-        "/genomic/sequences/{species}/{genomic_datasets}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "genomic_datasets",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "404": {
-                        "description": "Reference sequence not found."
-                    }
-                },
-                "summary": "Returns nucleotide sequences from selected reference or multiple references (separate multiple reference names with ',')",
-                "operationId": "get_sequences_api",
-                "parameters": [
-                    {
-                        "name": "page_number",
-                        "in": "query",
-                        "type": "integer"
-                    },
-                    {
-                        "name": "page_size",
-                        "in": "query",
-                        "type": "integer"
-                    },
-                    {
-                        "name": "filter",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "sort_by",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "cols",
-                        "in": "query",
-                        "type": "string"
-                    }
-                ],
-                "tags": [
-                    "genomic"
-                ]
-            }
-        },
-        "/genomic/species": {
-            "get": {
-                "responses": {
-                    "404": {
-                        "description": "No species available!"
-                    }
-                },
-                "summary": "Returns the list of species for which information is held",
-                "operationId": "get_species_api",
-                "tags": [
-                    "genomic"
-                ]
-            }
-        },
-        "/genomic/subject_info/{species}/{dataset}/{sample_id}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "dataset",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "sample_id",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns information on the selected sample",
-                "operationId": "get_sample_info_api",
-                "tags": [
-                    "genomic"
-                ]
-            }
-        },
-        "/genomic/subjects/{species}/{genomic_datasets}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "genomic_datasets",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "404": {
-                        "description": "Reference sequence not found."
-                    }
-                },
-                "summary": "Returns a list of subjects in the selected datasets",
-                "operationId": "get_subjects_api",
-                "parameters": [
-                    {
-                        "name": "page_number",
-                        "in": "query",
-                        "type": "integer"
-                    },
-                    {
-                        "name": "page_size",
-                        "in": "query",
-                        "type": "integer"
-                    },
-                    {
-                        "name": "filter",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "sort_by",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "cols",
-                        "in": "query",
-                        "type": "string"
-                    }
-                ],
-                "tags": [
-                    "genomic"
-                ]
-            }
-        },
-        "/reports/reports/list": {
-            "get": {
-                "responses": {
-                    "404": {
-                        "description": "No reports available!"
-                    }
-                },
-                "operationId": "get_reports_api",
-                "parameters": [
-                    {
-                        "name": "species",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "genomic_datasets",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "rep_datasets",
-                        "in": "query",
-                        "type": "string"
-                    }
-                ],
-                "tags": [
-                    "reports"
-                ]
-            }
-        },
-        "/reports/reports/run/{report_name}": {
-            "parameters": [
-                {
-                    "name": "report_name",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "404": {
-                        "description": "Malformed request"
-                    }
-                },
-                "operationId": "get_reports_run_api",
-                "parameters": [
-                    {
-                        "name": "format",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "species",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "genomic_datasets",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "genomic_filters",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "rep_datasets",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "rep_filters",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "params",
-                        "in": "query",
-                        "type": "string"
-                    }
-                ],
-                "tags": [
-                    "reports"
-                ]
-            }
-        },
-        "/reports/reports/status/{job_id}": {
-            "parameters": [
-                {
-                    "name": "job_id",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "404": {
-                        "description": "Malformed request"
-                    }
-                },
-                "operationId": "get_reports_status",
-                "tags": [
-                    "reports"
-                ]
-            }
-        },
-        "/repseq/all_novels": {
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns the list all novel alleles across all datasets",
-                "operationId": "get_novels_api",
-                "tags": [
-                    "repseq"
-                ]
-            }
-        },
-        "/repseq/all_samples_info/{species}/{dataset}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "dataset",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns information on all samples",
-                "operationId": "get_all_samples_info_api",
-                "tags": [
-                    "repseq"
-                ]
-            }
-        },
-        "/repseq/all_subjects_genotype/{species}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Return genotypes for all subjects of the specified species in the specified data type",
-                "operationId": "get_all_subjects_genotype_api",
-                "tags": [
-                    "repseq"
-                ]
-            }
-        },
-        "/repseq/dataset_info/{species}/{dataset}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "dataset",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns information and statistics on the dataset",
-                "operationId": "get_data_set_info_api",
-                "tags": [
-                    "repseq"
-                ]
-            }
-        },
-        "/repseq/genotype/{species}/{subject_name}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "subject_name",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns the inferred genotype (in MiAIRR format) of the specified sample",
-                "operationId": "get_genotype_api",
-                "tags": [
-                    "repseq"
-                ]
-            }
-        },
-        "/repseq/novels/{species}/{dataset}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "dataset",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns details of full-length novel alleles in a single dataset",
-                "operationId": "get_novels_sp_api",
-                "tags": [
-                    "repseq"
-                ]
-            }
-        },
-        "/repseq/ref_seqs/{species}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns the list of datasets available for the selected species",
-                "operationId": "get_data_set_api",
-                "tags": [
-                    "repseq"
-                ]
-            }
-        },
-        "/repseq/sample_info/{species}/{dataset}/{sample}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "dataset",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "sample",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns information on the selected sample",
-                "operationId": "get_sample_info_api",
-                "tags": [
-                    "repseq"
-                ]
-            }
-        },
-        "/repseq/samples/{species}/{dataset}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "dataset",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns the list of samples in the selected dataset",
-                "operationId": "get_samples_api",
-                "parameters": [
-                    {
-                        "name": "page_number",
-                        "in": "query",
-                        "type": "integer"
-                    },
-                    {
-                        "name": "page_size",
-                        "in": "query",
-                        "type": "integer"
-                    },
-                    {
-                        "name": "filter",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "sort_by",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "cols",
-                        "in": "query",
-                        "type": "string"
-                    }
-                ],
-                "tags": [
-                    "repseq"
-                ]
-            }
-        },
-        "/repseq/sequences/{species}/{dataset}": {
-            "parameters": [
-                {
-                    "name": "species",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "dataset",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns the list of sequences in the selected datasets",
-                "operationId": "get_sequences_api",
-                "parameters": [
-                    {
-                        "name": "page_number",
-                        "in": "query",
-                        "type": "integer"
-                    },
-                    {
-                        "name": "page_size",
-                        "in": "query",
-                        "type": "integer"
-                    },
-                    {
-                        "name": "filter",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "sort_by",
-                        "in": "query",
-                        "type": "string"
-                    },
-                    {
-                        "name": "cols",
-                        "in": "query",
-                        "type": "string"
-                    }
-                ],
-                "tags": [
-                    "repseq"
-                ]
-            }
-        },
-        "/repseq/species": {
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Returns the list of species for which information is held",
-                "operationId": "get_species_api",
-                "tags": [
-                    "repseq"
-                ]
-            }
-        },
-        "/system/config": {
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "summary": "Return internal configuration details",
-                "operationId": "get_config_api",
-                "tags": [
-                    "system"
-                ]
-            }
-        },
-        "/system/login/{username}/{password}": {
-            "parameters": [
-                {
-                    "name": "username",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                },
-                {
-                    "name": "password",
-                    "in": "path",
-                    "required": true,
-                    "type": "string"
-                }
-            ],
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "operationId": "get_login_api",
-                "tags": [
-                    "system"
-                ]
-            }
-        },
-        "/system/refresh": {
-            "get": {
-                "responses": {
-                    "200": {
-                        "description": "Success"
-                    }
-                },
-                "operationId": "get_refresh_api",
-                "tags": [
-                    "system"
-                ]
-            }
+        {
+          "in": "path",
+          "name": "dataset",
+          "required": true,
+          "type": "string"
         }
+      ]
     },
-    "info": {
-        "title": "DIgServer API",
-        "version": "1.0",
-        "description": "API for Ig Receptor gene data"
-    },
-    "produces": [
-        "application/json"
-    ],
-    "consumes": [
-        "application/json"
-    ],
-    "tags": [
-        {
-            "name": "system",
-            "description": "System-specific information"
+    "/genomic/all_subjects_genotype/{species}": {
+      "get": {
+        "operationId": "get_all_subjects_genotype_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
         },
+        "summary": "Return genotypes for all subjects of the specified species in the specified data type",
+        "tags": [
+          "genomic"
+        ]
+      },
+      "parameters": [
         {
-            "name": "repseq",
-            "description": "Genes and annotations inferred from RepSeq data"
-        },
-        {
-            "name": "genomic",
-            "description": "Genomic data and annotations"
-        },
-        {
-            "name": "reports",
-            "description": "Reports that can be run on subsets of genomic and repseq data"
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
         }
-    ],
-    "responses": {
-        "ParseError": {
-            "description": "When a mask can't be parsed"
+      ]
+    },
+    "/genomic/assemblies/{species}/{data_sets}": {
+      "get": {
+        "operationId": "get_assembly_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
         },
-        "MaskError": {
-            "description": "When any error occurs on mask"
+        "summary": "Returns the list of annotated assemblies for the selected species and datasets",
+        "tags": [
+          "genomic"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
         },
-        "NoResultFound": {}
+        {
+          "in": "path",
+          "name": "data_sets",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/genomic/data_sets/{species}": {
+      "get": {
+        "operationId": "get_data_set_api",
+        "responses": {
+          "404": {
+            "description": "No data sets available for that species."
+          }
+        },
+        "summary": "Returns the list of data sets for the selected species",
+        "tags": [
+          "genomic"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/genomic/dataset_info/{species}/{dataset}": {
+      "get": {
+        "operationId": "get_data_set_info_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns information and statistics on the dataset",
+        "tags": [
+          "genomic"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "dataset",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/genomic/feature_pos/{species}/{dataset}/{ref_seq_name}/{feature_string}": {
+      "get": {
+        "operationId": "get_feature_pos_api",
+        "responses": {
+          "404": {
+            "description": "Reference sequence not found."
+          }
+        },
+        "summary": "Returns the position of the first feature matching the specified string",
+        "tags": [
+          "genomic"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "dataset",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "ref_seq_name",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "feature_string",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/genomic/genotype/{species}/{patient_name}": {
+      "get": {
+        "operationId": "get_genotype_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns the inferred genotype (in MiAIRR format) of the specified patient",
+        "tags": [
+          "genomic"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "patient_name",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/genomic/sequences/{species}/{genomic_datasets}": {
+      "get": {
+        "operationId": "get_sequences_api",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page_number",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "filter",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "cols",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Reference sequence not found."
+          }
+        },
+        "summary": "Returns nucleotide sequences from selected reference or multiple references (separate multiple reference names with ',')",
+        "tags": [
+          "genomic"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "genomic_datasets",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/genomic/species": {
+      "get": {
+        "operationId": "get_species_api",
+        "responses": {
+          "404": {
+            "description": "No species available!"
+          }
+        },
+        "summary": "Returns the list of species for which information is held",
+        "tags": [
+          "genomic"
+        ]
+      }
+    },
+    "/genomic/subject_info/{species}/{dataset}/{sample_id}": {
+      "get": {
+        "operationId": "get_subject_info_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns information on the selected sample",
+        "tags": [
+          "genomic"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "dataset",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "sample_id",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/genomic/subjects/{species}/{genomic_datasets}": {
+      "get": {
+        "operationId": "get_subjects_api",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page_number",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "filter",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "cols",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Reference sequence not found."
+          }
+        },
+        "summary": "Returns a list of subjects in the selected datasets",
+        "tags": [
+          "genomic"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "genomic_datasets",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/refbook/asc_alignment/{species}/{locus}/{asc}": {
+      "get": {
+        "operationId": "get_asc_alignment",
+        "parameters": [
+          {
+            "description": "Codons per row, 5 to 60",
+            "in": "query",
+            "name": "wrap",
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Species or locus not found"
+          }
+        },
+        "summary": "Returns a formatted alignment of every allele in an ASC",
+        "tags": [
+          "refbook"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "locus",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "asc",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/refbook/asc_seqs/{species}/{locus}/{asc}": {
+      "get": {
+        "operationId": "get_asc_seqs",
+        "responses": {
+          "404": {
+            "description": "Species or locus not found"
+          }
+        },
+        "summary": "Returns sequences of all alleles in an ASC",
+        "tags": [
+          "refbook"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "locus",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "asc",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/refbook/asc_tree/{species}/{locus}/{asc}": {
+      "get": {
+        "operationId": "get_asc_tree",
+        "responses": {
+          "404": {
+            "description": "Species or locus not found"
+          }
+        },
+        "summary": "Hierarchical clustering of every allele in an ASC",
+        "tags": [
+          "refbook_tree"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "locus",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "asc",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/refbook/asc_usage/{species}/{locus}/{asc}": {
+      "get": {
+        "operationId": "get_asc_usage",
+        "responses": {
+          "404": {
+            "description": "Species or locus not found"
+          }
+        },
+        "summary": "Returns usage statistics for all alleles in an ASC",
+        "tags": [
+          "refbook"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "locus",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "asc",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/refbook/asc_zygousity/{species}/{locus}/{asc}": {
+      "get": {
+        "operationId": "get_asc_zygosity",
+        "responses": {
+          "404": {
+            "description": "Species or locus not found"
+          }
+        },
+        "summary": "Returns zygosity statistics for all subjects in a given ASC",
+        "tags": [
+          "refbook"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "locus",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "asc",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/refbook/ascs_in_locus/{species}/{locus}": {
+      "get": {
+        "operationId": "get_ascs_in_locus_api",
+        "responses": {
+          "404": {
+            "description": "Species or locus not found"
+          }
+        },
+        "summary": "Returns the list of ASCs in a given locus for a given species",
+        "tags": [
+          "refbook"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "locus",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/refbook/ascs_overview/{species}/{locus}/{asc}": {
+      "get": {
+        "operationId": "get_ascs_overview",
+        "responses": {
+          "404": {
+            "description": "Species or locus not found"
+          }
+        },
+        "summary": "Returns data for the overview refbook component",
+        "tags": [
+          "refbook"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "locus",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "asc",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/refbook/projects/{species}/{locus}": {
+      "get": {
+        "operationId": "get_projects_api",
+        "responses": {
+          "404": {
+            "description": "Species or locus not found"
+          }
+        },
+        "summary": "Returns the projects held for a species and locus, per database",
+        "tags": [
+          "refbook"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "locus",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/refbook/samples/{species}/{locus}": {
+      "get": {
+        "operationId": "get_samples_api",
+        "responses": {
+          "404": {
+            "description": "Species or locus not found"
+          }
+        },
+        "summary": "Returns the samples held for a species and locus, per database",
+        "tags": [
+          "refbook"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "locus",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/refbook/species_and_loci": {
+      "get": {
+        "operationId": "get_species_api",
+        "responses": {
+          "404": {
+            "description": "No species available!"
+          }
+        },
+        "summary": "Returns the list of species and loci for which information is held",
+        "tags": [
+          "refbook"
+        ]
+      }
+    },
+    "/refbook/summary": {
+      "get": {
+        "operationId": "get_refbook_summary",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Headline counts for the landing page",
+        "tags": [
+          "refbook"
+        ]
+      }
+    },
+    "/refbook/sunburst/{species}/{locus}": {
+      "get": {
+        "operationId": "get_sunburst_api",
+        "responses": {
+          "404": {
+            "description": "Species or locus not found"
+          }
+        },
+        "summary": "The locus hierarchy for the sunburst panel, as depth-ordered parallel arrays",
+        "tags": [
+          "refbook_sunburst"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "locus",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/reports/reports/list": {
+      "get": {
+        "operationId": "get_reports_api",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "species",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "genomic_datasets",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "rep_datasets",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "No reports available!"
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/reports/reports/run/{report_name}": {
+      "get": {
+        "operationId": "get_reports_run_api",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "species",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "genomic_datasets",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "genomic_filters",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "rep_datasets",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "rep_filters",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "params",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Malformed request"
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "report_name",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/reports/reports/status/{job_id}": {
+      "get": {
+        "operationId": "get_reports_status",
+        "responses": {
+          "404": {
+            "description": "Malformed request"
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "job_id",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/repseq/all_novels": {
+      "get": {
+        "operationId": "get_novels_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns the list all novel alleles across all datasets",
+        "tags": [
+          "repseq"
+        ]
+      }
+    },
+    "/repseq/all_samples_info/{species}/{dataset}": {
+      "get": {
+        "operationId": "get_all_samples_info_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns information on all samples",
+        "tags": [
+          "repseq"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "dataset",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/repseq/all_subjects_genotype/{species}": {
+      "get": {
+        "operationId": "get_all_subjects_genotype_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Return genotypes for all subjects of the specified species in the specified data type",
+        "tags": [
+          "repseq"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/repseq/dataset_info/{species}/{dataset}": {
+      "get": {
+        "operationId": "get_data_set_info_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns information and statistics on the dataset",
+        "tags": [
+          "repseq"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "dataset",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/repseq/download_study_script/{species}/{study_id}/{dataset}": {
+      "get": {
+        "operationId": "get_download_study_script",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns information and statistics on the dataset",
+        "tags": [
+          "repseq"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "study_id",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "dataset",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/repseq/genotype/{species}/{subject_name}": {
+      "get": {
+        "operationId": "get_genotype_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns the inferred genotype (in MiAIRR format) of the specified sample",
+        "tags": [
+          "repseq"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "subject_name",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/repseq/novels/{species}/{dataset}": {
+      "get": {
+        "operationId": "get_novels_sp_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns details of full-length novel alleles in a single dataset",
+        "tags": [
+          "repseq"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "dataset",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/repseq/ref_seqs/{species}": {
+      "get": {
+        "operationId": "get_data_set_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns the list of datasets available for the selected species",
+        "tags": [
+          "repseq"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/repseq/sample_info/{species}/{dataset}/{sample}": {
+      "get": {
+        "operationId": "get_sample_info_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns information on the selected sample",
+        "tags": [
+          "repseq"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "dataset",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "sample",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/repseq/samples/{species}/{dataset}": {
+      "get": {
+        "operationId": "get_samples_api",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page_number",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "filter",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "cols",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns the list of samples in the selected dataset",
+        "tags": [
+          "repseq"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "dataset",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/repseq/sequences/{species}/{dataset}": {
+      "get": {
+        "operationId": "get_sequences_api",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page_number",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "filter",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "sort_by",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "cols",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns the list of sequences in the selected datasets",
+        "tags": [
+          "repseq"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "species",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "dataset",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/repseq/species": {
+      "get": {
+        "operationId": "get_species_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Returns the list of species for which information is held",
+        "tags": [
+          "repseq"
+        ]
+      }
+    },
+    "/system/config": {
+      "get": {
+        "operationId": "get_config_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "summary": "Return internal configuration details",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/system/login/{username}/{password}": {
+      "get": {
+        "operationId": "get_login_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "tags": [
+          "system"
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "username",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "in": "path",
+          "name": "password",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    "/system/refresh": {
+      "get": {
+        "operationId": "get_refresh_api",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "tags": [
+          "system"
+        ]
+      }
     }
+  },
+  "produces": [
+    "application/json"
+  ],
+  "responses": {
+    "MaskError": {
+      "description": "When any error occurs on mask"
+    },
+    "NoResultFound": {},
+    "ParseError": {
+      "description": "When a mask can't be parsed"
+    }
+  },
+  "swagger": "2.0",
+  "tags": [
+    {
+      "description": "System-specific information",
+      "name": "system"
+    },
+    {
+      "description": "Genes and annotations inferred from RepSeq data",
+      "name": "repseq"
+    },
+    {
+      "description": "Genomic data and annotations",
+      "name": "genomic"
+    },
+    {
+      "description": "Reports that can be run on subsets of genomic and repseq data",
+      "name": "reports"
+    },
+    {
+      "description": "Refbook related operations",
+      "name": "refbook"
+    },
+    {
+      "description": "Locus hierarchy for the sunburst panel",
+      "name": "refbook_sunburst"
+    },
+    {
+      "description": "Hierarchical clustering of an ASC",
+      "name": "refbook_tree"
+    }
+  ]
 }

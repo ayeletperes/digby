@@ -1,0 +1,37 @@
+<div class="gallery">
+  <header class="gallery-head">
+    <h2>What would you like to look at?</h2>
+    <p class="lede">
+      Each of these reads the same data from a different angle. Pick one to start. The
+      filters on the left choose the species, locus and samples for all of them, so moving
+      between analyses keeps your selection.
+    </p>
+  </header>
+
+  @for (group of groups; track group) {
+    @if (panelsIn(group).length) {
+      <section class="gallery-group">
+        <h3>{{ group }}</h3>
+        <ul class="cards">
+          @for (panel of panelsIn(group); track panel.id) {
+            <li>
+              <button type="button" class="card" [class.unavailable]="blocked(panel)"
+                      [disabled]="!!blocked(panel)" (click)="open(panel)">
+                <span class="thumb" [innerHTML]="thumbnail(panel.id)"></span>
+                <span class="card-body">
+                  <span class="card-title">{{ panel.label }}</span>
+                  <span class="card-text">{{ blocked(panel) ?? panel.description }}</span>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+
+  <p class="gallery-docs">
+    Every panel carries a note behind the ⓘ beside its title, saying what it
+    shows and what it does not claim.
+  </p>
+</div>

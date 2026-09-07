@@ -64,8 +64,90 @@
   color: #99a0b0;
 }
 
+/* height is bound from the allele count - see chartHeight - so it must not be
+   fixed here as well */
 .chart-container {
   width: 100%;
-  height: 400px;
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
+
+/* The cohort the bars are drawn from: a count means little without its total. */
+.samples-box .sep { color: #9aa0a6; margin: 0 0.1rem; font-weight: 400; }
+/* one line: the box sits in a row of equal-height cards and a wrapping caption
+   was pushing the whole row taller than the numbers it labels */
+.samples-box .sub {
+  display: flex; align-items: baseline; gap: 0.4rem;
+  margin-top: 0.15rem; font-size: 0.72rem; color: #5f6368;
+  white-space: nowrap; line-height: 1.25;
+}
+.samples-box .sub.muted { color: #80868b; font-style: italic; }
+.samples-box .drill { color: var(--vdj-teal); font-style: normal; font-weight: 600; }
+
+/* the whole card is the control */
+button.samples-box {
+  border: 1px solid #e8eaed; background: #fff; text-align: left; cursor: pointer;
+  font: inherit; transition: border-color 0.15s ease, background 0.15s ease;
+}
+button.samples-box:hover { border-color: var(--vdj-teal); background: #f8f9fa; }
+button.samples-box:focus-visible { outline: 2px solid var(--vdj-teal); outline-offset: 2px; }
+button.samples-box.open { border-color: var(--vdj-teal); background: #f8f9fa; }
+
+.projects-drill {
+  margin-top: 0.75rem; padding: 0.8rem 0.9rem;
+  border: 1px solid #e8eaed; border-radius: 8px; background: #fff;
+}
+.drill-chart { height: 260px; }
+.drill-note { margin: 0.5rem 0 0; font-size: 0.78rem; color: #5f6368; max-width: 80ch; }
+
+/* Unobserved alleles are mostly *Del deletion markers, so the chart is filtered
+   by default; the count says what is being left out rather than hiding it. */
+.chart-toolbar {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+/* A pill switch, not a checkbox. The input stays in the DOM so it keeps its
+   keyboard behaviour and label association; only its rendering is replaced. */
+.observed-toggle {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-size: 0.82rem; color: var(--vdj-body); cursor: pointer; margin: 0;
+  line-height: 1;
+}
+.observed-toggle input {
+  position: absolute; opacity: 0; width: 0; height: 0; margin: 0;
+}
+.observed-toggle .switch {
+  position: relative; flex: 0 0 auto; width: 32px; height: 18px;
+  border-radius: 999px; background: #cfd8d6;
+  transition: background 150ms ease;
+}
+.observed-toggle .switch::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px; border-radius: 50%; background: #fff;
+  transition: transform 150ms ease;
+}
+.observed-toggle input:checked + .switch { background: var(--vdj-teal); }
+.observed-toggle input:checked + .switch::after { transform: translateX(14px); }
+.observed-toggle input:focus-visible + .switch {
+  outline: 2px solid var(--vdj-teal); outline-offset: 2px;
+}
+.switch-label { line-height: 1.2; }
+
+@media (prefers-reduced-motion: reduce) {
+  .observed-toggle .switch, .observed-toggle .switch::after { transition: none; }
+}
+.toolbar-note { font-size: 0.76rem; color: var(--vdj-muted); line-height: 1.2; }
+
+/* Rows are a fixed height and the panel scrolls. At 384 alleles (IGHV1-69 in the
+   full HUSA set) there is no width that fits them, so the chart grows and the
+   box scrolls rather than the bars being squeezed to nothing. */
+.chart-scroll { max-height: 70vh; overflow-y: auto; overflow-x: hidden; }
+
+.sort-group { display: inline-flex; border: 1px solid var(--vdj-rule); border-radius: 6px; overflow: hidden; }
+.sort-group button {
+  border: 0; background: #fff; padding: 0.2rem 0.6rem;
+  font-size: 0.76rem; color: var(--vdj-body); cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+.sort-group button + button { border-left: 1px solid var(--vdj-rule); }
+.sort-group button:hover { background: var(--vdj-teal-wash); }
+.sort-group button.on { background: var(--vdj-teal); color: #fff; font-weight: 600; }

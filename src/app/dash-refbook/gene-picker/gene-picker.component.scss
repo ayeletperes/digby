@@ -1,0 +1,62 @@
+.gene-picker { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+
+.picker-head { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+
+.picker-search {
+  flex: 1 1 220px; min-width: 0;
+  padding: 0.35rem 0.6rem; font-size: 0.85rem;
+  border: 1px solid #dadce0; border-radius: 6px;
+}
+.picker-search:focus { outline: none; border-color: var(--vdj-teal); }
+
+.segment-filter { display: inline-flex; border: 1px solid #dadce0; border-radius: 6px; overflow: hidden; }
+.segment-filter button {
+  border: 0; background: #fff; padding: 0.3rem 0.7rem;
+  font-size: 0.8rem; color: #3c4043; cursor: pointer; white-space: nowrap;
+}
+.segment-filter button + button { border-left: 1px solid #dadce0; }
+.segment-filter button.on { background: var(--vdj-teal); color: #fff; }
+.segment-filter .n { opacity: 0.65; margin-left: 0.25rem; font-size: 0.75em; }
+
+/* selected genes stay visible even when the filter hides them from the list */
+.picker-selected {
+  display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center;
+  padding: 0.4rem; background: var(--vdj-teal-wash); border-radius: 6px;
+}
+.chosen {
+  border: 1px solid var(--vdj-teal); background: #fff; color: var(--vdj-teal-dark);
+  border-radius: 999px; padding: 0.1rem 0.55rem; font-size: 0.8rem;
+  cursor: pointer; white-space: nowrap;
+}
+.chosen .x { opacity: 0.6; margin-left: 0.2rem; }
+.chosen:hover { background: #d2e3fc; }
+
+.picker-count { margin: 0; font-size: 0.75rem; color: #80868b; }
+.picker-note { margin: 0.5rem 0; font-size: 0.85rem; color: #5f6368; }
+.picker-note.error { color: #d62839; }
+
+.picker-list {
+  max-height: 15rem; overflow-y: auto;
+  border: 1px solid #e8eaed; border-radius: 6px; padding: 0.4rem;
+}
+.family + .family { margin-top: 0.5rem; }
+
+.family-head {
+  margin: 0; padding: 0.15rem 0;
+  font-size: 0.78rem; font-weight: 600; color: #3c4043;
+}
+.family-head .n { font-weight: 400; color: #80868b; margin-left: 0.3rem; }
+
+.family-genes { display: flex; flex-wrap: wrap; gap: 0.25rem; padding: 0.15rem 0 0.15rem 1rem; }
+.gene {
+  border: 1px solid #dadce0; background: #fff; border-radius: 4px;
+  padding: 0.1rem 0.45rem; font-size: 0.78rem; color: #3c4043;
+  cursor: pointer; white-space: nowrap;
+}
+.gene:hover:not(:disabled) { border-color: var(--vdj-teal); }
+.gene:disabled { opacity: 0.35; cursor: not-allowed; }
+.gene.on { background: var(--vdj-teal); border-color: var(--vdj-teal); color: #fff; }
+
+.link-button { background: none; border: 0; padding: 0; color: var(--vdj-teal); font-size: 0.78rem; cursor: pointer; }
+
+.cap-note { font-size: 0.75rem; color: #5f6368; margin-left: 0.3rem; }
