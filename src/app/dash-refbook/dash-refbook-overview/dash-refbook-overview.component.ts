@@ -213,33 +213,34 @@ constructor(private refbookService: RefbookService, private drill: DashDrillServ
       // the source toggle changes which projects exist, so drop the cache
       this.projectData = [];
       if (this.showProjects) { this.loadProjects(); }
-      // Both is only drawable when a sample can be in both databases at once.
-      const bothPossible = hasGenomic && hasAirrseq && (data.cohort?.shared ?? 0) > 0;
-      this.denominators = {
-        Genomic: data.cohort?.genomic ?? 0,
-        'AIRR-seq': data.cohort?.airrseq ?? 0,
-        Both: data.cohort?.shared ?? 0,
-      };
+        // Three exclusive buckets: seen in the repertoire and not the genome, in
+        // the genome and not the repertoire, and in both. Each is out of the
+        // cohort it can be drawn from.
+        const bothPossible = hasGenomic && hasAirrseq && (data.cohort?.shared ?? 0) > 0;
 
-      // The previous three series were exclusive buckets with `Both` set to
-      const series = [
-        {
-          label: 'Genomic', show: hasGenomic,
-          data: data.genomic_counts,
-          backgroundColor: '#a9e1d4', borderColor: '#8DD3C7', borderWidth: 1,
-        },
-        {
-          label: 'AIRR-seq', show: hasAirrseq,
-          data: data.vdjbase_counts,
-          backgroundColor: '#FFA07A', borderColor: '#fa946b', borderWidth: 1,
-        },
-        {
-          // A true intersection now, not min(genomic, airrseq): these are the
-          label: 'Both', show: bothPossible,
-          data: data.both_counts,
-          backgroundColor: '#ce93d8', borderColor: '#ba68c8', borderWidth: 1,
-        },
-      ];
+        this.denominators = bothPossible
+          ? { 'Genomic only': data.cohort?.genomic ?? 0,
+              'AIRR-seq only': data.cohort?.airrseq ?? 0,
+              Both: data.cohort?.shared ?? 0 }
+          : { Genomic: data.cohort?.genomic ?? 0, 'AIRR-seq': data.cohort?.airrseq ?? 0 };
+
+        const series = [
+          {
+            label: bothPossible ? 'Genomic only' : 'Genomic', show: hasGenomic,
+            data: bothPossible ? data.genomic_only_counts : data.genomic_counts,
+            backgroundColor: '#a9e1d4', borderColor: '#8DD3C7', borderWidth: 1,
+          },
+          {
+            label: bothPossible ? 'AIRR-seq only' : 'AIRR-seq', show: hasAirrseq,
+            data: bothPossible ? data.vdjbase_only_counts : data.vdjbase_counts,
+            backgroundColor: '#FFA07A', borderColor: '#fa946b', borderWidth: 1,
+          },
+          {
+            label: 'Both', show: bothPossible,
+            data: data.both_counts,
+            backgroundColor: '#ce93d8', borderColor: '#ba68c8', borderWidth: 1,
+          },
+        ];
 
       this.lastOverview = data;
       const names = data.alleles ?? [];

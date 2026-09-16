@@ -32,7 +32,6 @@ import { GeneBrowserComponent } from './app/gene-browser/gene-browser.component'
 import { RefbookComponent } from './app/refbook/refbook.component';
 import { DashRefbookComponent } from './app/dash-refbook/dash-refbook.component';
 import { DashQtlComponent } from './app/dash-qtl/dash-qtl.component';
-import { GeneRefbookComponent } from './app/gene-refbook/gene-refbook.component';
 import { ReportsComponent } from './app/reports/reports.component';
 import { QuickRefComponent } from './app/home/quick-ref/quick-ref.component';
 import { UserGuideComponent } from './app/home/user-guide/user-guide.component';
@@ -69,7 +68,6 @@ const appRoutes: Routes = [
   { path: 'genebrowser/:speciesName/:refName', component: GeneBrowserComponent, canActivate: [AuthGuard] },
   // Analysis menu
   { path: 'reference_book/:species', component: RefbookComponent, canActivate: [AuthGuard] },
-  { path: 'gene_refbook', component: GeneRefbookComponent, canActivate: [AuthGuard] },
   { path: 'dash_refbook', component: DashRefbookComponent, canActivate: [AuthGuard] },
   { path: 'dash_qtl', component: DashQtlComponent, canActivate: [AuthGuard] },
   // one route for every doc page; the slug is looked up in DOCS_PAGES and the
