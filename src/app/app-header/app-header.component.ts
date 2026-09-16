@@ -4,6 +4,7 @@ import {AuthService} from "../auth/auth.service";
 import { Router, RouterLinkActive, RouterLink } from "@angular/router";
 import { GeneTableSelection } from '../gene-table-selector/gene-table-selector.model';
 import { GeneTableSelectorService } from '../gene-table-selector/gene-table-selector.service';
+import { environment } from '../../environments/environment';
 import { NgbCollapse, NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap';
 
 
@@ -20,6 +21,9 @@ export class AppHeaderComponent implements OnInit {
   public displayLogin = false;
   public displayLogout = false
   public displayProtected = true;
+  // the demo build offers the dashboards and nothing else: every other page
+  // needs the reports subsystem, the user database or the sample BAMs
+  public demo = (environment as any).demo === true;
   geneTableServiceSubscription = null;
   @ViewChild('assemblies_present') assemblies_present: boolean = false;
 

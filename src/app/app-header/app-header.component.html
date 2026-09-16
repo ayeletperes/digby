@@ -15,9 +15,9 @@
               AIRR-Seq Data
             </a>
             <div ngbDropdownMenu class="dropdown-menu" aria-labelledby="navbarHelpAbout">
-              <a ngbDropdownItem class="dropdown-item" routerLink="./datarep" (click)="isMenuCollapsed = true">Explore AIRR-Seq Data</a>
-              <a ngbDropdownItem class="dropdown-item" [routerLink]="['./samplerep', 'null']" (click)="isMenuCollapsed = true">Samples</a>
-              <a ngbDropdownItem class="dropdown-item" routerLink="./generep" (click)="isMenuCollapsed = true">Germline Genes</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" routerLink="./datarep" (click)="isMenuCollapsed = true">Explore AIRR-Seq Data</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" [routerLink]="['./samplerep', 'null']" (click)="isMenuCollapsed = true">Samples</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" routerLink="./generep" (click)="isMenuCollapsed = true">Germline Genes</a>
             </div>
           </li>
         }
@@ -27,10 +27,10 @@
               Genomic Data
             </a>
             <div ngbDropdownMenu class="dropdown-menu" aria-labelledby="navbarHelpAbout">
-              <a ngbDropdownItem class="dropdown-item" routerLink="./datagen" (click)="isMenuCollapsed = true">Explore Genomic Data</a>
-              <a ngbDropdownItem class="dropdown-item" [routerLink]="['./genesample', 'null']" (click)="isMenuCollapsed = true">Samples</a>
-              <a ngbDropdownItem class="dropdown-item" routerLink="./genetable" (click)="isMenuCollapsed = true">Genes</a>
-              <a ngbDropdownItem class="dropdown-item" [routerLink]="['./genebrowser', 'Human', 'IGH']" (click)="isMenuCollapsed = true" [disabled]=!assemblies_present>Gene Browser</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" routerLink="./datagen" (click)="isMenuCollapsed = true">Explore Genomic Data</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" [routerLink]="['./genesample', 'null']" (click)="isMenuCollapsed = true">Samples</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" routerLink="./genetable" (click)="isMenuCollapsed = true">Genes</a>
+              <a ngbDropdownItem class="dropdown-item" [routerLink]="['./genebrowser', 'Human', 'IGH']" (click)="isMenuCollapsed = true" [disabled]="demo || !assemblies_present">Gene Browser</a>
             </div>
           </li>
         }
@@ -40,9 +40,9 @@
               Analysis
             </a>
             <div ngbDropdownMenu class="dropdown-menu" aria-labelledby="navbarHelpAbout">
-              <a ngbDropdownItem class="dropdown-item" routerLink="/reports" (click)="isMenuCollapsed = true">Reports</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" routerLink="/reports" (click)="isMenuCollapsed = true">Reports</a>
               <a ngbDropdownItem class="dropdown-item" routerLink="/dash_refbook" (click)="isMenuCollapsed = true">Allele Reference Dashboard</a>
-              <a ngbDropdownItem class="dropdown-item" [routerLink]="['./reference_book', 'null']" (click)="isMenuCollapsed = true">Macaque Reference Book</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" [routerLink]="['./reference_book', 'null']" (click)="isMenuCollapsed = true">Macaque Reference Book</a>
             </div>
           </li>
         }
@@ -52,22 +52,22 @@
               Help / About
             </a>
             <div ngbDropdownMenu class="dropdown-menu" aria-labelledby="navbarHelpAbout">
-              <a ngbDropdownItem class="dropdown-item" href="./user-guide" (click)="isMenuCollapsed = true">User Guide</a>
-              <a ngbDropdownItem class="dropdown-item" href="./quick-ref" (click)="isMenuCollapsed = true">Quick Reference</a>
-              <a ngbDropdownItem class="dropdown-item" href="./assets/doc/report_documentation.pdf" (click)="isMenuCollapsed = true">Guide to Reports (pdf)</a>
-              <a ngbDropdownItem class="dropdown-item" href="./assets/doc/glossary.pdf" (click)="isMenuCollapsed = true">Glossary (pdf)</a>
-              <a ngbDropdownItem class="dropdown-item" href="./licensing" (click)="isMenuCollapsed = true">Licensing</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" href="./user-guide" (click)="isMenuCollapsed = true">User Guide</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" href="./quick-ref" (click)="isMenuCollapsed = true">Quick Reference</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" href="./assets/doc/report_documentation.pdf" (click)="isMenuCollapsed = true">Guide to Reports (pdf)</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" href="./assets/doc/glossary.pdf" (click)="isMenuCollapsed = true">Glossary (pdf)</a>
+              <a ngbDropdownItem [disabled]="demo" class="dropdown-item" href="./licensing" (click)="isMenuCollapsed = true">Licensing</a>
             </div>
           </li>
         }
         @if (displayLogin) {
           <li ngbNavItem class="nav-item" routerLinkActive="active">
-            <a class="nav-link" ngbNavLink routerLink="/auth" (click)="isMenuCollapsed = true">Login</a>
+            <a class="nav-link" [class.disabled]="demo" ngbNavLink routerLink="/auth" (click)="isMenuCollapsed = true">Login</a>
           </li>
         }
         @if (displayLogout) {
           <li ngbNavItem class="nav-item" routerLinkActive="active">
-            <a class="nav-link" ngbNavLink routerLink="/auth" (click)="onLogout()">Logout</a>
+            <a class="nav-link" [class.disabled]="demo" ngbNavLink routerLink="/auth" (click)="onLogout()">Logout</a>
           </li>
         }
       </ul>

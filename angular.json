@@ -104,6 +104,30 @@
                   "maximumError": "2mb"
                 }
               ]
+            },
+            "demo": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.demo.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "namedChunks": false,
+              "extractLicenses": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "10mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "600kb",
+                  "maximumError": "2mb"
+                }
+              ]
             }
           },
           "defaultConfiguration": "development"
@@ -119,6 +143,9 @@
             },
             "production": {
               "buildTarget": "digby:build:production"
+            },
+            "demo": {
+              "buildTarget": "digby:build:demo"
             }
           },
           "defaultConfiguration": "development"
