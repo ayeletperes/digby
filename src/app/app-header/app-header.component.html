@@ -42,6 +42,7 @@
             <div ngbDropdownMenu class="dropdown-menu" aria-labelledby="navbarHelpAbout">
               <a ngbDropdownItem [disabled]="demo" class="dropdown-item" routerLink="/reports" (click)="isMenuCollapsed = true">Reports</a>
               <a ngbDropdownItem class="dropdown-item" routerLink="/dash_refbook" (click)="isMenuCollapsed = true">Allele Reference Dashboard</a>
+              <a ngbDropdownItem class="dropdown-item" routerLink="/dash_qtl" (click)="isMenuCollapsed = true">Gene Usage QTL</a>
               <a ngbDropdownItem [disabled]="demo" class="dropdown-item" [routerLink]="['./reference_book', 'null']" (click)="isMenuCollapsed = true">Macaque Reference Book</a>
             </div>
           </li>

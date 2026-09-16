@@ -1,0 +1,335 @@
+<div class="qtl-shell" [class.rail-closed]="!railOpen">
+
+  <!-- Everything that is a choice lives here, as it does on the reference
+       dashboard: the dataset, which question is being asked, and that question's
+       own subject. The canvas is output only. -->
+  <aside class="qtl-rail">
+    <button type="button" class="rail-handle" (click)="railOpen = !railOpen"
+            [title]="railOpen ? 'Collapse filters' : 'Show filters'">
+      {{ railOpen ? '‹' : '›' }}
+    </button>
+
+    @if (railOpen) {
+      <div class="rail-body">
+        <section class="rail-section">
+          <h3 class="rail-heading">Dataset</h3>
+          <div class="rail-pair">
+            <div>
+              <label class="rail-label" for="qtlSpecies">Species</label>
+              <select class="form-select form-select-sm" id="qtlSpecies"
+                      [(ngModel)]="selection.species" (ngModelChange)="onSpeciesChange()">
+                @for (s of species; track s) { <option [ngValue]="s">{{ s }}</option> }
+              </select>
+            </div>
+            <div>
+              <label class="rail-label" for="qtlLocus">Locus</label>
+              <select class="form-select form-select-sm" id="qtlLocus"
+                      [(ngModel)]="selection.locus" (ngModelChange)="onLocusChange()">
+                @for (l of lociFor(selection.species); track l) {
+                  <option [ngValue]="l">{{ l }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <!-- Always shown, not only when there is more than one. Which cohort
+               these numbers describe is part of reading them, and a control that
+               appears once a second study is loaded teaches nobody that the
+               first one was a study too. -->
+          @if (projectsFor(selection.species).length) {
+            <label class="rail-label" for="qtlProject">Project</label>
+            <select class="form-select form-select-sm" id="qtlProject"
+                    [(ngModel)]="selection.project" (ngModelChange)="onProjectChange()">
+              @for (p of projectsFor(selection.species); track p) {
+                <option [ngValue]="p">{{ p || 'unnamed run' }}</option>
+              }
+            </select>
+            <p class="rail-note">
+              One project at a time. These scans are computed within a cohort and
+              are not pooled across them, so every number on the page is this
+              project's.@if (!hasProjectChoice) { It is the only one loaded.}
+            </p>
+          }
+          @if (ascs.length) {
+            <p class="rail-note">
+              {{ ascs.length }} genes scanned · {{ ascsWithSignal }} with a
+              significant variant.
+            </p>
+          }
+        </section>
+
+        <section class="rail-section">
+          <h3 class="rail-heading">Analysis</h3>
+          <ul class="panel-list">
+            <li>
+              <button type="button" class="panel-link home" [class.on]="atGallery"
+                      title="All analyses" (click)="showGallery()">
+                <span class="panel-name">Home</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="panel-link" [class.on]="isOpen('summary')"
+                      title="Every significant variant, by segment and location"
+                      (click)="showView('summary')">
+                <span class="panel-name">Summary of hits</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="panel-link" [class.on]="isOpen('gene')"
+                      title="Which variants explain a gene's usage"
+                      (click)="showView('gene')">
+                <span class="panel-name">Start from a gene</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="panel-link" [class.on]="isOpen('variant')"
+                      title="Which genes a variant explains"
+                      (click)="showView('variant')">
+                <span class="panel-name">Start from a variant</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="panel-link" [class.on]="isOpen('pairing')"
+                      title="Which partner a gene recombines with"
+                      (click)="showView('pairing')">
+                <span class="panel-name">Gene pairing</span>
+              </button>
+            </li>
+          </ul>
+          @if (!atGallery) {
+            <p class="rail-note">{{ viewNote }}</p>
+          }
+        </section>
+
+        <!-- The open analysis's own subject, in the shape its question needs:
+             ~35 genes are worth browsing, thousands of variants must be typed. -->
+        <section class="rail-section"
+                 [class.hidden]="atGallery || view === 'summary'">
+          @if (view === 'pairing') {
+            <h3 class="rail-heading">Direction</h3>
+            <div class="segment-chips">
+              @for (c of conditionals; track c) {
+                <button type="button" class="segment-chip mono"
+                        [class.on]="pairingConditional === c"
+                        (click)="setConditional(c)"
+                        [title]="c === 'P(J|D)' ? 'Anchor on a J, spread the D genes'
+                                                : 'Anchor on a D, spread the J genes'">
+                  {{ c }}
+                </button>
+              }
+            </div>
+            <p class="rail-note">
+              Two scans over the same variants, never pooled. {{ pairingConditional }}
+              anchors on a {{ pairingAnchorSide }}.
+            </p>
+
+            <h3 class="rail-heading">Variant</h3>
+            @if (pairingError) {
+              <p class="rail-note warn">{{ pairingError }}</p>
+            } @else if (!pairingHasScan) {
+              <p class="rail-note warn">
+                No partner-pairing scan has been run for {{ selection.locus }}.
+                This is a missing scan, not a scan that found nothing, only IGH
+                has one loaded.
+              </p>
+            } @else if (pairingLoading) {
+              <p class="rail-note">Loading the scan…</p>
+            } @else {
+              <input class="form-control form-control-sm asc-filter" type="text"
+                     [(ngModel)]="pairingFilter" placeholder="filter by id or gene" />
+              <p class="rail-note">
+                {{ pairingScanned | number }} scanned;
+                the strongest {{ pairingVariants.length | number }} are listed.
+              </p>
+              <ul class="variant-list">
+                @for (v of shownPairingVariants; track v.variant) {
+                  <li>
+                    <button type="button" class="variant-link"
+                            [class.on]="v.variant === pairingVariant"
+                            (click)="pickPairingVariant(v.variant)">
+                      <span class="v-id">{{ v.variant }}</span>
+                      <span class="v-meta">
+                        {{ v.neglog10_p | number:'1.1-1' }}
+                        @if (v.n_significant_anchors) {
+                          · {{ v.n_significant_anchors }}/{{ v.n_anchors }}
+                        }
+                      </span>
+                      <span class="v-gene">{{ v.gene ?? 'no gene' }} · {{ v.feature }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+              @if (!shownPairingVariants.length) {
+                <p class="rail-note">Nothing matches “{{ pairingFilter }}”.</p>
+              }
+            }
+          } @else if (view === 'gene') {
+            <h3 class="rail-heading">Gene</h3>
+
+            <!-- IGH scans 70 genes across three segments, which is more than a
+                 bare dropdown can be read through. Segment first, then type. -->
+            @if (segmentsPresent.length > 1) {
+              <div class="segment-chips">
+                @for (seg of segmentsPresent; track seg) {
+                  <button type="button" class="segment-chip"
+                          [class.on]="ascSegment === seg"
+                          (click)="toggleSegment(seg)"
+                          [title]="'Only ' + seg + ' genes'">{{ seg }}</button>
+                }
+                @if (ascSegment) {
+                  <button type="button" class="segment-chip clear"
+                          (click)="ascSegment = ''">all</button>
+                }
+              </div>
+            }
+
+            <input class="form-control form-control-sm asc-filter" type="text"
+                   [(ngModel)]="ascFilter" [disabled]="!ascs.length"
+                   placeholder="type a gene name…" />
+
+            <select class="form-select form-select-sm" id="qtlAsc"
+                    [(ngModel)]="selection.asc" (ngModelChange)="onAscChange()"
+                    [disabled]="!ascs.length" [size]="filteredAscs.length > 8 ? 10 : 0">
+              @for (a of filteredAscs; track a.asc) {
+                <option [ngValue]="a.asc">
+                  {{ ascName(selection.locus, a.asc) }}, {{ a.n_significant }} significant
+                </option>
+              }
+            </select>
+            @if (ascs.length && !filteredAscs.length) {
+              <p class="rail-note">
+                No gene matches{{ ascFilter ? ' “' + ascFilter + '”' : '' }}{{
+                  ascSegment ? ' in segment ' + ascSegment : '' }}.
+              </p>
+            } @else if (filteredAscs.length < ascs.length) {
+              <p class="rail-note">
+                {{ filteredAscs.length }} of {{ ascs.length }} genes shown.
+              </p>
+            }
+          } @else {
+            <h3 class="rail-heading">Variant</h3>
+            <app-qtl-search [species]="selection.species" kind="variant"
+                            placeholder="A variant id, chr22_22756855"
+                            (variantPicked)="onSearchVariant($event)">
+            </app-qtl-search>
+            @if (selection.variant) {
+              <p class="chosen-subject">{{ selection.variant }}</p>
+            }
+          }
+
+          @if (chosen) {
+            <label class="rail-label">Plotting against</label>
+            <div class="chosen">
+              <span class="chosen-name">{{ chosen }}</span>
+              <button type="button" class="chosen-drop" (click)="clearDrill()"
+                      title="Back">×</button>
+            </div>
+          }
+        </section>
+      </div>
+    }
+  </aside>
+
+  <main class="qtl-canvas">
+    <header class="canvas-head">
+      <h2>Gene usage QTL@if (!atGallery) {<span class="panel-of">&nbsp;·
+        {{ openPanelLabel }}</span>}</h2>
+      <p class="canvas-sub">
+        Where variation in the locus explains how much each gene is used.
+        @if (selection.species && selection.locus) {
+          {{ selection.species }} · {{ selection.locus }}@if (projectLabel) { · {{ projectLabel }}}
+        }
+      </p>
+    </header>
+
+    @if (error) {
+      <p class="qtl-status error">{{ error }}</p>
+    } @else if (atGallery) {
+      <!-- One cohort, said once, where someone lands. Every number in every
+           analysis here comes from it, and none of them says so on its own. -->
+      <p class="cohort-note">
+        Every analysis here is one study@if (projectLabel) {:
+        <strong>project {{ projectLabel }}</strong>}, the cohort the guQTL scan
+        was run on. Nothing on these pages is pooled across studies, and a count
+        or a frequency is that project's, not a population's.
+        @if (hasProjectChoice) {
+          Choose which in the sidebar.
+        }
+      </p>
+      <app-panel-gallery [panels]="galleryPanels" [groups]="galleryGroups"
+                         [species]="selection.species ?? ''"
+                         [locus]="selection.locus ?? ''"
+                         [art]="galleryArt" [blocked]="galleryBlocked"
+                         (opened)="openFromGallery($event)">
+      </app-panel-gallery>
+    } @else if (view === 'summary') {
+      <app-qtl-summary [species]="selection.species" [locus]="selection.locus"
+                       (genePicked)="onSummaryGene($event)"
+                       (variantPicked)="onSummaryVariant($event)">
+      </app-qtl-summary>
+    } @else if (view === 'pairing') {
+      <app-qtl-pairing [species]="selection.species" [locus]="selection.locus"
+                       [variant]="pairingVariant" [conditional]="pairingConditional">
+      </app-qtl-pairing>
+    } @else if (isPlotting) {
+      <app-qtl-variant [selection]="plotSelection" [fallbackAsc]="pointAsc"
+                       (ascPicked)="onAscPicked($event)"
+                       (regionVariantPicked)="onRegionVariant($event)"
+                       (backToGene)="clearDrill()">
+      </app-qtl-variant>
+    } @else if (view === 'variant') {
+      @if (selection.variant) {
+        <app-qtl-variant-lookup [species]="selection.species"
+                                [variant]="selection.variant"
+                                (resolved)="onLookupResolved($event)"
+                                (drill)="onLookupDrill($event)">
+        </app-qtl-variant-lookup>
+      } @else {
+        <!-- The whole locus as the picker. Typing an id assumes you already have
+             one; this is every variant the scan tested, so one can be chosen by
+             where it sits and how strong it is rather than by name. -->
+        <p class="qtl-status">
+          Click any point below to open that variant, or type an id in the
+          sidebar. Each point is a variant's strongest result across every gene
+          in {{ selection.locus }}, only variants the scan actually tested are
+          held.
+        </p>
+        <app-qtl-manhattan [selection]="variantPickerSelection"
+                           (variantPicked)="onVariantMapPick($event)">
+        </app-qtl-manhattan>
+      }
+    } @else if (selection.asc) {
+      <app-qtl-manhattan [selection]="selection"
+                         (variantPicked)="onVariantPicked($event)">
+      </app-qtl-manhattan>
+    } @else {
+      <!-- No whole-locus scan here. It aggregated the strongest result per
+           variant across every gene, which on IGH is a pass over 658,140 rows
+           and took long enough that the tab read as broken. The variant tab
+           still offers it, where picking a variant without a gene in mind is
+           the actual question. -->
+      <p class="qtl-status">
+        Choose a gene in the sidebar to see every variant tested against its
+        usage. {{ ascs.length }} genes were scanned in {{ selection.locus }},
+        {{ ascsWithSignal }} of them with a significant variant.
+      </p>
+    }
+
+    <!-- Wherever a variant is on screen, what it actually is. Not a third tab:
+         the association names a variant, this says what the variant sits in, so
+         it belongs under whichever view named it. `plotSelection` already carries
+         the variant in both tabs - the gene tab's plotted one, the variant tab's
+         own subject - and its `asc` is undefined when no single gene is chosen,
+         which is exactly when the track should fall back to the best per variant. -->
+    <!-- `view` keeps its value while the cards are up, so this has to ask
+         whether an analysis is actually open, not just which one it would be. -->
+    @if (!error && !atGallery && !isPlotting && view !== 'pairing'
+         && view !== 'summary' && plotSelection.variant) {
+      <section class="region-panel">
+        <h4>Around {{ plotSelection.variant }}</h4>
+        <app-qtl-region [selection]="plotSelection" [fallbackAsc]="pointAsc"
+                        (variantPicked)="onRegionVariant($event)">
+        </app-qtl-region>
+      </section>
+    }
+  </main>
+</div>

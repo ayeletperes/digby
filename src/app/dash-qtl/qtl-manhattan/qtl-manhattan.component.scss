@@ -1,0 +1,40 @@
+.qtl-status { margin: 1rem 0; font-size: 0.9rem; color: #5f6368; }
+.qtl-status.error { color: #d62839; }
+
+.qtl-summary { margin: 0 0 0.5rem; font-size: 0.85rem; color: #3c4043; }
+.qtl-summary .muted { color: #80868b; }
+
+.qtl-hint { margin: 0.4rem 0 0; font-size: 0.78rem; color: #80868b; max-width: 78ch; }
+
+.leads-head {
+  margin: 1.2rem 0 0.4rem; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: #5f6368;
+}
+.leads { border-collapse: collapse; font-size: 0.82rem; }
+.leads th {
+  text-align: left; font-weight: 600; color: #5f6368;
+  border-bottom: 1px solid #e8eaed; padding: 0.2rem 0.9rem 0.2rem 0;
+}
+.leads td { padding: 0.18rem 0.9rem 0.18rem 0; border-bottom: 1px solid #f1f3f4; }
+.leads .n { text-align: right; }
+/* a p-value resting on a handful of subjects is flagged, not hidden */
+.leads .weak { color: #d62839; font-weight: 600; }
+
+.link-button {
+  background: none; border: 0; padding: 0; color: var(--vdj-teal);
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+  font-size: 0.82rem; cursor: pointer;
+}
+.link-button:hover { text-decoration: underline; }
+
+.scan-title {
+  margin: 0 0 0.25rem; font-size: 0.95rem; font-weight: 600; color: #202124;
+}
+
+/* The overview is a maximum over ~30 separate scans drawn as one skyline, which
+   reads as a Manhattan unless it is said otherwise. Said otherwise. */
+.qtl-caveat {
+  margin: 0.5rem 0 0; padding: 0.5rem 0.75rem;
+  border-left: 3px solid #eda100; border-radius: 0 6px 6px 0;
+  background: #fef7e0; font-size: 0.78rem; color: #3c4043; max-width: 90ch;
+}

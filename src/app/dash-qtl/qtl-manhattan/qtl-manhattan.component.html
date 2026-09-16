@@ -1,0 +1,79 @@
+@if (error) {
+  <p class="qtl-status error">{{ error }}</p>
+} @else if (isFetching) {
+  <p class="qtl-status">Loading the scan…</p>
+} @else if (!points.length) {
+  <p class="qtl-status">No associations for this selection.</p>
+} @else {
+  <h3 class="scan-title">
+    @if (selection.asc) {
+      Manhattan, {{ ascName(selection.locus, selection.asc) }}
+    } @else {
+      Locus overview, strongest result per variant
+    }
+  </h3>
+
+  <p class="qtl-summary">
+    <strong>{{ points.length | number }}</strong> variants,
+    <strong>{{ significantCount | number }}</strong> reaching significance
+    @if (threshold) {
+      <!-- stated on the same scale as the axis and the dashed line, rather than as
+           a raw p-value nobody can compare against the plot by eye -->
+      · above -log10 p {{ threshold.neglog10_threshold | number:'1.2-2' }}
+      <span class="muted">
+        ({{ threshold.n_independent | number }} independent variants,
+        {{ threshold.n_subjects }} subjects)
+      </span>
+    }
+  </p>
+
+  <plotly-plot [data]="plotData" [layout]="plotLayout" [config]="plotConfig"
+               (plotlyClick)="onPlotClick($event)"></plotly-plot>
+
+  @if (selection.asc) {
+    <p class="qtl-hint">
+      One scan: every variant tested against the usage of
+      <strong>{{ ascName(selection.locus, selection.asc) }}</strong>, one test per point.
+      Click a point to plot the usage behind it.
+    </p>
+  } @else {
+    <p class="qtl-caveat">
+      <strong>This is not a single scan.</strong> Each gene is scanned separately,
+      so every point here is that variant's strongest result across all
+      {{ ascCount ?? 'the' }} gene scans, neighbouring points routinely come from
+      different tests, and the height of a point is a maximum over that many of
+      them. Read it as “where in {{ selection.locus }} is there signal at all”,
+      not as one scan's skyline; pick a gene to see an actual Manhattan.
+      The dashed line still holds: the run applies one threshold to every gene's
+      scan, so a point above it did clear it in whichever scan produced it.
+      Hover a point to see which gene that was, or click to open the variant.
+    </p>
+  }
+
+  @if (leads.length) {
+    <h4 class="leads-head">Strongest independent signals</h4>
+    <table class="leads">
+      <tr>
+        <th>variant</th><th>ASC</th><th class="n">-log10 p</th>
+        <th class="n">effect</th><th class="n">smallest genotype class</th>
+      </tr>
+      @for (lead of leads; track lead.variant + lead.asc) {
+        <tr>
+          <td><button type="button" class="link-button"
+                      (click)="variantPicked.emit({ variant: lead.variant, asc: lead.asc })">{{ lead.variant }}</button></td>
+          <td>{{ lead.asc }}</td>
+          <td class="n">{{ lead.neglog10_p | number:'1.1-1' }}</td>
+          <td class="n">{{ lead.beta | number:'1.2-2' }}</td>
+          <td class="n" [class.weak]="lead.well_powered === false">
+            {{ lead.min_genotype_group ?? '–' }}
+          </td>
+        </tr>
+      }
+    </table>
+    <p class="qtl-hint">
+      The smallest genotype class is shown because the analysis documents its
+      extreme tail as anti-conservative: a very small p-value resting on a handful
+      of subjects is not the same finding as one resting on fifty.
+    </p>
+  }
+}

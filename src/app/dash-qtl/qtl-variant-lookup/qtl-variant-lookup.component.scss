@@ -1,0 +1,136 @@
+.qtl-status { margin: 1rem 0; font-size: 0.9rem; color: #5f6368; }
+.qtl-status.error { color: #d62839; }
+
+/* -------------------------------------------------------------- the answer */
+
+.found { margin-bottom: 0.8rem; }
+.variant-name {
+  margin: 0; font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+  font-size: 1.05rem; color: #202124;
+}
+.variant-sub { margin: 0.2rem 0 0; font-size: 0.85rem; color: #5f6368; }
+
+/* the headline answer to "is it a QTL here", stated rather than left to be read
+   off the table */
+.verdict {
+  margin: 0.55rem 0 0; padding: 0.45rem 0.7rem;
+  border-left: 3px solid #137333; border-radius: 0 6px 6px 0;
+  background: #e6f4ea; font-size: 0.85rem; color: #202124;
+}
+.verdict.none { border-left-color: #9aa0a6; background: #f1f3f4; color: #3c4043; }
+.verdict-note { display: block; margin-top: 0.15rem; font-size: 0.76rem; color: #5f6368; }
+
+.card {
+  border: 1px solid #e8eaed; border-radius: 8px; padding: 0.8rem 0.9rem;
+  background: #fff; min-width: 0; overflow-x: auto;
+}
+.card-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 1rem; margin-bottom: 0.5rem;
+}
+.card h4 {
+  margin: 0; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: #5f6368;
+}
+.toggle {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.78rem; color: #5f6368; cursor: pointer; white-space: nowrap;
+}
+
+.note { margin: 0.6rem 0 0; font-size: 0.78rem; color: #5f6368; max-width: 80ch; }
+
+/* a p-value resting on a handful of subjects is flagged, never hidden */
+.weak { color: #d62839; font-weight: 600; }
+
+.assoc { border-collapse: collapse; font-size: 0.82rem; width: 100%; }
+.assoc th {
+  text-align: left; font-weight: 600; color: #5f6368;
+  border-bottom: 1px solid #e8eaed; padding: 0.2rem 0.7rem 0.2rem 0;
+  white-space: nowrap;
+}
+.assoc td { padding: 0.22rem 0.7rem 0.22rem 0; border-bottom: 1px solid #f1f3f4; }
+.assoc tr:hover td { background: #f8f9fa; }
+.assoc .n { text-align: right; }
+.assoc .muted { color: #80868b; }
+.assoc .gene { font-weight: 600; color: #202124; white-space: nowrap; }
+
+.sort {
+  border: 0; background: none; padding: 0; font: inherit; color: inherit;
+  cursor: pointer;
+}
+.sort:hover { color: var(--vdj-teal); text-decoration: underline; }
+
+.tag {
+  display: inline-block; margin-right: 0.25rem; padding: 0.02rem 0.4rem;
+  border-radius: 999px; font-size: 0.7rem; white-space: nowrap;
+}
+.tag.sig { background: #fce8e6; color: #c5221f; }
+.tag.lead { background: #e6f4ea; color: #137333; }
+
+.link-button {
+  background: none; border: 0; padding: 0; color: var(--vdj-teal);
+  font-size: 0.8rem; cursor: pointer; white-space: nowrap;
+}
+.link-button:hover { text-decoration: underline; }
+
+.outside { margin: 0.2rem 0 0.4rem; font-size: 0.78rem; color: var(--vdj-muted); }
+.outside a {
+  color: var(--vdj-teal); text-decoration: none; margin-left: 0.45rem;
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace; font-size: 0.76rem;
+}
+.outside a:hover { text-decoration: underline; }
+.outside a::after { content: ' \2197'; font-family: inherit; }
+
+/* the counts and the gene table share a row: the bar is three columns wide and
+   was holding a full-width one to itself */
+.lookup-row {
+  display: flex; gap: 0.8rem; align-items: flex-start; margin-top: 0.6rem;
+}
+
+/* Untick "significant only" and this is 70 rows, which ran the card past the
+   counts beside it and pushed the region track off the screen. The table
+   scrolls in place instead, under a header that stays put. */
+.assoc-scroll { max-height: 24rem; overflow-y: auto; }
+.assoc-scroll .assoc th {
+  position: sticky; top: 0; background: #fff; z-index: 1;
+  box-shadow: inset 0 -1px 0 #e8eaed;
+}
+.genotype-card { flex: 0 0 19rem; min-width: 0; }
+.genes-card { flex: 1 1 0; min-width: 0; }
+@media (max-width: 1000px) {
+  .lookup-row { flex-wrap: wrap; }
+  .genotype-card { flex: 1 1 100%; }
+}
+.genotype-card h4 {
+  margin: 0 0 0.2rem; font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: var(--vdj-muted);
+}
+
+.info-button {
+  border: 0; background: none; padding: 0 0 0 0.3rem;
+  color: var(--vdj-teal); font-size: 0.9rem; line-height: 1; cursor: pointer;
+}
+.info-button:hover { color: var(--vdj-teal-dark); }
+.caption-body {
+  margin: 0.4rem 0; padding: 0.6rem 0.8rem;
+  background: #f8f9fa; border-left: 3px solid var(--vdj-teal); border-radius: 0 4px 4px 0;
+  font-size: 0.85rem; color: #3c4043; max-width: 80ch;
+  text-transform: none; font-weight: 400; letter-spacing: 0;
+}
+
+.gene-filters { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+.segment-chip {
+  font-size: 0.72rem; padding: 0.05rem 0.5rem; border-radius: 10px;
+  border: 1px solid #dadce0; background: #fff; color: #5f6368; cursor: pointer;
+}
+.segment-chip:hover { border-color: var(--vdj-teal); }
+.segment-chip.on { background: var(--vdj-teal); border-color: var(--vdj-teal); color: #fff; }
+.gene-filter {
+  font-size: 0.78rem; padding: 0.1rem 0.4rem; min-width: 10rem;
+  border: 1px solid var(--vdj-teal-border); border-radius: 4px;
+}
+.clear-filters {
+  font-size: 0.72rem; padding: 0.05rem 0.5rem; border-radius: 10px;
+  border: 1px solid #d62839; background: #fff; color: #d62839; cursor: pointer;
+}
+.shown-count { font-size: 0.74rem; color: var(--vdj-muted); }

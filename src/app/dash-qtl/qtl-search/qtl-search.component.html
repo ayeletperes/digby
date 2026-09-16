@@ -1,0 +1,30 @@
+<div class="qtl-search">
+  <input type="search" class="search-box" [(ngModel)]="query" (ngModelChange)="onType()"
+         [placeholder]="placeholder"
+         [attr.aria-label]="placeholder">
+
+  @if (isSearching) {
+    <p class="search-note">Searching…</p>
+  } @else if (searched && !hits.length) {
+    <p class="search-note">
+      Nothing in this dataset matches “{{ query }}”.
+      @if (kind === 'variant') {
+        Only variants the scan actually tested are held, so one outside the
+        sequenced loci will not appear.
+      }
+    </p>
+  } @else if (hits.length) {
+    <ul class="hits">
+      @for (hit of hits; track hit.kind + hit.locus + hit.label) {
+        <li>
+          <button type="button" class="hit" (click)="choose(hit)">
+            <span class="kind" [class.gene]="hit.kind === 'gene'">{{ hit.kind }}</span>
+            <span class="label">{{ hit.label }}</span>
+            <span class="locus">{{ hit.locus }}</span>
+            <span class="detail">{{ hit.detail }}</span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>

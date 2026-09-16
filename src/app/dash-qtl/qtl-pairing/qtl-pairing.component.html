@@ -1,0 +1,258 @@
+<section class="pairing-main">
+  @if (error) {
+    <p class="qtl-status error">{{ error }}</p>
+  } @else if (loading) {
+    <p class="qtl-status">Loading the pairing…</p>
+  } @else if (!data) {
+    <p class="qtl-status">
+      Pick a variant to see what it does to {{ conditional }}.
+    </p>
+  } @else {
+
+    <div class="variant-head">
+      <h3 class="variant-name">{{ data.variant.variant }}</h3>
+      <p class="variant-sub">
+        {{ data.variant.contig }}:{{ data.variant.pos | number }}
+        · MAF {{ data.variant.maf | percent:'1.1-1' }}
+        @if (data.variant.gene) {
+          · {{ data.variant.feature }} of <strong>{{ data.variant.gene }}</strong>
+        }
+        · {{ data.subjects.genotyped }} subjects genotyped
+        @if (data.subjects.enrichment_rows_without_genotype) {
+          · {{ data.subjects.enrichment_rows_without_genotype | number }} pairing
+          rows belong to subjects this variant was not called in and are in no box
+        }
+      </p>
+    </div>
+
+    <!-- The test that put this variant on the list. It was ranked by its
+         omnibus, so the omnibus belongs on the page with the boxes it
+         justifies rather than being something the reader has to take on
+         trust from the ordering of a sidebar. -->
+    <div class="pairing-top">
+    <details class="omnibus-block" open>
+      <summary>
+        Pairing test, MANOVA of {{ conditional }} on genotype,
+        one per {{ anchorSide }} gene
+        <em>({{ anchorsWithSignal }} of {{ anchors.length }} significant)</em>
+        <button type="button" class="info-button" [attr.aria-expanded]="testInfoOpen"
+                title="What this test asks"
+                (click)="$event.preventDefault(); toggleTestInfo()">ⓘ</button>
+      </summary>
+
+      @if (testInfoOpen) {
+        <p class="caption-body">
+          Pillai's trace on the full partner distribution, so it asks whether the
+          variant moved the pairing <em>at all</em>, not whether it moved any one
+          partner. The cells below are post-hoc: under a row that is not
+          significant they describe, they do not show.
+        </p>
+      }
+      <div class="omnibus-scroll">
+      <table class="omnibus-table">
+        <tr>
+          <th>{{ anchorSide }} gene</th><th class="n">Pillai</th><th class="n">F</th>
+          <th class="n">p</th><th class="n">−log10 p</th><th class="n">n</th>
+          <th class="n">smallest class</th><th></th><th></th>
+        </tr>
+        @for (r of omnibusRows; track r.anchor) {
+          <tr [class.on]="isChosen(r.anchor)" [class.quiet]="!r.o.significant">
+            <td>
+              <button type="button" class="link-button" (click)="toggleAnchor(r.anchor)"
+                      [disabled]="!isChosen(r.anchor) && atAnchorLimit">
+                {{ r.label }}
+              </button>
+            </td>
+            <td class="n">{{ r.o.pillai | number:'1.3-3' }}</td>
+            <td class="n">{{ r.o.f_stat | number:'1.2-2' }}</td>
+            <td class="n">{{ r.o.p_value.toExponential(2) }}</td>
+            <td class="n">{{ r.o.neglog10_p | number:'1.1-1' }}</td>
+            <td class="n muted">{{ r.o.n }}</td>
+            <td class="n" [class.weak]="r.o.min_genotype_group !== null
+                                        && r.o.min_genotype_group < 5">
+              {{ r.o.min_genotype_group ?? '–' }}
+            </td>
+            <td>@if (r.o.significant) { <span class="tag sig">significant</span> }</td>
+            <td>@if (isChosen(r.anchor)) { <span class="tag shown">shown below</span> }</td>
+          </tr>
+        }
+      </table>
+      </div>
+    </details>
+
+      <!-- The subject counts sit with the test rather than in the corner of the
+           figure. They qualify every box below equally, and inside the grid they
+           were an orphan panel that never lined up with the row beside it. -->
+      <section class="counts-card">
+        <h4>Subjects by genotype</h4>
+        <app-qtl-genotype-counts [counts]="genotypes" [variant]="variant ?? ''"
+                                 [source]="'/api/qtl/pairing/' + species + '/' + locus
+                                           + '/' + variant">
+        </app-qtl-genotype-counts>
+      </section>
+    </div>
+
+    <!-- the anchors on show, as a small multi-select -->
+    <div class="anchor-strip">
+      <span class="strip-label">Show {{ anchorSide }}
+        <em>(up to {{ maxAnchors }})</em></span>
+      @for (a of anchors; track a) {
+        <button type="button" class="anchor-chip"
+                [class.on]="isChosen(a)"
+                [class.sig]="omnibusOf(a)?.significant"
+                [disabled]="!isChosen(a) && atAnchorLimit"
+                (click)="toggleAnchor(a)"
+                [title]="'p ' + omnibusOf(a)?.p_value?.toExponential(2)
+                         + ' · n ' + omnibusOf(a)?.n">
+          {{ short(a) }}
+        </button>
+      }
+      <span class="panel-toggles">
+        <label>
+          <input type="checkbox" [checked]="showAnchorMarginal"
+                 (change)="toggleAnchorMarginal()" />
+          overall {{ anchorSide }} usage
+        </label>
+        <label>
+          <input type="checkbox" [checked]="showPartnerMarginal"
+                 (change)="togglePartnerMarginal()" />
+          overall {{ partnerSide }} usage
+        </label>
+        <label>
+          <input type="checkbox" [checked]="strictOnly" (change)="toggleStrict()" />
+          strict marks only
+        </label>
+        <button type="button" class="info-button" [attr.aria-expanded]="infoOpen"
+                title="How to read these panels" (click)="toggleInfo()">ⓘ</button>
+      </span>
+    </div>
+
+    @if (infoOpen) {
+      <p class="caption-body">
+        <strong>Overall {{ anchorSide }} usage</strong>, down the left, is how
+        much each {{ anchorSide }} gene is used at all, by genotype. A variant
+        that moves who a gene pairs with while leaving this flat is the whole
+        reason this scan is separate from the usage scan.
+        <br><br>
+        <strong>Overall {{ partnerSide }} usage</strong>, along the bottom, is
+        the same for each {{ partnerSide }} gene, so a column that is low under
+        every genotype reads as a rare partner rather than as an effect.
+        <br><br>
+        <strong>Subjects by genotype</strong>, beside the test above, because a
+        class of five is not a distribution however tight its box.
+        <br><br>
+        <strong>Stars in the grid</strong> are the post-hoc test on that one
+        cell, uncorrected: <span class="sig-mark">*</span> p&lt;0.05,
+        <span class="sig-mark">**</span> p&lt;0.01,
+        <span class="sig-mark">***</span> p&lt;0.001, the same cuts the
+        manuscript figure uses, so a cell carries the same number of stars in
+        both. <em>Which</em> cells are starred is the pipeline's own call and is
+        not recomputed here: p&lt;0.05 under an omnibus that reached
+        significance. A cell under a row that did not is not evidence, so it is
+        not starred at all, however small its own p-value.
+        <br><br>
+        <strong>A star on an overall panel is a different test at a different
+        bar.</strong> It is the usage scan, and it is not a p-value cut: the gene
+        clears the run's own threshold@if (usageThresholdText) {,
+        {{ usageThresholdText }}}, corrected across the independent variants in
+        the locus. That is about four orders of magnitude stricter than the cut
+        that earns a cell its first asterisk, so the two marks are not
+        comparable, and it is one star or none. Under this variant,
+        {{ partnersMovedInUsage }} of {{ partners.length }} {{ partnerSide }}
+        genes clear it.
+      </p>
+    }
+
+    @if (!rows.length) {
+      <p class="qtl-status">
+        Choose a {{ anchorSide }} gene above to draw its partner distribution.
+      </p>
+    } @else {
+      <!-- Laid out as the figure is: marginals down the left, the conditional
+           grid on the right, the partner marginal along the bottom sharing
+           the grid's categories, and the subject counts in the corner. -->
+      <div class="figure" [class.one-column]="!showAnchorMarginal">
+        @for (r of rows; track r.anchor) {
+          @if (showAnchorMarginal) {
+            <div class="fig-left">
+              <plotly-plot [data]="r.marginalData" [layout]="r.marginalLayout"
+                           [config]="marginalConfig(r.anchor)"></plotly-plot>
+            </div>
+          }
+          <div class="fig-right">
+            <div class="row-head">
+              <span class="row-name" [class.sig]="r.omnibus?.significant">
+                {{ r.label }}
+              </span>
+              @if (r.omnibus) {
+                <span class="row-stat">
+                  p {{ r.omnibus.p_value.toExponential(2) }} · n {{ r.omnibus.n }}
+                  @if (r.omnibus.significant) {
+                    <span class="tag sig">significant</span>
+                  } @else {
+                    <span class="tag">not significant</span>
+                  }
+                  @if (r.marks.length) {
+                    · ✳ {{ r.marks.length }} of {{ partners.length }}
+                  }
+                  @if (usageOf(r.anchor); as u) {
+                    · overall use of {{ r.label }}
+                    @if (u.significant) {
+                      <span class="tag moved">also moves, p
+                        {{ u.p_value?.toExponential(2) }}</span>
+                    } @else {
+                      <span class="tag">does not move</span>
+                    }
+                  }
+                </span>
+              }
+            </div>
+            <plotly-plot [data]="r.gridData" [layout]="r.gridLayout"
+                         [config]="gridConfig(r.anchor)"></plotly-plot>
+          </div>
+        }
+
+        @if (showPartnerMarginal) {
+          @if (showAnchorMarginal) {
+            <div class="fig-left legend-cell">
+              <ul class="genotype-key">
+                @for (k of genotypeKey; track k.label) {
+                  <li><i class="key-swatch" [style.border-color]="k.colour"></i>{{ k.label }}</li>
+                }
+              </ul>
+            </div>
+          }
+          <div class="fig-right">
+            <plotly-plot [data]="partnerData" [layout]="partnerLayout"
+                         [config]="partnerConfig"></plotly-plot>
+          </div>
+        }
+      </div>
+
+      <p class="star-key">
+        <span class="star-group">
+          <strong>Cells</strong>
+          <span class="sig-mark">*</span> p&lt;0.05
+          <span class="sig-mark">**</span> p&lt;0.01
+          <span class="sig-mark">***</span> p&lt;0.001,
+          under an omnibus that reached significance
+        </span>
+        <span class="star-group">
+          <strong>Overall panels</strong>
+          <span class="sig-mark">*</span> the gene's own usage clears the scan's
+          threshold@if (usageThresholdText) {, {{ usageThresholdText }}}, which is
+          a stricter bar than any of the cell cuts
+        </span>
+      </p>
+
+      @if (!showPartnerMarginal || !showAnchorMarginal) {
+        <ul class="genotype-key inline">
+          @for (k of genotypeKey; track k.label) {
+            <li><i class="key-swatch" [style.border-color]="k.colour"></i>{{ k.label }}</li>
+          }
+        </ul>
+      }
+
+    }
+  }
+</section>

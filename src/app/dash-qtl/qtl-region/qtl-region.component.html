@@ -1,0 +1,243 @@
+@if (error) {
+  <p class="qtl-status error">{{ error }}</p>
+} @else if (contig) {
+
+  <!-- The head stays put while a refetch runs. It used to live inside the
+       "loaded" branch, so changing the window replaced the whole panel with a
+       loading line: the control you had just used vanished under the cursor and
+       the track collapsed. Only the track dims now. -->
+  <div class="region-head">
+    <p class="region-where">
+      {{ contig }}:{{ start | number }}–{{ end | number }}
+      <span class="span-size">({{ spanLabel }})</span>
+      · {{ variantCount | number }} tested variant{{ variantCount === 1 ? '' : 's' }}
+      @if (plottedAsc) { · against <strong>{{ plottedAsc }}</strong> }
+      @else { · strongest signal per variant }
+    </p>
+    <div class="view-controls">
+      <button type="button" class="info-button" [attr.aria-expanded]="infoOpen"
+              title="About this track" (click)="toggleInfo()">ⓘ</button>
+      <button type="button" (click)="zoomOut()" title="Widen the drawn range">− zoom out</button>
+      @if (isRanged) {
+        <button type="button" class="reset" (click)="resetView()"
+                title="Back to the window centred on this variant">reset</button>
+      }
+      <label class="window-pick">
+        Window
+        <select (change)="setWindow($any($event.target).value)">
+          @for (w of windows; track w) {
+            <option [value]="w" [selected]="!isRanged && w === window">
+              {{ w >= 1000 ? (w / 1000) + ' kb' : w + ' bp' }}
+            </option>
+          }
+          @if (isRanged) {
+            <option value="" selected disabled>dragged range</option>
+          }
+        </select>
+      </label>
+    </div>
+  </div>
+
+  @if (infoOpen) {
+    <p class="caption-body">
+      Drag across the upper track to zoom into a range; click a variant to select
+      it, or a gene for its structure at its own scale. Hover any block for its
+      name and coordinates. Blocks narrower than a pixel are drawn at minimum
+      width, so a seven-base heptamer is visible but not to scale, and the dots
+      shrink as the window widens so a crowded region reads as crowded rather
+      than solid, every tested variant is drawn at every width, none are thinned
+      away.
+    </p>
+  }
+
+  @if (!annotated) {
+    <p class="note warn">
+      No gene annotation is configured on this server, so only the variants are
+      drawn. The track is empty because the annotation is missing, not because
+      the region is.
+    </p>
+  }
+
+  <svg class="track" [class.busy]="isFetching"
+       [attr.viewBox]="'0 0 ' + view + ' ' + height"
+       preserveAspectRatio="xMidYMid meet" role="img"
+       aria-label="Genomic region around the selected variant"
+       (pointerdown)="onBrushStart($event)" (pointermove)="onBrushMove($event)"
+       (pointerup)="onBrushEnd()" (pointercancel)="onBrushEnd()">
+
+    <!-- the selected variant, carried through every row so the position a gene
+         body or an element sits at relative to it is readable by eye -->
+    <line class="centre-line" [attr.x1]="selectedX" [attr.x2]="selectedX"
+          [attr.y1]="plotTop - 6" [attr.y2]="axisY"></line>
+
+    <!-- significance -->
+    <line class="axis" [attr.x1]="pad" [attr.x2]="pad"
+          [attr.y1]="plotTop" [attr.y2]="plotBottom"></line>
+    <!-- inside the plot, anchored left: at `pad - 2` an end-anchored label hangs
+         off the left of the viewBox and the digits are clipped -->
+    @for (t of yTicks; track t.label) {
+      <text class="tick y" [attr.x]="pad + 3" [attr.y]="t.y - 2">{{ t.label }}</text>
+    }
+    @if (thresholdY !== null) {
+      <line class="threshold" [attr.x1]="pad" [attr.x2]="view - pad"
+            [attr.y1]="thresholdY" [attr.y2]="thresholdY"></line>
+    }
+    @for (m of marks; track m.variant) {
+      <circle class="mark" [class.sig]="m.significant" [class.on]="m.selected"
+              [attr.cx]="m.cx" [attr.cy]="m.cy" [attr.r]="m.r"
+              (click)="pick(m.variant)">
+        <title>{{ m.title }}</title>
+      </circle>
+    }
+
+    <!-- genes -->
+    @for (b of geneBoxes; track b.title) {
+      <rect class="gene" [class.open]="b.label === detailGene"
+            [attr.x]="b.x" [attr.y]="b.y"
+            [attr.width]="b.width" [attr.height]="b.height" [attr.fill]="b.fill"
+            (click)="showGene(b.label)">
+        <title>{{ b.title }}&#10;click for its structure</title>
+      </rect>
+      @if (b.showLabel) {
+        <text class="gene-label" [class.open]="b.label === detailGene"
+              [attr.x]="b.labelX" [attr.y]="b.y - 3"
+              (click)="showGene(b.label)">{{ b.label }}</text>
+      }
+    }
+
+    <!-- functional elements, in their real coordinates -->
+    @for (b of elementBoxes; track b.title) {
+      <rect class="element" [attr.x]="b.x" [attr.y]="b.y"
+            [attr.width]="b.width" [attr.height]="b.height" [attr.fill]="b.fill">
+        <title>{{ b.title }}</title>
+      </rect>
+      @if (b.showLabel) {
+        <text class="element-label" [attr.x]="b.labelX"
+              [attr.y]="b.y + elementH - 4">{{ b.label }}</text>
+      }
+    }
+
+    <!-- position axis -->
+    <line class="axis" [attr.x1]="pad" [attr.x2]="view - pad"
+          [attr.y1]="axisY" [attr.y2]="axisY"></line>
+    @for (t of ticks; track t.label) {
+      <line class="axis" [attr.x1]="t.x" [attr.x2]="t.x"
+            [attr.y1]="axisY" [attr.y2]="axisY + 4"></line>
+      <text class="tick" [attr.x]="t.x" [attr.y]="axisY + 14"
+            [attr.text-anchor]="t.anchor">{{ t.label }}</text>
+    }
+
+    <!-- the range being dragged, drawn last so it sits over everything -->
+    @if (brushWidth > 0) {
+      <rect class="brush" [attr.x]="brushX" [attr.y]="plotTop - 6"
+            [attr.width]="brushWidth" [attr.height]="axisY - plotTop + 6"></rect>
+    }
+  </svg>
+
+  <!-- One gene at its own scale. At any window wide enough to show where a
+       variant sits, the parts of a gene are sub-pixel; this row is the only
+       place a 7 bp heptamer is ever a shape rather than a hairline. -->
+  @if (detailGene) {
+    <div class="detail-head">
+      <span class="detail-title">{{ detailGene }}</span>
+      <span class="detail-sub">
+        gene model at its own scale, {{ detailEnd - detailStart | number }} bp across
+        @if (detailDistance > 0) {
+          · the selected variant is {{ detailDistance | number }} bp outside it
+        } @else {
+          · the selected variant falls inside it
+        }
+      </span>
+      <button type="button" class="detail-close" (click)="closeGene()"
+              title="Close the gene model">×</button>
+    </div>
+
+    <svg class="detail" [class.busy]="isFetching"
+         [attr.viewBox]="'0 0 ' + view + ' ' + detailHeight"
+         preserveAspectRatio="xMidYMid meet" role="img"
+         [attr.aria-label]="'Gene model for ' + detailGene">
+
+      @if (detailGeneBox) {
+        <rect class="gene" [attr.x]="detailGeneBox.x" [attr.y]="detailGeneY"
+              [attr.width]="detailGeneBox.width" [attr.height]="detailGeneH"
+              [attr.fill]="detailGeneBox.fill">
+          <title>{{ detailGeneBox.title }}</title>
+        </rect>
+        <text class="gene-label" [attr.x]="detailGeneBox.labelX"
+              [attr.y]="detailGeneY - 4">{{ detailGeneBox.label }}</text>
+      }
+
+      @for (b of detailBoxes; track b.title) {
+        <rect class="element" [attr.x]="b.x" [attr.y]="b.y"
+              [attr.width]="b.width" [attr.height]="b.height" [attr.fill]="b.fill">
+          <title>{{ b.title }}</title>
+        </rect>
+        @if (b.showLabel) {
+          <text class="element-label" [attr.x]="b.labelX"
+                [attr.y]="b.y + detailElementH - 6">{{ b.label }}</text>
+        }
+      }
+
+      @if (detailVariantX !== null) {
+        <line class="centre-line" [attr.x1]="detailVariantX" [attr.x2]="detailVariantX"
+              [attr.y1]="detailGeneY - 10" [attr.y2]="detailAxisY"></line>
+        <circle class="mark on" [attr.cx]="detailVariantX"
+                [attr.cy]="detailGeneY - 12" r="4"></circle>
+      }
+
+      <line class="axis" [attr.x1]="pad" [attr.x2]="view - pad"
+            [attr.y1]="detailAxisY" [attr.y2]="detailAxisY"></line>
+      @for (t of detailTicks; track t.label) {
+        <line class="axis" [attr.x1]="t.x" [attr.x2]="t.x"
+              [attr.y1]="detailAxisY" [attr.y2]="detailAxisY + 4"></line>
+        <text class="tick" [attr.x]="t.x" [attr.y]="detailAxisY + 15"
+              [attr.text-anchor]="t.anchor">{{ t.label }}</text>
+      }
+    </svg>
+
+    @if (detailNote) {
+      <p class="note warn">{{ detailNote }}</p>
+    }
+  }
+
+  @if (!detailGene && genesInWindow.length) {
+    <p class="note detail-hint">
+      Click a gene above for its structure at its own scale, leader, coding, RSS
+      and UTR are sub-pixel at this width and only legible there.
+    </p>
+  }
+
+  <app-plot-export [overrideTable]="exportTable" [name]="exportName"
+                   [title]="exportTitle" [source]="exportSource"></app-plot-export>
+
+  <div class="legend">
+    <span class="key"><i class="swatch gene-swatch"></i>gene body</span>
+    @for (entry of legend; track entry.feature) {
+      <span class="key"><i class="swatch" [style.background]="entry.colour"></i>{{ entry.feature }}</span>
+    }
+    <span class="key"><i class="swatch dot on"></i>selected variant</span>
+    <span class="key"><i class="swatch line threshold-key"></i>significance threshold</span>
+    <span class="key"><i class="swatch dot sig"></i>significant variant</span>
+    <span class="key"><i class="swatch dot"></i>tested, not significant</span>
+  </div>
+
+  @if (annotationSource) {
+    <p class="note">Annotated against {{ annotationSource }}.</p>
+  }
+
+  @if (annotated && !annotationSource) {
+    <p class="note warn">
+      The annotation in use does not state its release. Feature calls are only
+      comparable to the scan if it is the release the scan was run against.
+    </p>
+  }
+
+  @if (!genesInWindow.length && annotated) {
+    <p class="note">No annotated gene falls in this window.</p>
+  }
+
+} @else if (isFetching) {
+  <p class="qtl-status">Loading the region…</p>
+} @else {
+  <p class="qtl-status">Select a variant to see the region around it.</p>
+}

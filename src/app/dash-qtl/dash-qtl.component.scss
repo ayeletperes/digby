@@ -1,0 +1,154 @@
+.qtl-shell {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: calc(100vh - 90px);
+}
+.qtl-shell.rail-closed { grid-template-columns: 26px minmax(0, 1fr); }
+
+.qtl-rail { position: relative; border-right: 1px solid #e8eaed; background: #fafafa; min-width: 0; }
+.rail-handle {
+  position: absolute; top: 0.5rem; right: -1px; z-index: 2;
+  width: 22px; height: 26px; padding: 0;
+  border: 1px solid #e8eaed; border-radius: 4px 0 0 4px;
+  background: #fff; color: #5f6368; cursor: pointer; line-height: 1;
+}
+.rail-body { padding: 0.75rem 0.85rem 2rem; max-height: calc(100vh - 100px); overflow-y: auto; }
+
+.rail-section + .rail-section {
+  margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid #e8eaed;
+}
+.rail-heading {
+  display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 0.5rem;
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: #5f6368;
+}
+.heading-note { font-weight: 400; letter-spacing: 0; color: #80868b; }
+
+.rail-label { display: block; margin: 0.6rem 0 0.2rem; font-size: 0.75rem; color: #5f6368; }
+.rail-note { margin: 0.4rem 0 0; font-size: 0.72rem; color: #80868b; }
+
+/* Species and locus are one decision, not two screens' worth of column. */
+.rail-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.rail-pair .rail-label { margin-top: 0; }
+
+
+.qtl-canvas { padding: 0.75rem 1rem 2rem; min-width: 0; }
+.canvas-head { border-bottom: 1px solid #e8eaed; padding-bottom: 0.6rem; margin-bottom: 0.75rem; }
+.canvas-head h2 { margin: 0; font-size: 1.15rem; font-weight: 600; color: #202124; }
+.canvas-sub { margin: 0.2rem 0 0.6rem; font-size: 0.85rem; color: #5f6368; }
+
+
+.qtl-status { margin: 1rem 0; font-size: 0.9rem; color: #5f6368; }
+.qtl-status.error { color: #d62839; }
+
+.link-button {
+  background: none; border: 0; padding: 0; color: var(--vdj-teal); font-size: 0.8rem; cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .qtl-shell, .qtl-shell.rail-closed { grid-template-columns: minmax(0, 1fr); }
+  .qtl-rail { border-right: 0; border-bottom: 1px solid #e8eaed; }
+  .rail-body { max-height: none; }
+}
+
+
+/* ------------------------------------------ the analysis list, as on refbook */
+
+.panel-list { list-style: none; margin: 0; padding: 0; }
+.panel-link {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; border: 0; background: none; text-align: left;
+  padding: 0.3rem 0.5rem; border-radius: 4px;
+  font-size: 0.85rem; color: #3c4043; cursor: pointer;
+}
+.panel-link:hover:not(:disabled) { background: var(--vdj-teal-wash); }
+.panel-link.on { background: var(--vdj-teal); color: #fff; font-weight: 500; }
+
+/* --------------------------------------- the open analysis's subject */
+
+/* The variant, once resolved. The search box above it stays empty and ready,
+   so this is the only thing saying what is being looked at. */
+.chosen-subject {
+  margin: 0.45rem 0 0; font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+  font-size: 0.78rem; color: #202124; word-break: break-all;
+}
+
+/* The other half of the pair, once drilled into, with the way back out. */
+.chosen {
+  display: flex; align-items: center; gap: 0.3rem;
+  border: 1px solid var(--vdj-teal-border); border-radius: 6px;
+  padding: 0.2rem 0.25rem 0.2rem 0.5rem; background: var(--vdj-teal-wash);
+}
+.chosen-name {
+  flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace; font-size: 0.78rem;
+  color: var(--vdj-teal-dark);
+}
+.chosen-drop {
+  flex: 0 0 auto; border: 0; background: none; padding: 0 0.2rem; color: #5f6368;
+  font-size: 1rem; line-height: 1; cursor: pointer;
+}
+.chosen-drop:hover { color: #d62839; }
+
+/* The rail scrolls, so an absolutely-positioned dropdown inside it would be
+   clipped. In this column the hit list sits in flow and pushes instead. */
+.qtl-rail ::ng-deep .qtl-search .hits,
+.qtl-rail ::ng-deep .qtl-search .search-note {
+  position: static; box-shadow: none; margin-top: 0.35rem;
+}
+.qtl-rail ::ng-deep .qtl-search .hits { max-height: 16rem; }
+
+.region-panel {
+  margin-top: 1rem; border: 1px solid #e8eaed; border-radius: 8px;
+  padding: 0.8rem 0.9rem; background: #fff; min-width: 0;
+}
+.region-panel h4 {
+  margin: 0 0 0.5rem; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 0.05em; text-transform: uppercase; color: #5f6368;
+}
+
+.rail-section.hidden { display: none; }
+
+.segment-chips { display: flex; gap: 0.25rem; margin-bottom: 0.35rem; flex-wrap: wrap; }
+.segment-chip {
+  font-size: 0.72rem; padding: 0.05rem 0.45rem; border-radius: 10px;
+  border: 1px solid #dadce0; background: #fff; color: #5f6368; cursor: pointer;
+}
+.segment-chip:hover { border-color: var(--vdj-teal); }
+.segment-chip.on { background: var(--vdj-teal); border-color: var(--vdj-teal); color: #fff; }
+.segment-chip.clear { font-style: italic; }
+.asc-filter { margin-bottom: 0.35rem; }
+
+.panel-of { font-weight: 400; color: #5f6368; }
+.panel-link.home { font-weight: 500; }
+
+.segment-chip.mono {
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace; font-size: 0.7rem;
+}
+.rail-note.warn { color: #b06000; }
+
+/* the pairing tab's variant list, in the rail with every other subject control */
+.variant-list {
+  list-style: none; margin: 0.4rem 0 0; padding: 0;
+  max-height: 22rem; overflow-y: auto;
+}
+.variant-link {
+  display: block; width: 100%; text-align: left; border: 0; background: none;
+  padding: 0.2rem 0.3rem; border-radius: 4px; cursor: pointer;
+}
+.variant-link:hover { background: var(--vdj-teal-wash); }
+.variant-link.on { background: var(--vdj-teal); color: #fff; }
+.variant-link.on .v-gene, .variant-link.on .v-meta { color: #e6f2f1; }
+.v-id {
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace; font-size: 0.74rem;
+  font-weight: 600;
+}
+.v-meta { float: right; font-size: 0.7rem; color: #80868b; }
+.v-gene { display: block; font-size: 0.68rem; color: #80868b; }
+
+.cohort-note {
+  margin: 0 0 0.9rem; padding: 0.55rem 0.75rem; font-size: 0.82rem;
+  color: #3c4043; background: #f8f9fa;
+  border-left: 3px solid var(--vdj-teal); border-radius: 0 4px 4px 0;
+  max-width: 80ch;
+}

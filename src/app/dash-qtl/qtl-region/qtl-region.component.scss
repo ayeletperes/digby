@@ -1,0 +1,134 @@
+.qtl-status { margin: 1rem 0; font-size: 0.9rem; color: var(--vdj-muted); }
+.qtl-status.error { color: #d62839; }
+
+.region-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap; margin-bottom: 0.4rem;
+}
+.region-where {
+  margin: 0; font-size: 0.85rem; color: var(--vdj-body);
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+}
+.view-controls { display: flex; align-items: center; gap: 0.6rem; }
+.view-controls button {
+  font-size: 0.75rem; padding: 0.1rem 0.45rem; border-radius: 4px;
+  border: 1px solid var(--vdj-teal-border); background: #fff; color: var(--vdj-ink);
+  cursor: pointer;
+}
+.view-controls button:hover { background: var(--vdj-teal-wash); }
+.view-controls button.reset { border-color: #d62839; color: #d62839; }
+.span-size { color: var(--vdj-muted); }
+
+.window-pick { font-size: 0.8rem; color: var(--vdj-muted); }
+.window-pick select {
+  margin-left: 0.35rem; font-size: 0.8rem; padding: 0.1rem 0.3rem;
+  border: 1px solid var(--vdj-teal-border); border-radius: 4px;
+  background: #fff; color: var(--vdj-ink);
+}
+
+.track { width: 100%; height: auto; display: block; overflow: visible; }
+
+.axis { stroke: var(--vdj-rule); stroke-width: 1; }
+.centre-line {
+  stroke: var(--vdj-teal); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.7;
+}
+.threshold { stroke: #d62839; stroke-width: 1; stroke-dasharray: 4 3; opacity: 0.65; }
+.threshold-label {
+  fill: #d62839; font-size: 8px; text-anchor: end; opacity: 0.85;
+}
+
+.tick { fill: var(--vdj-muted); font-size: 9px; text-anchor: middle; }
+.tick.y { text-anchor: start; }
+
+.mark {
+  fill: var(--vdj-muted); opacity: 0.55; cursor: pointer;
+  stroke: #fff; stroke-width: 0.5;
+}
+.mark:hover { opacity: 1; }
+.mark.sig { fill: #d62839; opacity: 0.8; }
+/* the selected variant is the reason the panel is open, so it outranks colour */
+/* Selection is not a data class, so it is not given a data colour. It used to be
+   `--vdj-teal`, which is also the fill for coding sequence - the one mark that
+   must be unambiguous was drawn in the palette's busiest colour. A hollow ring
+   cannot collide with any feature or significance colour. */
+.mark.on {
+  fill: #fff; opacity: 1; stroke: var(--vdj-ink); stroke-width: 1.6;
+}
+
+.gene { stroke: var(--vdj-teal-border); stroke-width: 0.5; cursor: pointer; }
+.gene.open, .gene-label.open { stroke: var(--vdj-ink); stroke-width: 1.1; }
+.gene-label { cursor: pointer; }
+.gene-label.open { fill: var(--vdj-teal); stroke: none; }
+.element { stroke: #fff; stroke-width: 0.4; }
+.gene:hover, .element:hover { stroke: var(--vdj-ink); stroke-width: 1; }
+
+.gene-label {
+  fill: var(--vdj-ink); font-size: 9px; font-weight: 600; text-anchor: middle;
+}
+.element-label {
+  fill: #fff; font-size: 7px; text-anchor: middle; pointer-events: none;
+}
+
+.legend {
+  display: flex; flex-wrap: wrap; gap: 0.15rem 0.9rem;
+  margin-top: 0.45rem; font-size: 0.74rem; color: var(--vdj-muted);
+}
+.key { display: inline-flex; align-items: center; gap: 0.3rem; }
+.swatch {
+  width: 12px; height: 8px; border-radius: 2px; display: inline-block;
+  border: 1px solid var(--vdj-rule);
+}
+.swatch.gene-swatch { background: #c8d5d4; }
+.swatch.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--vdj-muted); }
+.swatch.dot.sig { background: #d62839; }
+.swatch.dot.on { background: #fff; border: 1.5px solid var(--vdj-ink); }
+.swatch.line {
+  width: 14px; height: 0; border: 0; border-top: 1px dashed #d62839;
+  border-radius: 0; background: none;
+}
+
+.note {
+  margin: 0.4rem 0 0; font-size: 0.78rem; color: var(--vdj-muted); max-width: 80ch;
+}
+.note.warn { color: #b06000; }
+
+/* dragging a range to zoom, as a genome browser does */
+.track { cursor: crosshair; touch-action: none; }
+.brush {
+  fill: var(--vdj-teal); opacity: 0.16;
+  stroke: var(--vdj-teal); stroke-width: 0.8; pointer-events: none;
+}
+/* a refetch dims the track rather than replacing it, so the control that
+   started the refetch stays under the cursor */
+.track.busy, .detail.busy { opacity: 0.45; transition: opacity 120ms; }
+
+.detail-head {
+  display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+  margin: 0.7rem 0 0.1rem; padding-top: 0.5rem;
+  border-top: 1px dashed var(--vdj-rule);
+}
+.detail-title {
+  font-size: 0.82rem; font-weight: 600; color: var(--vdj-ink);
+  font-family: 'Roboto Mono', Menlo, Consolas, monospace;
+}
+.detail-sub { font-size: 0.74rem; color: var(--vdj-muted); }
+.detail { width: 100%; height: auto; display: block; overflow: visible; }
+
+.detail-close {
+  border: 0; background: none; color: var(--vdj-muted); cursor: pointer;
+  font-size: 1rem; line-height: 1; padding: 0 0.2rem; margin-left: auto;
+}
+.detail-close:hover { color: #d62839; }
+.detail-hint { font-style: italic; }
+
+/* the same info control and caption the reference dashboard uses */
+.info-button {
+  border: 0; background: none; padding: 0;
+  color: var(--vdj-teal); font-size: 1rem; line-height: 1; cursor: pointer;
+}
+.info-button:hover { color: var(--vdj-teal-dark); }
+.caption-body {
+  margin: 0.5rem 0 0.2rem; padding: 0.6rem 0.8rem;
+  background: #f8f9fa; border-left: 3px solid var(--vdj-teal); border-radius: 0 4px 4px 0;
+  font-size: 0.85rem; color: #3c4043; max-width: 80ch;
+}

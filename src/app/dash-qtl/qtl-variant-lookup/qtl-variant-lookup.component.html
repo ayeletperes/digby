@@ -1,0 +1,182 @@
+<div class="lookup">
+
+  @if (error) {
+    <p class="qtl-status error">{{ error }}</p>
+  } @else if (isFetching) {
+    <p class="qtl-status">Looking it up…</p>
+  } @else if (result) {
+
+    <section class="found">
+      <h3 class="variant-name">{{ result.variant.variant }}</h3>
+      <p class="variant-sub">
+        {{ result.locus }} · {{ result.variant.contig }}:{{ result.variant.pos | number }}
+        @if (result.variant.maf !== null) { · MAF {{ result.variant.maf | percent:'1.1-1' }} }
+        @if (result.variant.gene) {
+          · {{ result.variant.feature }} of <strong>{{ result.variant.gene }}</strong>
+          @if (result.variant.distance_to_gene) {
+            ({{ result.variant.distance_to_gene | number:'1.0-0' }} bp away)
+          }
+        }
+      </p>
+
+      @if (outsideLinks.length) {
+        <p class="outside">
+          Also known as
+          @for (link of outsideLinks; track link.url + link.label) {
+            <a [href]="link.url" [title]="link.title"
+               target="_blank" rel="noopener">{{ link.label }}</a>
+          }
+        </p>
+      }
+
+      <p class="verdict" [class.none]="!result.n_significant">
+        @if (result.n_significant) {
+          A gene usage QTL for
+          <strong>{{ result.n_significant }}</strong>
+          {{ result.n_significant === 1 ? 'gene' : 'genes' }},
+          of {{ result.n_tested }} scanned in {{ result.locus }}.
+        } @else {
+          Tested against all {{ result.n_tested }} genes scanned in {{ result.locus }},
+          significant for none of them.
+        }
+        <span class="verdict-note">
+          @if (threshold) {
+            Significance is p &lt; {{ threshold.toExponential(1) }}, the locus threshold.
+          }
+          @if (result.min_genotype_group !== null && result.min_genotype_group < 5) {
+            <strong class="weak">The rarest genotype class has only
+            {{ result.min_genotype_group }}
+            {{ result.min_genotype_group === 1 ? 'subject' : 'subjects' }}.</strong>
+          }
+        </span>
+      </p>
+
+    </section>
+
+    <!-- the counts and the genes side by side: the bar is three columns wide
+         and was holding a full-width row to itself -->
+    <div class="lookup-row">
+        @if (genotypeSpread) {
+          <section class="card genotype-card">
+            <h4>Genotypes in the scanned cohort
+              <button type="button" class="info-button"
+                      [attr.aria-expanded]="genotypeInfoOpen"
+                      title="What these counts are"
+                      (click)="toggleGenotypeInfo()">ⓘ</button>
+            </h4>
+            @if (genotypeInfoOpen) {
+              <p class="caption-body">
+                The subjects this scan was run on, not a population frequency.
+                Every p-value here rests on these counts; for a
+                reference-population frequency, follow the dbSNP link above.
+              </p>
+            }
+            <app-qtl-genotype-counts [counts]="result.genotype_counts"
+                                     [variant]="result.variant.variant">
+            </app-qtl-genotype-counts>
+          </section>
+        }
+
+    <section class="card genes-card">
+      <div class="card-head">
+        <h4>{{ significantOnly ? 'Genes it drives' : 'Every gene it was tested against' }}
+          <button type="button" class="info-button" [attr.aria-expanded]="infoOpen"
+                  title="How these are counted" (click)="toggleInfo()">ⓘ</button>
+        </h4>
+        <div class="gene-filters">
+          @if (geneSegments.length > 1) {
+            @for (seg of geneSegments; track seg) {
+              <button type="button" class="segment-chip" [class.on]="geneSegment === seg"
+                      (click)="toggleGeneSegment(seg)"
+                      [title]="'Only ' + seg + ' genes'">{{ seg }}</button>
+            }
+          }
+          <input class="gene-filter" type="text" [(ngModel)]="geneFilter"
+                 placeholder="filter by gene name" />
+          <label class="toggle">
+            <input type="checkbox" [(ngModel)]="significantOnly">
+            significant only
+          </label>
+          @if (filtersOn) {
+            <button type="button" class="clear-filters" (click)="clearFilters()">clear</button>
+            <span class="shown-count">{{ rows.length }} of {{ totalRows }}</span>
+          }
+        </div>
+      </div>
+
+      @if (!rows.length) {
+        <p class="note">
+          @if (filtersOn) {
+            No gene matches those filters. The other
+            {{ totalRows }} are still there; the filters are hiding them.
+          } @else {
+            No scans are held for this variant.
+          }
+        </p>
+      } @else {
+        @if (infoOpen) {
+          <p class="caption-body">
+            Each gene is its own scan, so this variant carries one result per
+            gene. <strong>Smallest class</strong> is the number of subjects in
+            the rarest genotype group: the pipeline documents the extreme tail as
+            anti-conservative, so a small p-value resting on a handful of
+            subjects is flagged rather than trusted. The run publishes that number
+            only for lead variants, so it is counted from the genotypes for the
+            rest, which reproduces the run's own value wherever the run gives one.
+            Open a row to see the usage behind it.
+          </p>
+        }
+        <div class="assoc-scroll">
+        <table class="assoc">
+          <tr>
+            <th><button type="button" class="sort" (click)="sortBy('asc')">gene</button></th>
+            <th>seg</th>
+            <th class="n"><button type="button" class="sort" (click)="sortBy('neglog10_p')">p-value</button></th>
+            <th class="n">-log10 p</th>
+            <th class="n"><button type="button" class="sort" (click)="sortBy('beta')">effect</button></th>
+            <th class="n"><button type="button" class="sort" (click)="sortBy('n')">n</button></th>
+            <th class="n">
+              <button type="button" class="sort" (click)="sortBy('min_genotype_group')">
+                smallest class
+              </button>
+            </th>
+            <th></th>
+            <th></th>
+          </tr>
+          @for (a of rows; track a.asc) {
+            <tr>
+              <td class="gene">{{ ascName(result?.locus, a.asc) }}</td>
+              <td class="muted">{{ a.segment }}</td>
+              <td class="n">{{ a.p_value.toExponential(2) }}</td>
+              <td class="n muted">{{ a.neglog10_p | number:'1.1-1' }}</td>
+              <td class="n">{{ a.beta | number:'1.2-2' }}</td>
+              <td class="n muted">{{ a.n }}</td>
+              <td class="n" [class.weak]="a.well_powered === false">
+                {{ a.min_genotype_group ?? '–' }}
+              </td>
+              <td>
+                @if (a.significant) { <span class="tag sig">significant</span> }
+                @if (a.is_lead) { <span class="tag lead">lead</span> }
+              </td>
+              <td>
+                <button type="button" class="link-button" (click)="open(a)">
+                  plot usage →
+                </button>
+              </td>
+            </tr>
+          }
+        </table>
+        </div>
+
+
+      }
+    </section>
+    </div>
+
+  } @else if (notFound) {
+    <p class="qtl-status">
+      Nothing tested matches <code>{{ notFound }}</code>. Only variants the scan
+      actually ran are held, so one outside the sequenced loci will not be found.
+    </p>
+  }
+</div>
